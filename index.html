@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Attendance System</title>
+  <link rel="stylesheet" href="styles.css">
+  <script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.min.js"></script>
+</head>
+<body>
+  <div class="container">
+    <h1>Attendance System</h1>
+
+    <!-- Login Section -->
+    <div id="login-section">
+      <h2>Login</h2>
+      <form id="login-form">
+        <label for="email">Email:</label>
+        <input type="email" id="email" name="email" required>
+        <label for="password">Password:</label>
+        <input type="password" id="password" name="password" required>
+        <button type="submit">Login</button>
+      </form>
+    </div>
+
+    <!-- Teacher Section -->
+    <div id="teacher-section" class="hidden">
+      <h2>Generate QR Code</h2>
+      <form id="qr-generator-form">
+        <label for="session-id">Session ID:</label>
+        <input type="text" id="session-id" name="session-id" required>
+        <button type="submit">Generate QR Code</button>
+      </form>
+      <div id="qr-code-display"></div>
+
+       <!-- Add the "View Attendance" button and attendance list -->
+  <h2>Attendance Reports</h2>
+  <button id="view-attendance">View Attendance</button>
+  <div id="attendance-list"></div>
+    </div>
+
+    <!-- Student Section -->
+    <div id="student-section" class="hidden">
+      <h2>Scan QR Code</h2>
+      <div id="scanner">
+        <video id="qr-video" width="50%" height="auto"></video>
+        <canvas id="qr-canvas" style="display: none;"></canvas>
+      </div>
+      <button id="scan-once">Scan QR Code</button>
+      <button id="close-scanner" class="hidden">Close Scanner</button>
+      <p id="scan-result"></p>
+    </div>
+
+  <script src="script.js"></script>
+  
+</body>
+</html>
