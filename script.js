@@ -1,4 +1,4 @@
-const API_BASE_URL = "http://localhost:5000";
+const API_BASE_URL = "https://qrattendance-backend-production.up.railway.app/";
 let currentUserId = null; // Store the logged-in user's ID
 let videoStream = null; // Store the video stream
 
