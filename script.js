@@ -47,7 +47,7 @@ document.getElementById('qr-generator-form').addEventListener('submit', async fu
     const response = await fetch(`${API_BASE_URL}/generate-qr`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ sessionId }),
+      body: JSON.stringify({ sessionId, userId: currentUserId }), // Pass the teacher's userId
     });
     const data = await response.json();
 
@@ -58,6 +58,34 @@ document.getElementById('qr-generator-form').addEventListener('submit', async fu
     }
   } catch (err) {
     console.error("QR generation error:", err);
+  }
+});
+
+// Handle "View Attendance" button click
+document.getElementById('view-attendance').addEventListener('click', async () => {
+  try {
+    const response = await fetch(`${API_BASE_URL}/attendance?userId=${currentUserId}`); // Pass the teacher's userId
+    if (!response.ok) {
+      throw new Error(`HTTP error! Status: ${response.status}`);
+    }
+    const data = await response.json();
+
+    if (data.success) {
+      const attendanceRecords = data.attendance
+        .map(record => 
+          `Student ID: ${record.studentId}, Session: ${record.sessionId}, Status: <strong>${record.status}</strong>`
+        )
+        .join('<br>');
+
+      document.getElementById('attendance-list').innerHTML = attendanceRecords 
+        ? `<h3>Attendance Records:</h3> ${attendanceRecords}`
+        : "<p>No attendance records found.</p>";
+    } else {
+      alert("Failed to fetch attendance records.");
+    }
+  } catch (err) {
+    console.error("Fetch error:", err);
+    alert("Failed to fetch attendance records. Please check the console for details.");
   }
 });
 
@@ -196,6 +224,12 @@ document.getElementById('register-form').addEventListener('submit', async functi
   // Validate passwords match
   if (password !== confirmPassword) {
     alert("Passwords do not match!");
+    return;
+  }
+
+  // Validate student ID (if role is student)
+  if (role === 'student' && !studentId) {
+    alert("Student ID is required!");
     return;
   }
 
