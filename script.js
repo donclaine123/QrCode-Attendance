@@ -170,3 +170,81 @@ document.getElementById('view-attendance').addEventListener('click', async () =>
     alert("Failed to fetch attendance records. Please check the console for details.");
   }
 });
+
+// Show/hide Student ID field based on role selection
+document.getElementById('role').addEventListener('change', function () {
+  const studentIdField = document.getElementById('student-id-field');
+  if (this.value === 'student') {
+    studentIdField.classList.remove('hidden');
+  } else {
+    studentIdField.classList.add('hidden');
+  }
+});
+
+// Handle registration form submission
+document.getElementById('register-form').addEventListener('submit', async function (e) {
+  e.preventDefault();
+
+  const role = document.getElementById('role').value;
+  const email = document.getElementById('reg-email').value;
+  const firstName = document.getElementById('first-name').value;
+  const lastName = document.getElementById('last-name').value;
+  const password = document.getElementById('reg-password').value;
+  const confirmPassword = document.getElementById('confirm-password').value;
+  const studentId = role === 'student' ? document.getElementById('student-id').value : null;
+
+  // Validate passwords match
+  if (password !== confirmPassword) {
+    alert("Passwords do not match!");
+    return;
+  }
+
+  // Prepare registration data
+  const registrationData = {
+    role,
+    email,
+    firstName,
+    lastName,
+    password,
+    studentId,
+  };
+
+  try {
+    const response = await fetch(`${API_BASE_URL}/register`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(registrationData),
+    });
+    const data = await response.json();
+
+    if (data.success) {
+      alert("Registration successful! Please log in.");
+      document.getElementById('register-section').classList.add('hidden');
+      document.getElementById('login-section').classList.remove('hidden');
+    } else {
+      alert(data.message || "Registration failed. Please try again.");
+    }
+  } catch (err) {
+    console.error("Registration error:", err);
+    alert("Failed to register. Please check the console for details.");
+  }
+});
+
+// Show Register Section when "Register" button is clicked
+document.getElementById('show-register').addEventListener('click', function () {
+  document.getElementById('login-section').classList.add('hidden');
+  document.getElementById('register-section').classList.remove('hidden');
+});
+
+// Optional: Add a "Back to Login" button in the Register Section
+document.getElementById('register-form').insertAdjacentHTML(
+  'beforeend',
+  '<button type="button" id="back-to-login">Back to Login</button>'
+);
+
+// Handle "Back to Login" button click
+document.getElementById('back-to-login').addEventListener('click', function () {
+  document.getElementById('register-section').classList.add('hidden');
+  document.getElementById('login-section').classList.remove('hidden');
+});
+
