@@ -1,5 +1,5 @@
-const API_URL = "https://qrattendance-backend-production.up.railway.app";
-// const API_URL = "http://localhost:5000";
+// const API_URL = "https://qrattendance-backend-production.up.railway.app";
+const API_URL = "http://localhost:5000";
 
 // 📌 Login Function
 async function login(email, password) {
