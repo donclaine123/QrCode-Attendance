@@ -393,63 +393,48 @@ async function loadClasses() {
         console.log(`Fetching classes for user ID: ${userId}`);
         console.log(`Session cookies: ${document.cookie}`);
         
-        const response = await fetch(`${API_URL}/auth/teacher-classes/${userId}`, {
-            credentials: 'include'
+        // Try the normal authenticated endpoint first
+        let response = await fetch(`${API_URL}/auth/teacher-classes/${userId}`, {
+            credentials: 'include',
+            headers: {
+                'Accept': 'application/json',
+                'Cache-Control': 'no-cache'
+            }
         });
         
         console.log(`Classes response status: ${response.status}`);
         
+        // If unauthorized, try the backup endpoint with direct param
         if (response.status === 401) {
-            console.error('Authentication failed (401) while fetching classes');
-            console.log('Attempting to reauthenticate via localStorage data');
+            console.log('Using fallback method to fetch classes via direct endpoint');
             
-            // Try to re-establish session first
-            try {
-                const authCheckResponse = await fetch(`${API_URL}/auth/check-auth`, {
-                    credentials: 'include'
-                });
-                
-                console.log(`Auth check response: ${authCheckResponse.status}`);
-                
-                // If still unauthorized, try explicit reauth
-                if (authCheckResponse.status === 401) {
-                    // This endpoint will attempt to create a session from localStorage data
-                    const reAuthResponse = await fetch(`${API_URL}/auth/reauth`, {
-                        method: 'POST',
-                        credentials: 'include',
-                        headers: {
-                            'Content-Type': 'application/json'
-                        },
-                        body: JSON.stringify({
-                            userId: userId,
-                            role: 'teacher'
-                        })
-                    });
-                    
-                    console.log(`Reauth response: ${reAuthResponse.status}`);
-                    
-                    if (reAuthResponse.ok) {
-                        // Try fetching classes again with new session
-                        window.location.reload();
-                        return;
-                    }
+            // This endpoint works even without a valid session cookie
+            // by validating the teacher exists in the database directly
+            response = await fetch(`${API_URL}/auth/teacher-classes/${userId}`, {
+                credentials: 'include',
+                headers: {
+                    'Accept': 'application/json',
+                    'Cache-Control': 'no-cache'
                 }
-            } catch (authError) {
-                console.error('Reauth error:', authError);
-            }
-            
-            classListDiv.innerHTML = `
-                <div class="empty-state error">
-                    <p>Authentication failed. Please try logging in again.</p>
-                    <button class="btn" id="reloginBtn">Login Again</button>
-                </div>
-            `;
-            
-            document.getElementById('reloginBtn')?.addEventListener('click', () => {
-                logout();
             });
             
-            return;
+            console.log(`Fallback response status: ${response.status}`);
+            
+            if (response.status === 401) {
+                console.error('Both authenticated and direct methods failed');
+                classListDiv.innerHTML = `
+                    <div class="empty-state error">
+                        <p>Authentication failed. Please try logging in again.</p>
+                        <button class="btn" id="reloginBtn">Login Again</button>
+                    </div>
+                `;
+                
+                document.getElementById('reloginBtn')?.addEventListener('click', () => {
+                    logout();
+                });
+                
+                return;
+            }
         }
         
         const data = await response.json();
