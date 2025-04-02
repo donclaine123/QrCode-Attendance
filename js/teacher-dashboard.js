@@ -50,11 +50,43 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Check headers to debug CORS issues
     fetch(`${API_URL}/auth/debug-headers`, { 
-        credentials: 'include'
+        credentials: 'include',
+        headers: {
+            'Cache-Control': 'no-cache'
+        }
     })
     .then(response => response.json())
     .then(data => {
         console.log("Debug headers response:", data);
+        
+        // Check if we don't have any cookies but have localStorage auth
+        if (!document.cookie && localStorage.getItem('userId')) {
+            console.log("No cookies found but localStorage has auth data - trying to establish session");
+            
+            // Try to establish a session using localStorage data
+            fetch(`${API_URL}/auth/reauth`, {
+                method: 'POST',
+                credentials: 'include',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Cache-Control': 'no-cache'
+                },
+                body: JSON.stringify({
+                    userId: localStorage.getItem('userId'),
+                    role: localStorage.getItem('userRole')
+                })
+            })
+            .then(response => response.json())
+            .then(authData => {
+                console.log("Re-auth response:", authData);
+                if (authData.success) {
+                    console.log("Session re-established successfully");
+                }
+            })
+            .catch(error => {
+                console.error("Re-auth error:", error);
+            });
+        }
     })
     .catch(error => {
         console.error("Headers debug error:", error);
