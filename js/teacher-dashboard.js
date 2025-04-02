@@ -74,10 +74,11 @@ document.addEventListener('DOMContentLoaded', function() {
             
             // Display a warning about cookie issues
             document.body.insertAdjacentHTML('afterbegin', `
-                <div id="cookie-warning" style="background-color: #fff3cd; color: #856404; padding: 10px; margin: 10px; border-radius: 5px; border: 1px solid #ffeeba; position: relative;">
-                    <span style="position: absolute; right: 10px; top: 5px; cursor: pointer;" onclick="this.parentElement.style.display='none'">✕</span>
-                    <strong>Session Issue Detected:</strong> Your browser is not storing cookies properly. This may affect your login session.
-                    <button id="fix-session-btn" style="background-color: #007bff; color: white; border: none; border-radius: 3px; padding: 5px 10px; margin-left: 10px; cursor: pointer;">Fix Session</button>
+                <div id="cookie-warning" style="background-color: #fff3cd; color: #856404; padding: 15px; margin: 10px; border-radius: 5px; border: 1px solid #ffeeba; position: relative; z-index: 9999; box-shadow: 0 4px 8px rgba(0,0,0,0.1);">
+                    <span style="position: absolute; right: 10px; top: 5px; cursor: pointer; font-weight: bold;" onclick="this.parentElement.style.display='none'">✕</span>
+                    <strong>Session Issue Detected:</strong> Your browser is not storing cookies properly. This may cause login problems.
+                    <p style="margin: 5px 0;">User ID: ${localStorage.getItem('userId')}, Role: ${localStorage.getItem('userRole')}</p>
+                    <button id="fix-session-btn" style="background-color: #007bff; color: white; border: none; border-radius: 3px; padding: 8px 15px; margin: 5px 0; cursor: pointer; font-weight: bold;">Fix Session</button>
                 </div>
             `);
             
@@ -85,6 +86,12 @@ document.addEventListener('DOMContentLoaded', function() {
             document.getElementById('fix-session-btn').addEventListener('click', function() {
                 this.disabled = true;
                 this.textContent = 'Fixing...';
+                
+                console.log("Attempting to fix session by creating server-side session from localStorage");
+                console.log("User data from localStorage:", {
+                    userId: localStorage.getItem('userId'),
+                    role: localStorage.getItem('userRole')
+                });
                 
                 // Try to establish a session using localStorage data
                 fetch(`${API_URL}/auth/reauth`, {
@@ -99,16 +106,30 @@ document.addEventListener('DOMContentLoaded', function() {
                         role: localStorage.getItem('userRole')
                     })
                 })
-                .then(response => response.json())
+                .then(response => {
+                    console.log("Re-auth response status:", response.status);
+                    return response.json();
+                })
                 .then(authData => {
-                    console.log("Re-auth response:", authData);
+                    console.log("Re-auth response data:", authData);
+                    
                     if (authData.success) {
-                        console.log("Session re-established successfully");
+                        console.log("Session re-established successfully - checking for cookie");
+                        
+                        // Check if cookie was set
+                        const cookieCheck = document.cookie.includes('qr_attendance_sid');
+                        console.log("Cookie check after reauth:", cookieCheck ? "Cookie found" : "No cookie found");
+                        
                         this.textContent = 'Success!';
                         document.getElementById('cookie-warning').style.backgroundColor = '#d4edda';
                         document.getElementById('cookie-warning').style.color = '#155724';
                         document.getElementById('cookie-warning').style.borderColor = '#c3e6cb';
-                        document.getElementById('cookie-warning').innerHTML = '<strong>Success!</strong> Session fixed. Reloading page in 2 seconds...';
+                        
+                        if (cookieCheck) {
+                            document.getElementById('cookie-warning').innerHTML = '<strong>Success!</strong> Session fixed and cookie stored. Reloading page in 2 seconds...';
+                        } else {
+                            document.getElementById('cookie-warning').innerHTML = '<strong>Partial Success.</strong> Session created but cookie storage still has issues. Using localStorage fallback. Reloading page in 2 seconds...';
+                        }
                         
                         // Reload the page after 2 seconds
                         setTimeout(() => {
@@ -119,11 +140,30 @@ document.addEventListener('DOMContentLoaded', function() {
                         document.getElementById('cookie-warning').style.backgroundColor = '#f8d7da';
                         document.getElementById('cookie-warning').style.color = '#721c24';
                         document.getElementById('cookie-warning').style.borderColor = '#f5c6cb';
+                        document.getElementById('cookie-warning').innerHTML = `
+                            <strong>Failed to fix session:</strong> ${authData.message || 'Unknown error'}
+                            <p>You may need to log out and log in again.</p>
+                            <button id="logout-now-btn" style="background-color: #dc3545; color: white; border: none; border-radius: 3px; padding: 5px 10px; margin-top: 5px; cursor: pointer;">Logout Now</button>
+                        `;
+                        
+                        // Add logout event listener
+                        document.getElementById('logout-now-btn')?.addEventListener('click', logout);
                     }
                 })
                 .catch(error => {
                     console.error("Re-auth error:", error);
                     this.textContent = 'Error';
+                    document.getElementById('cookie-warning').style.backgroundColor = '#f8d7da';
+                    document.getElementById('cookie-warning').style.color = '#721c24';
+                    document.getElementById('cookie-warning').style.borderColor = '#f5c6cb';
+                    document.getElementById('cookie-warning').innerHTML = `
+                        <strong>Connection Error:</strong> ${error.message}
+                        <p>Please check your network connection and try again.</p>
+                        <button id="retry-btn" style="background-color: #007bff; color: white; border: none; border-radius: 3px; padding: 5px 10px; margin-top: 5px; cursor: pointer;">Retry</button>
+                    `;
+                    
+                    // Add retry event listener
+                    document.getElementById('retry-btn')?.addEventListener('click', () => window.location.reload());
                 });
             });
         }
@@ -373,16 +413,40 @@ async function initDashboard() {
     try {
         const teacherInfoDiv = document.getElementById('teacherInfo');
         
+        // Get userId from localStorage if available
+        const localUserId = localStorage.getItem('userId');
+        const localRole = localStorage.getItem('userRole') || 'teacher';
+        
         // Check server authentication first
         console.log('Checking server authentication');
-        const response = await fetch(`${API_URL}/auth/check-auth`, {
-            credentials: 'include'
+        
+        // Include localStorage user info in the URL for fallback auth
+        let authUrl = `${API_URL}/auth/check-auth`;
+        
+        // Append userId as query param if available in localStorage
+        if (localUserId) {
+            authUrl += `?userId=${localUserId}&role=${localRole}`;
+            console.log(`Using fallback auth query params: userId=${localUserId}, role=${localRole}`);
+        }
+        
+        const response = await fetch(authUrl, {
+            credentials: 'include',
+            headers: {
+                'Cache-Control': 'no-cache'
+            }
         });
         
         const data = await response.json();
         console.log('Auth response:', data); // Debug log
         
         if (data.authenticated && data.user) {
+            // Check if using fallback authentication
+            if (data.fallbackAuth) {
+                console.log('Using fallback authentication with valid user data from database');
+            } else {
+                console.log('Successfully authenticated with session');
+            }
+            
             // Check if user is a teacher
             if (data.user.role === 'teacher') {
                 console.log('Successfully authenticated as teacher');
@@ -397,7 +461,60 @@ async function initDashboard() {
                 teacherInfoDiv.innerHTML = `
                     <p>Welcome, ${data.user.firstName || 'Teacher'} ${data.user.lastName || ''}!</p>
                     <p>User ID: ${data.user.id}</p>
+                    ${data.fallbackAuth ? '<p class="text-warning"><small>Note: Using localStorage authentication (cookies not working)</small></p>' : ''}
                 `;
+                
+                // If we're using fallback auth, try to reestablish session
+                if (data.fallbackAuth && !document.getElementById('cookie-warning')) {
+                    console.log('Showing cookie warning for fallback auth user');
+                    // Add a less intrusive warning for fallback auth
+                    document.body.insertAdjacentHTML('afterbegin', `
+                        <div id="cookie-warning" style="background-color: #fff3cd; color: #856404; padding: 10px; margin: 10px; border-radius: 5px; border: 1px solid #ffeeba; position: relative; z-index: 9999;">
+                            <span style="position: absolute; right: 10px; top: 5px; cursor: pointer; font-weight: bold;" onclick="this.parentElement.style.display='none'">✕</span>
+                            <strong>Session Cookie Issue:</strong> Your browser is using localStorage authentication.
+                            <button id="fix-session-btn" style="background-color: #007bff; color: white; border: none; border-radius: 3px; padding: 5px 10px; margin-left: 10px; cursor: pointer;">Fix Session</button>
+                        </div>
+                    `);
+                    
+                    // Add event listener to fix session button
+                    document.getElementById('fix-session-btn')?.addEventListener('click', function() {
+                        this.disabled = true;
+                        this.textContent = 'Fixing...';
+                        
+                        // Try to establish a session using localStorage data
+                        fetch(`${API_URL}/auth/reauth`, {
+                            method: 'POST',
+                            credentials: 'include',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'Cache-Control': 'no-cache'
+                            },
+                            body: JSON.stringify({
+                                userId: localStorage.getItem('userId'),
+                                role: localStorage.getItem('userRole')
+                            })
+                        })
+                        .then(response => response.json())
+                        .then(authData => {
+                            if (authData.success) {
+                                console.log("Session re-establishment attempt successful");
+                                this.textContent = 'Success!';
+                                setTimeout(() => {
+                                    document.getElementById('cookie-warning').style.display = 'none';
+                                }, 2000);
+                            } else {
+                                console.log("Session re-establishment failed:", authData.message);
+                                this.textContent = 'Failed, try again';
+                                this.disabled = false;
+                            }
+                        })
+                        .catch(error => {
+                            console.error("Re-auth error:", error);
+                            this.textContent = 'Error, try again';
+                            this.disabled = false;
+                        });
+                    });
+                }
                 
                 // Load teacher's classes
                 await loadClasses();
@@ -412,9 +529,6 @@ async function initDashboard() {
         }
         
         // If not authenticated via server, check localStorage as fallback
-        const localUserId = localStorage.getItem('userId');
-        const localRole = localStorage.getItem('userRole');
-        
         if (localUserId && localRole === 'teacher') {
             console.log('Using localStorage authentication as fallback');
             
@@ -425,7 +539,58 @@ async function initDashboard() {
             teacherInfoDiv.innerHTML = `
                 <p>Welcome, ${firstName || 'Teacher'} ${lastName || ''}!</p>
                 <p>User ID: ${localUserId}</p>
+                <p class="text-warning"><small>Note: Using localStorage authentication only</small></p>
             `;
+            
+            // Show session warning
+            if (!document.getElementById('cookie-warning')) {
+                document.body.insertAdjacentHTML('afterbegin', `
+                    <div id="cookie-warning" style="background-color: #fff3cd; color: #856404; padding: 15px; margin: 10px; border-radius: 5px; border: 1px solid #ffeeba; position: relative; z-index: 9999; box-shadow: 0 4px 8px rgba(0,0,0,0.1);">
+                        <span style="position: absolute; right: 10px; top: 5px; cursor: pointer; font-weight: bold;" onclick="this.parentElement.style.display='none'">✕</span>
+                        <strong>Session Issue Detected:</strong> Your browser is not storing cookies properly. This may cause login problems.
+                        <button id="fix-session-btn" style="background-color: #007bff; color: white; border: none; border-radius: 3px; padding: 8px 15px; margin: 5px 0; cursor: pointer; font-weight: bold;">Fix Session</button>
+                    </div>
+                `);
+                
+                // Add event listener to fix session button
+                document.getElementById('fix-session-btn')?.addEventListener('click', function() {
+                    this.disabled = true;
+                    this.textContent = 'Fixing...';
+                    
+                    // Try to establish a session using localStorage data
+                    fetch(`${API_URL}/auth/reauth`, {
+                        method: 'POST',
+                        credentials: 'include',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Cache-Control': 'no-cache'
+                        },
+                        body: JSON.stringify({
+                            userId: localStorage.getItem('userId'),
+                            role: localStorage.getItem('userRole')
+                        })
+                    })
+                    .then(response => response.json())
+                    .then(authData => {
+                        if (authData.success) {
+                            console.log("Session re-establishment attempt successful");
+                            this.textContent = 'Success!';
+                            setTimeout(() => {
+                                window.location.reload();
+                            }, 2000);
+                        } else {
+                            console.log("Session re-establishment failed:", authData.message);
+                            this.textContent = 'Failed, try again';
+                            this.disabled = false;
+                        }
+                    })
+                    .catch(error => {
+                        console.error("Re-auth error:", error);
+                        this.textContent = 'Error, try again';
+                        this.disabled = false;
+                    });
+                });
+            }
             
             // Load teacher's classes
             await loadClasses();
@@ -465,8 +630,11 @@ async function loadClasses() {
         console.log(`Fetching classes for user ID: ${userId}`);
         console.log(`Session cookies: ${document.cookie}`);
         
+        // Always include userId as query param for cases when cookies don't work
+        const classesUrl = `${API_URL}/auth/teacher-classes/${userId}?userId=${userId}`;
+        
         // Try the normal authenticated endpoint first
-        let response = await fetch(`${API_URL}/auth/teacher-classes/${userId}`, {
+        let response = await fetch(classesUrl, {
             credentials: 'include',
             headers: {
                 'Accept': 'application/json',
@@ -482,7 +650,7 @@ async function loadClasses() {
             
             // This endpoint works even without a valid session cookie
             // by validating the teacher exists in the database directly
-            response = await fetch(`${API_URL}/auth/teacher-classes/${userId}`, {
+            response = await fetch(`${API_URL}/auth/teacher-classes/${userId}?userId=${userId}&bypass=true`, {
                 credentials: 'include',
                 headers: {
                     'Accept': 'application/json',
