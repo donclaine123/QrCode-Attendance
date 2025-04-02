@@ -394,7 +394,12 @@ async function loadClasses() {
         console.log(`Session cookies: ${document.cookie}`);
         
         const response = await fetch(`${API_URL}/auth/teacher-classes/${userId}`, {
-            credentials: 'include'
+            method: 'GET',
+            credentials: 'include',
+            headers: {
+                'Accept': 'application/json',
+                'Content-Type': 'application/json'
+            }
         });
         
         console.log(`Classes response status: ${response.status}`);
@@ -406,19 +411,28 @@ async function loadClasses() {
             // Try to re-establish session first
             try {
                 const authCheckResponse = await fetch(`${API_URL}/auth/check-auth`, {
-                    credentials: 'include'
+                    method: 'GET',
+                    credentials: 'include',
+                    headers: {
+                        'Accept': 'application/json',
+                        'Content-Type': 'application/json'
+                    }
                 });
                 
                 console.log(`Auth check response: ${authCheckResponse.status}`);
+                const authData = await authCheckResponse.json();
+                console.log('Auth check data:', authData);
                 
                 // If still unauthorized, try explicit reauth
                 if (authCheckResponse.status === 401) {
+                    console.log('Auth check failed, trying reauth');
                     // This endpoint will attempt to create a session from localStorage data
                     const reAuthResponse = await fetch(`${API_URL}/auth/reauth`, {
                         method: 'POST',
                         credentials: 'include',
                         headers: {
-                            'Content-Type': 'application/json'
+                            'Content-Type': 'application/json',
+                            'Accept': 'application/json'
                         },
                         body: JSON.stringify({
                             userId: userId,
@@ -429,9 +443,37 @@ async function loadClasses() {
                     console.log(`Reauth response: ${reAuthResponse.status}`);
                     
                     if (reAuthResponse.ok) {
-                        // Try fetching classes again with new session
-                        window.location.reload();
+                        console.log('Reauth successful, cookies after reauth:', document.cookie);
+                        // Delay slightly to ensure cookies are set
+                        setTimeout(() => {
+                            window.location.reload();
+                        }, 500);
                         return;
+                    }
+                } else {
+                    // Auth check worked but original request failed
+                    console.log('Auth check succeeded but original request failed');
+                    // Try classes request again with fresh auth
+                    try {
+                        const retryResponse = await fetch(`${API_URL}/auth/teacher-classes/${userId}`, {
+                            method: 'GET',
+                            credentials: 'include',
+                            headers: {
+                                'Accept': 'application/json',
+                                'Content-Type': 'application/json'
+                            }
+                        });
+                        
+                        console.log(`Retry response: ${retryResponse.status}`);
+                        
+                        if (retryResponse.ok) {
+                            const retryData = await retryResponse.json();
+                            // Process the data instead of reloading
+                            processClassData(retryData, classSelect, attendanceClassSelect, classListDiv);
+                            return;
+                        }
+                    } catch (retryError) {
+                        console.error('Retry error:', retryError);
                     }
                 }
             } catch (authError) {
@@ -453,67 +495,7 @@ async function loadClasses() {
         }
         
         const data = await response.json();
-        
-        // Clear existing options
-        classSelect.innerHTML = '<option value="">Select a class</option>';
-        attendanceClassSelect.innerHTML = '<option value="">Select a class</option>';
-        
-        if (data.success) {
-            // Clear existing class list
-            classListDiv.innerHTML = '';
-            
-            if (data.classes && data.classes.length > 0) {
-                // Add classes to selects and class list
-                data.classes.forEach(cls => {
-                    // Add to class select for QR generation
-                    const option = document.createElement('option');
-                    option.value = cls.id;
-                    option.textContent = cls.class_name || cls.name;
-                    classSelect.appendChild(option);
-                    
-                    // Add to attendance class select
-                    const attOption = document.createElement('option');
-                    attOption.value = cls.id;
-                    attOption.textContent = cls.class_name || cls.name;
-                    attendanceClassSelect.appendChild(attOption);
-                    
-                    // Add to class list
-                    const classCard = document.createElement('div');
-                    classCard.className = 'class-card';
-                    classCard.innerHTML = `
-                        <h3>${cls.class_name || cls.name}</h3>
-                        <p>${cls.subject || 'No subject'}</p>
-                        <p class="description">${cls.description || 'No description'}</p>
-                        <button class="btn btn-sm btn-danger delete-class" data-id="${cls.id}">Delete</button>
-                    `;
-                    classListDiv.appendChild(classCard);
-                });
-                
-                // Add event listeners to delete buttons
-                document.querySelectorAll('.delete-class').forEach(button => {
-                    button.addEventListener('click', async function() {
-                        const classId = this.getAttribute('data-id');
-                        if (confirm('Are you sure you want to delete this class?')) {
-                            await deleteClass(classId);
-                        }
-                    });
-                });
-            } else {
-                classListDiv.innerHTML = `
-                    <div class="empty-state">
-                        <p>You haven't created any classes yet.</p>
-                        <p>Add your first class using the form below.</p>
-                    </div>
-                `;
-            }
-        } else {
-            classListDiv.innerHTML = `
-                <div class="empty-state error">
-                    <p>Failed to load classes: ${data.message || 'Unknown error'}</p>
-                    <p>Please try again or contact support.</p>
-                </div>
-            `;
-        }
+        processClassData(data, classSelect, attendanceClassSelect, classListDiv);
     } catch (error) {
         console.error('Error loading classes:', error);
         const classListDiv = document.getElementById('classList');
@@ -521,6 +503,70 @@ async function loadClasses() {
             <div class="empty-state error">
                 <p>Error loading classes: ${error.message}</p>
                 <p>Please check your connection and try again.</p>
+            </div>
+        `;
+    }
+}
+
+// Helper function to process class data
+function processClassData(data, classSelect, attendanceClassSelect, classListDiv) {
+    // Clear existing options
+    classSelect.innerHTML = '<option value="">Select a class</option>';
+    attendanceClassSelect.innerHTML = '<option value="">Select a class</option>';
+    
+    if (data.success) {
+        // Clear existing class list
+        classListDiv.innerHTML = '';
+        
+        if (data.classes && data.classes.length > 0) {
+            // Add classes to selects and class list
+            data.classes.forEach(cls => {
+                // Add to class select for QR generation
+                const option = document.createElement('option');
+                option.value = cls.id;
+                option.textContent = cls.class_name || cls.name;
+                classSelect.appendChild(option);
+                
+                // Add to attendance class select
+                const attOption = document.createElement('option');
+                attOption.value = cls.id;
+                attOption.textContent = cls.class_name || cls.name;
+                attendanceClassSelect.appendChild(attOption);
+                
+                // Add to class list
+                const classCard = document.createElement('div');
+                classCard.className = 'class-card';
+                classCard.innerHTML = `
+                    <h3>${cls.class_name || cls.name}</h3>
+                    <p>${cls.subject || 'No subject'}</p>
+                    <p class="description">${cls.description || 'No description'}</p>
+                    <button class="btn btn-sm btn-danger delete-class" data-id="${cls.id}">Delete</button>
+                `;
+                classListDiv.appendChild(classCard);
+            });
+            
+            // Add event listeners to delete buttons
+            document.querySelectorAll('.delete-class').forEach(button => {
+                button.addEventListener('click', async function() {
+                    const classId = this.getAttribute('data-id');
+                    if (confirm('Are you sure you want to delete this class?')) {
+                        await deleteClass(classId);
+                    }
+                });
+            });
+        } else {
+            classListDiv.innerHTML = `
+                <div class="empty-state">
+                    <p>You haven't created any classes yet.</p>
+                    <p>Add your first class using the form below.</p>
+                </div>
+            `;
+        }
+    } else {
+        classListDiv.innerHTML = `
+            <div class="empty-state error">
+                <p>Failed to load classes: ${data.message || 'Unknown error'}</p>
+                <p>Please try again or contact support.</p>
             </div>
         `;
     }
