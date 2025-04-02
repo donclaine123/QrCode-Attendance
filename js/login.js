@@ -73,26 +73,8 @@ document.addEventListener('DOMContentLoaded', function() {
         if (result.success) {
           console.log('Login successful, redirecting...');
           
-          // Test that the session is accessible
-          try {
-            const checkResponse = await fetch(`${API_URL}/auth/check-auth`, {
-              method: 'GET',
-              credentials: 'include',
-              headers: {
-                'Accept': 'application/json'
-              }
-            });
-            
-            if (checkResponse.ok) {
-              console.log('Session verified successfully');
-            } else {
-              console.warn('Session verification failed, but continuing with redirection');
-            }
-          } catch (error) {
-            console.error('Error checking session:', error);
-          }
-          
-          // Add a small delay to ensure cookie is set before redirect
+          // Increase delay to ensure session is properly established
+          // before any other requests are made
           setTimeout(() => {
             // Store all user data in URL parameters for dashboard
             const params = new URLSearchParams();
@@ -109,7 +91,7 @@ document.addEventListener('DOMContentLoaded', function() {
             } else if (result.userData.role === 'student') {
               window.location.href = `${basePath}/pages/student-dashboard.html?${params.toString()}`;
             }
-          }, 500);
+          }, 1000); // Increased from 500ms to 1000ms
         } else {
           showError(result.message);
           submitButton.textContent = originalButtonText;
