@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Email Verification</title>
+  <link rel="stylesheet" href="../css/style.css">
+</head>
+
+<body>
+  <div class="container">
+    <h1>Email Verification</h1>
+    <h2 id="verification-status">Verifying your email...</h2>
+    <p id="message">Please wait...</p>
+
+    <script type="module">
+      import { API_URL } from "../js/config.js";
+      
+      async function verifyEmail() {
+        const urlParams = new URLSearchParams(window.location.search);
+        const token = urlParams.get("token");
+
+        console.log("Verification token:", token);
+
+        if (!token) {
+          document.getElementById("verification-status").textContent = "Invalid Link";
+          document.getElementById("message").textContent = "Invalid verification link. Please request a new verification email.";
+          document.getElementById("message").className = "error-message";
+          return;
+        }
+
+        try {
+          // Use the correct API URL from config
+          const response = await fetch(`${API_URL}/auth/verify?token=${token}`, {
+            credentials: 'include'
+          });
+          
+          const data = await response.json();
+
+          if (data.success) {
+            document.getElementById("verification-status").textContent = "Verification Successful";
+            document.getElementById("message").textContent = "✅ Email verified! You can now log in.";
+            document.getElementById("message").className = "success-message";
+            setTimeout(() => {
+              window.location.href = "../index.html";
+            }, 3000);
+          } else {
+            document.getElementById("verification-status").textContent = "Verification Failed";
+            document.getElementById("message").textContent = "❌ Verification failed or token expired.";
+            document.getElementById("message").className = "error-message";
+          }
+        } catch (error) {
+          console.error("Verification error:", error);
+          document.getElementById("verification-status").textContent = "Server Error";
+          document.getElementById("message").textContent = "⚠️ Server error. Please try again or contact support.";
+          document.getElementById("message").className = "error-message";
+        }
+      }
+
+      // Call the function to execute on page load
+      verifyEmail();
+    </script>
+    
+    <div class="actions">
+      <button onclick="window.location.href='../index.html'">Back to Login</button>
+    </div>
+  </div>
+</body>
+
+</html>
