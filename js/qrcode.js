@@ -1,121 +1,5 @@
 // QR Code Generation functionality
 
-// Helper function to check for cookie storage issues and recover if possible
-function checkCookieStorageHealth() {
-    // Check if we have localStorage data but no cookies
-    const userId = localStorage.getItem('userId');
-    const userRole = localStorage.getItem('userRole');
-    const hasCookies = document.cookie.includes('qr_attendance_sid');
-    
-    if (userId && userRole && !hasCookies) {
-        console.log('Cookie storage issue detected: userId in localStorage but no session cookie');
-        
-        // Add subtle indicator near the QR button
-        const qrButton = document.getElementById('generateQRBtn');
-        if (qrButton) {
-            qrButton.insertAdjacentHTML('afterend', `
-                <span id="cookie-indicator" style="font-size: 12px; margin-left: 10px; color: #e67e22;">
-                    <i>Using localStorage fallback</i>
-                    <button id="fix-cookie-btn" style="border: none; background: #f39c12; color: white; border-radius: 3px; padding: 2px 5px; margin-left: 5px; cursor: pointer; font-size: 10px;">Fix</button>
-                </span>
-            `);
-            
-            // Add click handler to the fix button
-            document.getElementById('fix-cookie-btn')?.addEventListener('click', function(e) {
-                e.preventDefault();
-                e.stopPropagation();
-                recoverSession();
-            });
-        }
-        
-        return false;
-    }
-    
-    return true;
-}
-
-// Function to recover session from localStorage when cookies aren't working
-function recoverSession() {
-    const userId = localStorage.getItem('userId');
-    const userRole = localStorage.getItem('userRole');
-    
-    if (!userId || !userRole) {
-        console.log('No localStorage data to recover session from');
-        return;
-    }
-    
-    console.log('Attempting to recover session from localStorage data');
-    
-    // Show mini loading indicator
-    const indicator = document.getElementById('cookie-indicator');
-    if (indicator) {
-        indicator.innerHTML = '<i>Recovering session...</i>';
-    }
-    
-    // Call reauth endpoint
-    fetch(`${API_URL}/auth/reauth`, {
-        method: 'POST',
-        credentials: 'include',
-        headers: {
-            'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-            userId: userId,
-            role: userRole
-        })
-    })
-    .then(response => response.json())
-    .then(data => {
-        console.log('Session recovery response:', data);
-        
-        if (data.success) {
-            if (indicator) {
-                indicator.innerHTML = '<i style="color: #27ae60;">Session recovered!</i>';
-                
-                // Remove indicator after 3 seconds
-                setTimeout(() => {
-                    indicator.style.opacity = '0';
-                    setTimeout(() => indicator.remove(), 500);
-                }, 3000);
-            }
-            
-            // Check if we got a cookie
-            const hasCookie = document.cookie.includes('qr_attendance_sid');
-            if (hasCookie) {
-                console.log('Cookie successfully set after recovery');
-            } else {
-                console.log('Cookie still not set after recovery, will continue using localStorage fallback');
-            }
-        } else {
-            if (indicator) {
-                indicator.innerHTML = '<i style="color: #e74c3c;">Recovery failed</i>';
-            }
-        }
-    })
-    .catch(error => {
-        console.error('Session recovery error:', error);
-        if (indicator) {
-            indicator.innerHTML = '<i style="color: #e74c3c;">Error recovering session</i>';
-        }
-    });
-}
-
-// Check cookie health on page load
-document.addEventListener('DOMContentLoaded', function() {
-    // Log library status for debugging
-    console.log('QR code library status: Loaded ✅');
-    
-    // Check if QRCode library is available
-    if (typeof QRCode === 'function') {
-        console.log('QRCode.CorrectLevel: Available ✅');
-    } else {
-        console.warn('QRCode library not loaded properly ❌');
-    }
-    
-    // Check cookie health
-    setTimeout(checkCookieStorageHealth, 1000);
-});
-
 // Function to generate the QR code for a class session
 async function generateQRCode() {
   console.log("generateQRCode called");
@@ -434,3 +318,36 @@ async function viewAttendance() {
     }
   }
 }
+
+// Add a window load event listener to log QR library status
+window.addEventListener('load', function() {
+  console.log("QR code library status:", typeof QRCode !== 'undefined' ? 'Loaded ✅' : 'Not loaded ❌');
+  if (typeof QRCode === 'undefined') {
+    console.error("QRCode library not loaded! QR code generation will fail.");
+    
+    // Add a fallback QRCode implementation
+    window.QRCode = function(element, options) {
+      if (typeof element === 'string') {
+        element = document.getElementById(element);
+      }
+      if (!element) return;
+      
+      console.warn("Using fallback QRCode implementation");
+      const div = document.createElement('div');
+      div.style.border = '1px solid #ccc';
+      div.style.padding = '10px';
+      div.style.textAlign = 'center';
+      div.innerHTML = `
+        <p>QR Code could not be generated</p>
+        <a href="${options.text}" target="_blank">${options.text}</a>
+      `;
+      
+      element.innerHTML = '';
+      element.appendChild(div);
+    };
+    
+    window.QRCode.CorrectLevel = { L: 1, M: 0, Q: 3, H: 2 };
+  } else {
+    console.log("QRCode.CorrectLevel:", QRCode.CorrectLevel ? "Available ✅" : "Missing ❌");
+  }
+});
