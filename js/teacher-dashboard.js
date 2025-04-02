@@ -10,6 +10,18 @@ document.addEventListener('DOMContentLoaded', function() {
     window.dashboardInitialized = true;
     console.log('Teacher dashboard loaded');
     
+    // Debug cookie status
+    console.log('Current cookies:', document.cookie);
+    
+    // Look for session cookie
+    const cookies = document.cookie.split(';').map(c => c.trim());
+    const sessionCookie = cookies.find(c => c.startsWith('qr_attendance_sid='));
+    if (sessionCookie) {
+        console.log('Session cookie found:', sessionCookie);
+    } else {
+        console.warn('No session cookie found in browser');
+    }
+    
     // Initialize dashboard
     initDashboard();
 
@@ -45,9 +57,6 @@ document.addEventListener('DOMContentLoaded', function() {
     // Setup debug listeners
     setupDebugListeners();
     
-    // Log cookies for debugging
-    console.log("Cookies:", document.cookie);
-    
     // Check headers to debug CORS issues
     fetch(`${API_URL}/auth/debug-headers`, { 
         credentials: 'include',
@@ -60,31 +69,62 @@ document.addEventListener('DOMContentLoaded', function() {
         console.log("Debug headers response:", data);
         
         // Check if we don't have any cookies but have localStorage auth
-        if (!document.cookie && localStorage.getItem('userId')) {
-            console.log("No cookies found but localStorage has auth data - trying to establish session");
+        if (!sessionCookie && localStorage.getItem('userId')) {
+            console.log("No session cookie found but localStorage has auth data - trying to establish session");
             
-            // Try to establish a session using localStorage data
-            fetch(`${API_URL}/auth/reauth`, {
-                method: 'POST',
-                credentials: 'include',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Cache-Control': 'no-cache'
-                },
-                body: JSON.stringify({
-                    userId: localStorage.getItem('userId'),
-                    role: localStorage.getItem('userRole')
+            // Display a warning about cookie issues
+            document.body.insertAdjacentHTML('afterbegin', `
+                <div id="cookie-warning" style="background-color: #fff3cd; color: #856404; padding: 10px; margin: 10px; border-radius: 5px; border: 1px solid #ffeeba; position: relative;">
+                    <span style="position: absolute; right: 10px; top: 5px; cursor: pointer;" onclick="this.parentElement.style.display='none'">✕</span>
+                    <strong>Session Issue Detected:</strong> Your browser is not storing cookies properly. This may affect your login session.
+                    <button id="fix-session-btn" style="background-color: #007bff; color: white; border: none; border-radius: 3px; padding: 5px 10px; margin-left: 10px; cursor: pointer;">Fix Session</button>
+                </div>
+            `);
+            
+            // Add event listener to the fix session button
+            document.getElementById('fix-session-btn').addEventListener('click', function() {
+                this.disabled = true;
+                this.textContent = 'Fixing...';
+                
+                // Try to establish a session using localStorage data
+                fetch(`${API_URL}/auth/reauth`, {
+                    method: 'POST',
+                    credentials: 'include',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Cache-Control': 'no-cache'
+                    },
+                    body: JSON.stringify({
+                        userId: localStorage.getItem('userId'),
+                        role: localStorage.getItem('userRole')
+                    })
                 })
-            })
-            .then(response => response.json())
-            .then(authData => {
-                console.log("Re-auth response:", authData);
-                if (authData.success) {
-                    console.log("Session re-established successfully");
-                }
-            })
-            .catch(error => {
-                console.error("Re-auth error:", error);
+                .then(response => response.json())
+                .then(authData => {
+                    console.log("Re-auth response:", authData);
+                    if (authData.success) {
+                        console.log("Session re-established successfully");
+                        this.textContent = 'Success!';
+                        document.getElementById('cookie-warning').style.backgroundColor = '#d4edda';
+                        document.getElementById('cookie-warning').style.color = '#155724';
+                        document.getElementById('cookie-warning').style.borderColor = '#c3e6cb';
+                        document.getElementById('cookie-warning').innerHTML = '<strong>Success!</strong> Session fixed. Reloading page in 2 seconds...';
+                        
+                        // Reload the page after 2 seconds
+                        setTimeout(() => {
+                            window.location.reload();
+                        }, 2000);
+                    } else {
+                        this.textContent = 'Failed';
+                        document.getElementById('cookie-warning').style.backgroundColor = '#f8d7da';
+                        document.getElementById('cookie-warning').style.color = '#721c24';
+                        document.getElementById('cookie-warning').style.borderColor = '#f5c6cb';
+                    }
+                })
+                .catch(error => {
+                    console.error("Re-auth error:", error);
+                    this.textContent = 'Error';
+                });
             });
         }
     })
