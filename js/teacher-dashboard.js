@@ -393,6 +393,37 @@ async function loadClasses() {
         console.log(`Fetching classes for user ID: ${userId}`);
         console.log(`Session cookies: ${document.cookie}`);
         
+        // Try automatic reauthentication first if no cookies are present
+        if (!document.cookie || document.cookie === '') {
+            console.log('No cookies detected, automatically trying reauth before fetching classes');
+            try {
+                const reAuthResponse = await fetch(`${API_URL}/auth/reauth`, {
+                    method: 'POST',
+                    credentials: 'include',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        userId: userId,
+                        role: 'teacher'
+                    })
+                });
+                
+                if (reAuthResponse.ok) {
+                    const reAuthData = await reAuthResponse.json();
+                    console.log('Auto-reauth successful:', reAuthData);
+                    console.log('Cookies after reauth:', document.cookie);
+                    
+                    // Wait a moment before proceeding
+                    await new Promise(resolve => setTimeout(resolve, 500));
+                }
+            } catch (reAuthError) {
+                console.error('Auto-reauth error:', reAuthError);
+            }
+        }
+        
+        // Proceed with fetching classes
         const response = await fetch(`${API_URL}/auth/teacher-classes/${userId}`, {
             method: 'GET',
             credentials: 'include',
@@ -424,7 +455,7 @@ async function loadClasses() {
                 console.log('Auth check data:', authData);
                 
                 // If still unauthorized, try explicit reauth
-                if (authCheckResponse.status === 401) {
+                if (authCheckResponse.status === 401 || !authData.authenticated) {
                     console.log('Auth check failed, trying reauth');
                     // This endpoint will attempt to create a session from localStorage data
                     const reAuthResponse = await fetch(`${API_URL}/auth/reauth`, {
@@ -444,11 +475,37 @@ async function loadClasses() {
                     
                     if (reAuthResponse.ok) {
                         console.log('Reauth successful, cookies after reauth:', document.cookie);
-                        // Delay slightly to ensure cookies are set
-                        setTimeout(() => {
+                        // Try fetching classes again with fresh auth
+                        try {
+                            console.log('Retrying class fetch after reauth');
+                            const retryResponse = await fetch(`${API_URL}/auth/teacher-classes/${userId}`, {
+                                method: 'GET',
+                                credentials: 'include',
+                                headers: {
+                                    'Accept': 'application/json',
+                                    'Content-Type': 'application/json'
+                                }
+                            });
+                            
+                            console.log(`Retry response after reauth: ${retryResponse.status}`);
+                            
+                            if (retryResponse.ok) {
+                                const retryData = await retryResponse.json();
+                                // Process the data instead of reloading
+                                processClassData(retryData, classSelect, attendanceClassSelect, classListDiv);
+                                return;
+                            } else {
+                                console.log('Retry failed even after reauth, reloading page');
+                                // Last resort - reload page
+                                window.location.reload();
+                                return;
+                            }
+                        } catch (retryError) {
+                            console.error('Retry error after reauth:', retryError);
+                            // Last resort - reload page
                             window.location.reload();
-                        }, 500);
-                        return;
+                            return;
+                        }
                     }
                 } else {
                     // Auth check worked but original request failed
