@@ -22,170 +22,62 @@ document.addEventListener('DOMContentLoaded', function() {
 // Initialize dashboard
 async function initDashboard() {
     try {
-        const welcomeMessage = document.getElementById('welcome-message');
-        const loadingSection = document.getElementById('loading-section');
-        const studentSection = document.getElementById('student-section');
-        const authDebug = document.getElementById('auth-debug');
+        console.log("Initializing student dashboard...");
         
-        let authenticated = false;
-        let userData = null;
+        // Get user info from sessionStorage instead of URL parameters
+        const userId = sessionStorage.getItem('userId');
+        const userRole = sessionStorage.getItem('userRole');
+        const userName = sessionStorage.getItem('userName');
         
-        // First, try session-based authentication as the primary method
-        console.log('Checking server authentication via session');
-        try {
-            const sessionResponse = await fetch(`${API_URL}/auth/check-auth`, {
+        // If no user info in sessionStorage, try to authenticate with the server
+        if (!userId || !userRole) {
+            console.log("No user info in sessionStorage, checking authentication...");
+            
+            // Check authentication status
+            const response = await fetch(`${API_URL}/auth/check-auth`, {
                 credentials: 'include',
                 headers: {
-                    'Accept': 'application/json',
-                    'Cache-Control': 'no-cache'
+                    'Accept': 'application/json'
                 }
             });
             
-            if (sessionResponse.ok) {
-                const sessionData = await sessionResponse.json();
-                console.log('Session auth response:', sessionData);
+            if (response.ok) {
+                const data = await response.json();
+                console.log("Authentication successful:", data);
                 
-                if (sessionData.authenticated && sessionData.user?.role === 'student') {
-                    console.log('Successfully authenticated via session');
-                    authenticated = true;
-                    userData = sessionData.user;
-                    
-                    // Store in localStorage for fallback
-                    localStorage.setItem('userId', userData.id);
-                    localStorage.setItem('userRole', 'student');
-                    if (userData.firstName) localStorage.setItem('firstName', userData.firstName);
-                    if (userData.lastName) localStorage.setItem('lastName', userData.lastName);
-                }
+                // Store user info in sessionStorage
+                sessionStorage.setItem('userId', data.user.id);
+                sessionStorage.setItem('userRole', data.role);
+                sessionStorage.setItem('userName', `${data.user.firstName} ${data.user.lastName}`);
+                
+                // Update welcome message
+                document.getElementById('welcome-message').textContent = `Welcome, ${data.user.firstName} ${data.user.lastName}!`;
+                
+                // Show student section
+                document.getElementById('student-section').style.display = 'block';
+                
+                // Load enrolled classes
+                loadEnrolledClasses();
+            } else {
+                console.error("Authentication failed, redirecting to login...");
+                window.location.href = getBasePath() + '/index.html';
             }
-        } catch (sessionError) {
-            console.error('Session authentication error:', sessionError);
-        }
-        
-        // If session auth failed, try URL parameters (from login redirect)
-        if (!authenticated) {
-            const urlParams = new URLSearchParams(window.location.search);
-            const urlUserId = urlParams.get('userId');
-            const urlRole = urlParams.get('role');
-            const urlFirstName = urlParams.get('firstName');
-            const urlLastName = urlParams.get('lastName');
+        } else {
+            // User info found in sessionStorage
+            console.log("User info found in sessionStorage:", { userId, userRole, userName });
             
-            if (urlUserId && urlRole === 'student') {
-                console.log('Using URL parameters for authentication');
-                authenticated = true;
-                userData = {
-                    id: urlUserId,
-                    role: 'student',
-                    firstName: urlFirstName,
-                    lastName: urlLastName
-                };
-                
-                // Store the user info in localStorage
-                localStorage.setItem('userId', urlUserId);
-                localStorage.setItem('userRole', 'student');
-                if (urlFirstName) localStorage.setItem('firstName', urlFirstName);
-                if (urlLastName) localStorage.setItem('lastName', urlLastName);
-                
-                // Try to establish a session with the server using URL params
-                try {
-                    const reAuthResponse = await fetch(`${API_URL}/auth/reauth`, {
-                        method: 'POST',
-                        credentials: 'include',
-                        headers: {
-                            'Content-Type': 'application/json'
-                        },
-                        body: JSON.stringify({
-                            userId: urlUserId,
-                            role: 'student'
-                        })
-                    });
-                    
-                    if (reAuthResponse.ok) {
-                        console.log('Successfully created session from URL parameters');
-                    }
-                } catch (reAuthError) {
-                    console.error('Error creating session from URL parameters:', reAuthError);
-                }
-            }
-        }
-        
-        // If still not authenticated, check localStorage as last resort
-        if (!authenticated) {
-            const localUserId = localStorage.getItem('userId');
-            const localRole = localStorage.getItem('userRole');
-            
-            if (localUserId && localRole === 'student') {
-                console.log('Using localStorage for authentication as last resort');
-                
-                // Try to establish a session with the server using localStorage data
-                try {
-                    const reAuthResponse = await fetch(`${API_URL}/auth/reauth`, {
-                        method: 'POST',
-                        credentials: 'include',
-                        headers: {
-                            'Content-Type': 'application/json',
-                            'X-User-ID': localUserId,
-                            'X-User-Role': localRole
-                        },
-                        body: JSON.stringify({
-                            userId: localUserId,
-                            role: localRole
-                        })
-                    });
-                    
-                    if (reAuthResponse.ok) {
-                        const reAuthData = await reAuthResponse.json();
-                        console.log('Re-authentication response:', reAuthData);
-                        
-                        if (reAuthData.success) {
-                            console.log('Successfully re-established session from localStorage');
-                            authenticated = true;
-                            userData = reAuthData.user;
-                        }
-                    }
-                } catch (reAuthError) {
-                    console.error('Error re-authenticating with localStorage:', reAuthError);
-                }
-                
-                // If session creation failed but we have localStorage data, use it
-                if (!authenticated) {
-                    authenticated = true;
-                    userData = {
-                        id: localUserId,
-                        role: 'student',
-                        firstName: localStorage.getItem('firstName') || '',
-                        lastName: localStorage.getItem('lastName') || ''
-                    };
-                }
-            }
-        }
-        
-        // Handle authentication result
-        if (authenticated && userData) {
-            // Display welcome message
-            if (welcomeMessage) {
-                welcomeMessage.textContent = `Welcome, ${userData.firstName || 'Student'} ${userData.lastName || ''}!`;
-            }
+            // Update welcome message
+            document.getElementById('welcome-message').textContent = `Welcome, ${userName}!`;
             
             // Show student section
-            if (loadingSection) loadingSection.style.display = 'none';
-            if (studentSection) studentSection.style.display = 'block';
+            document.getElementById('student-section').style.display = 'block';
             
-            // Load attendance history
-            loadAttendanceHistory();
-        } else {
-            console.log('Not authenticated, redirecting to login');
-            const basePath = getBasePath();
-            window.location.href = `${basePath}/index.html`;
+            // Load enrolled classes
+            loadEnrolledClasses();
         }
-        
     } catch (error) {
-        console.error('Dashboard initialization error:', error);
-        if (authDebug) {
-            authDebug.textContent = `Error: ${error.message}`;
-        }
-        alert('Error initializing dashboard. Please try logging in again.');
-        const basePath = getBasePath();
-        window.location.href = `${basePath}/index.html`;
+        console.error("Error initializing dashboard:", error);
+        showError("Failed to initialize dashboard. Please try again.");
     }
 }
 
@@ -358,37 +250,25 @@ function formatDateToUTC8(date) {
 // Logout function
 async function logout() {
     try {
-        console.log('Logging out...');
-        
-        // Clear localStorage first
-        localStorage.clear();
-        
-        // Clear session cookies
-        document.cookie.split(";").forEach(function(c) { 
-            document.cookie = c.replace(/^ +/, "").replace(/=.*/, "=;expires=" + new Date().toUTCString() + ";path=/"); 
-        });
-        
-        // Call server logout endpoint
+        // Call the logout endpoint
         const response = await fetch(`${API_URL}/auth/logout`, {
             method: 'POST',
-            credentials: 'include'
+            credentials: 'include',
+            headers: {
+                'Accept': 'application/json'
+            }
         });
         
-        const data = await response.json();
+        // Clear sessionStorage
+        sessionStorage.clear();
         
-        if (data.success) {
-            console.log('Logged out successfully');
-        } else {
-            console.warn('Server logout returned error:', data.message);
-        }
+        // Redirect to login page
+        window.location.href = getBasePath() + '/index.html';
     } catch (error) {
         console.error('Logout error:', error);
-    } finally {
-        // Get the base path for proper redirect
-        const basePath = getBasePath();
-        
-        // Always redirect to login page with proper path
-        window.location.href = `${basePath}/index.html`;
+        // Even if the server request fails, clear local storage and redirect
+        sessionStorage.clear();
+        window.location.href = getBasePath() + '/index.html';
     }
 }
 

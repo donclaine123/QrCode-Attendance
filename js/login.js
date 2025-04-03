@@ -76,20 +76,13 @@ document.addEventListener('DOMContentLoaded', function() {
           // Increase delay to ensure session is properly established
           // before any other requests are made
           setTimeout(() => {
-            // Store all user data in URL parameters for dashboard
-            const params = new URLSearchParams();
-            params.append('userId', result.userData.id);
-            params.append('role', result.userData.role);
-            params.append('firstName', result.userData.firstName);
-            params.append('lastName', result.userData.lastName);
-            
             const basePath = getBasePath();
             
-            // Redirect based on role with parameters
+            // Redirect based on role without URL parameters
             if (result.userData.role === 'teacher') {
-              window.location.href = `${basePath}/pages/teacher-dashboard.html?${params.toString()}`;
+              window.location.href = `${basePath}/pages/teacher-dashboard.html`;
             } else if (result.userData.role === 'student') {
-              window.location.href = `${basePath}/pages/student-dashboard.html?${params.toString()}`;
+              window.location.href = `${basePath}/pages/student-dashboard.html`;
             }
           }, 1000); // Increased from 500ms to 1000ms
         } else {
@@ -171,6 +164,40 @@ document.addEventListener('DOMContentLoaded', function() {
     });
   }
 
+  // Logout function
+  async function logout() {
+    try {
+      // Call the logout endpoint
+      const response = await fetch(`${API_URL}/auth/logout`, {
+        method: 'POST',
+        credentials: 'include',
+        headers: {
+          'Accept': 'application/json'
+        }
+      });
+      
+      // Clear sessionStorage
+      sessionStorage.clear();
+      
+      // Redirect to login page
+      window.location.href = getBasePath() + '/index.html';
+    } catch (error) {
+      console.error('Logout error:', error);
+      // Even if the server request fails, clear local storage and redirect
+      sessionStorage.clear();
+      window.location.href = getBasePath() + '/index.html';
+    }
+  }
+
+  // Add event listener for logout button
+  const logoutBtn = document.getElementById('logout-btn');
+  if (logoutBtn) {
+    logoutBtn.addEventListener('click', function(e) {
+      e.preventDefault();
+      logout();
+    });
+  }
+
   function showError(message) {
     if (!errorMsgElement) return;
     errorMsgElement.textContent = message;
@@ -239,12 +266,12 @@ async function login(email, password) {
     const data = await response.json();
     console.log('Login successful:', data);
     
-    // Store user data in localStorage as fallback
-    localStorage.setItem('userId', data.user.id);
-    localStorage.setItem('userRole', data.role);
-    localStorage.setItem('userName', `${data.user.firstName} ${data.user.lastName}`);
-    localStorage.setItem('userEmail', email);
-    localStorage.setItem('loginTime', new Date().toISOString());
+    // Store user data in sessionStorage
+    sessionStorage.setItem('userId', data.user.id);
+    sessionStorage.setItem('userRole', data.role);
+    sessionStorage.setItem('userName', `${data.user.firstName} ${data.user.lastName}`);
+    sessionStorage.setItem('userEmail', email);
+    sessionStorage.setItem('loginTime', new Date().toISOString());
     
     return {
       success: true,
