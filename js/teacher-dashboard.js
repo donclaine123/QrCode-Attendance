@@ -370,50 +370,53 @@ async function initDashboard() {
             console.log('Authentication failed:', authData ? authData.message : 'No response');
         }
         
-        // If all authentication methods failed, try re-auth with localStorage as a last resort
-        const localUserId = localStorage.getItem('userId');
-        const localRole = localStorage.getItem('userRole');
-        
-        if (localUserId && localRole === 'teacher') {
-            console.log('Attempting re-auth with localStorage data as last resort');
+        // If ALL authentication methods failed AND localStorage data exists, try re-auth as last resort
+        // This is where the duplicate session was being created, so only do this if we failed all other methods
+        if (!authenticated) {
+            const localUserId = localStorage.getItem('userId');
+            const localRole = localStorage.getItem('userRole');
             
-            try {
-                // No need to set headers here since we're explicitly creating a session
-                const reAuthResponse = await fetch(`${API_URL}/auth/reauth`, {
-                    method: 'POST',
-                    credentials: 'include',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({
-                        userId: localUserId,
-                        role: localRole
-                    })
-                });
+            if (localUserId && localRole === 'teacher') {
+                console.log('Attempting re-auth with localStorage data as last resort');
                 
-                if (reAuthResponse.ok) {
-                    const reAuthData = await reAuthResponse.json();
-                    console.log("Re-authentication response:", reAuthData);
+                try {
+                    // No need to set headers here since we're explicitly creating a session
+                    const reAuthResponse = await fetch(`${API_URL}/auth/reauth`, {
+                        method: 'POST',
+                        credentials: 'include',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({
+                            userId: localUserId,
+                            role: localRole
+                        })
+                    });
                     
-                    if (reAuthData.success) {
-                        console.log("Successfully re-established session:", reAuthData.sessionId);
-            
-                        // Display teacher information from localStorage
-                        const firstName = localStorage.getItem('firstName') || '';
-                        const lastName = localStorage.getItem('lastName') || '';
+                    if (reAuthResponse.ok) {
+                        const reAuthData = await reAuthResponse.json();
+                        console.log("Re-authentication response:", reAuthData);
                         
-                        teacherInfoDiv.innerHTML = `
-                            <p>Welcome, ${firstName || 'Teacher'} ${lastName || ''}!</p>
-                            <p>User ID: ${localUserId}</p>
-                        `;
-                        
-                        // Load teacher's classes
-                        await loadClasses();
-                        return;
+                        if (reAuthData.success) {
+                            console.log("Successfully re-established session:", reAuthData.sessionId);
+                
+                            // Display teacher information from localStorage
+                            const firstName = localStorage.getItem('firstName') || '';
+                            const lastName = localStorage.getItem('lastName') || '';
+                            
+                            teacherInfoDiv.innerHTML = `
+                                <p>Welcome, ${firstName || 'Teacher'} ${lastName || ''}!</p>
+                                <p>User ID: ${localUserId}</p>
+                            `;
+                            
+                            // Load teacher's classes
+                            await loadClasses();
+                            return;
+                        }
                     }
+                } catch (reAuthError) {
+                    console.error("Error re-authenticating:", reAuthError);
                 }
-            } catch (reAuthError) {
-                console.error("Error re-authenticating:", reAuthError);
             }
         }
         
