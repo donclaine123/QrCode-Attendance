@@ -328,15 +328,32 @@ function setupDebugListeners() {
     }
 }
 
-// Initialize dashboard data
+// Initialize dashboard
 async function initDashboard() {
     try {
         const teacherInfoDiv = document.getElementById('teacherInfo');
         
         // Check server authentication first
         console.log('Checking server authentication');
+        
+        // Add headers to help with cookie issues
+        const authHeaders = {
+            'Accept': 'application/json',
+            'Cache-Control': 'no-cache'
+        };
+        
+        // Add auth from localStorage if available
+        const userId = localStorage.getItem('userId');
+        const userRole = localStorage.getItem('userRole');
+        
+        if (userId && userRole) {
+            authHeaders['X-User-ID'] = userId;
+            authHeaders['X-User-Role'] = userRole;
+        }
+        
         const response = await fetch(`${API_URL}/auth/check-auth`, {
-            credentials: 'include'
+            credentials: 'include',
+            headers: authHeaders
         });
         
         const data = await response.json();
