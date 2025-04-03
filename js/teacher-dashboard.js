@@ -272,109 +272,124 @@ function setupDebugListeners() {
 
 // Initialize dashboard
 async function initDashboard() {
+  try {
+    // Remove localStorage header injection
+    const response = await fetch(`${API_URL}/auth/check-auth`, {
+      credentials: 'include',
+      headers: {
+        'Accept': 'application/json',
+        'Cache-Control': 'no-cache'
+      }
+    });
+
+    // Remove localStorage fallback checks
+    if (!response.ok) {
+      window.location.href = '/pages/login.html';
+      return;
+    }
+    
+    const teacherInfoDiv = document.getElementById('teacherInfo');
+    
+    // Check server authentication first
+    console.log('Checking server authentication');
+    
+    // Add headers to help with cookie issues
+    const authHeaders = {
+        'Accept': 'application/json',
+        'Cache-Control': 'no-cache'
+    };
+    
+    // Add auth from localStorage if available
+    const userId = localStorage.getItem('userId');
+    const userRole = localStorage.getItem('userRole');
+    
+    if (userId && userRole) {
+        authHeaders['X-User-ID'] = userId;
+        authHeaders['X-User-Role'] = userRole;
+        console.log('Added auth headers from localStorage:', { userId, userRole });
+    }
+    
+    // First try with fetch directly
+    let authData;
     try {
-        const teacherInfoDiv = document.getElementById('teacherInfo');
+    const response = await fetch(`${API_URL}/auth/check-auth`, {
+            credentials: 'include',
+            headers: authHeaders
+        });
         
-        // Check server authentication first
-        console.log('Checking server authentication');
-        
-        // Add headers to help with cookie issues
-        const authHeaders = {
-            'Accept': 'application/json',
-            'Cache-Control': 'no-cache'
-        };
-        
-        // Add auth from localStorage if available
-        const userId = localStorage.getItem('userId');
-        const userRole = localStorage.getItem('userRole');
-        
-        if (userId && userRole) {
-            authHeaders['X-User-ID'] = userId;
-            authHeaders['X-User-Role'] = userRole;
-            console.log('Added auth headers from localStorage:', { userId, userRole });
+        if (!response.ok) {
+            throw new Error(`Auth check failed with status ${response.status}`);
         }
         
-        // First try with fetch directly
-        let authData;
-        try {
-            const response = await fetch(`${API_URL}/auth/check-auth`, {
-                credentials: 'include',
-                headers: authHeaders
-            });
+        authData = await response.json();
+        console.log('Auth response:', authData);
+    } catch (fetchError) {
+        console.error('Fetch error in auth check:', fetchError);
+        // If CORS error, we'll fall back to localStorage
+        console.log('Falling back to localStorage due to fetch error');
+    }
+    
+    // Handle successful authentication
+    if (authData && authData.authenticated && authData.user) {
+        // Check if user is a teacher
+        if (authData.user.role === 'teacher') {
+            console.log('Successfully authenticated as teacher');
             
-            if (!response.ok) {
-                throw new Error(`Auth check failed with status ${response.status}`);
-            }
+            // Store in localStorage as fallback
+            localStorage.setItem('userId', authData.user.id);
+            localStorage.setItem('userRole', 'teacher');
+            localStorage.setItem('firstName', authData.user.firstName || '');
+            localStorage.setItem('lastName', authData.user.lastName || '');
             
-            authData = await response.json();
-            console.log('Auth response:', authData);
-        } catch (fetchError) {
-            console.error('Fetch error in auth check:', fetchError);
-            // If CORS error, we'll fall back to localStorage
-            console.log('Falling back to localStorage due to fetch error');
-        }
-        
-        // Handle successful authentication
-        if (authData && authData.authenticated && authData.user) {
-            // Check if user is a teacher
-            if (authData.user.role === 'teacher') {
-                console.log('Successfully authenticated as teacher');
-                
-                // Store in localStorage as fallback
-                localStorage.setItem('userId', authData.user.id);
-                localStorage.setItem('userRole', 'teacher');
-                localStorage.setItem('firstName', authData.user.firstName || '');
-                localStorage.setItem('lastName', authData.user.lastName || '');
-                
-                // Display teacher information
-                teacherInfoDiv.innerHTML = `
-                    <p>Welcome, ${authData.user.firstName || 'Teacher'} ${authData.user.lastName || ''}!</p>
-                    <p>User ID: ${authData.user.id}</p>
-                `;
-                
-                // Load teacher's classes
-                await loadClasses();
-                return;
-            } else if (authData.user.role === 'student') {
-                // User is a student, redirect to student dashboard
-                console.log('User is a student, redirecting to student dashboard');
-                const basePath = getBasePath();
-                window.location.href = `${basePath}/pages/student-dashboard.html`;
-                return;
-            }
-        } else {
-            console.log('Authentication failed:', authData ? authData.message : 'No response');
-        }
-        
-        // If not authenticated via server, check localStorage as fallback
-        const localUserId = localStorage.getItem('userId');
-        const localRole = localStorage.getItem('userRole');
-        
-        if (localUserId && localRole === 'teacher') {
-            console.log('Using localStorage authentication as fallback');
-            
-            // Skip re-authentication - rely on header-based auth in future requests
-            console.log('Will use header-based authentication for future requests');
-            
-            // Display teacher information from localStorage
-            const firstName = localStorage.getItem('firstName') || '';
-            const lastName = localStorage.getItem('lastName') || '';
-            
+            // Display teacher information
             teacherInfoDiv.innerHTML = `
-                <p>Welcome, ${firstName || 'Teacher'} ${lastName || ''}!</p>
-                <p>User ID: ${localUserId}</p>
+                <p>Welcome, ${authData.user.firstName || 'Teacher'} ${authData.user.lastName || ''}!</p>
+                <p>User ID: ${authData.user.id}</p>
             `;
             
-            // Load teacher's classes with header-based auth
+            // Load teacher's classes
             await loadClasses();
             return;
+        } else if (authData.user.role === 'student') {
+            // User is a student, redirect to student dashboard
+            console.log('User is a student, redirecting to student dashboard');
+            const basePath = getBasePath();
+            window.location.href = `${basePath}/pages/student-dashboard.html`;
+            return;
         }
+    } else {
+        console.log('Authentication failed:', authData ? authData.message : 'No response');
+    }
+    
+    // If not authenticated via server, check localStorage as fallback
+    const localUserId = localStorage.getItem('userId');
+    const localRole = localStorage.getItem('userRole');
+    
+    if (localUserId && localRole === 'teacher') {
+        console.log('Using localStorage authentication as fallback');
         
-        // Not authenticated at all, redirect to login
-        console.log('Not authenticated, redirecting to login');
-        const basePath = getBasePath();
-        window.location.href = `${basePath}/index.html`;
+        // Skip re-authentication - rely on header-based auth in future requests
+        console.log('Will use header-based authentication for future requests');
         
+        // Display teacher information from localStorage
+        const firstName = localStorage.getItem('firstName') || '';
+        const lastName = localStorage.getItem('lastName') || '';
+        
+        teacherInfoDiv.innerHTML = `
+            <p>Welcome, ${firstName || 'Teacher'} ${lastName || ''}!</p>
+            <p>User ID: ${localUserId}</p>
+        `;
+        
+        // Load teacher's classes with header-based auth
+        await loadClasses();
+        return;
+    }
+    
+    // Not authenticated at all, redirect to login
+    console.log('Not authenticated, redirecting to login');
+    const basePath = getBasePath();
+    window.location.href = `${basePath}/index.html`;
+    
     } catch (error) {
         console.error('Dashboard initialization error:', error);
         // Check if we have localStorage fallback before redirecting
