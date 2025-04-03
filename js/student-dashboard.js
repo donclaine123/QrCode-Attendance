@@ -10,189 +10,122 @@ document.addEventListener('DOMContentLoaded', function() {
     loadAttendanceHistory();
     
     // Add event listeners
-    const logoutBtn = document.getElementById('logoutBtn');
+    const logoutBtn = document.getElementById('logout-btn');
     if (logoutBtn) {
-        logoutBtn.addEventListener('click', logout);
+        logoutBtn.addEventListener('click', function(e) {
+            e.preventDefault();
+            logout();
+        });
         console.log('Logout button event listener added');
     } else {
         console.error('Logout button not found');
     }
+    
+    // Add event listeners for dashboard actions
+    const scanQrBtn = document.getElementById('scan-qr-btn');
+    const viewAttendanceBtn = document.getElementById('view-attendance-btn');
+    
+    if (scanQrBtn) {
+        scanQrBtn.addEventListener('click', function() {
+            document.getElementById('qr-scanner-section').style.display = 'block';
+            document.getElementById('attendance-section').style.display = 'none';
+        });
+    }
+    
+    if (viewAttendanceBtn) {
+        viewAttendanceBtn.addEventListener('click', function() {
+            document.getElementById('qr-scanner-section').style.display = 'none';
+            document.getElementById('attendance-section').style.display = 'block';
+        });
+    }
+    
+    // Set up debug listeners
+    setupDebugListeners();
 });
 
 // Initialize dashboard
 async function initDashboard() {
     try {
-        const welcomeMessage = document.getElementById('welcome-message');
-        const loadingSection = document.getElementById('loading-section');
-        const studentSection = document.getElementById('student-section');
-        const authDebug = document.getElementById('auth-debug');
+        console.log("Initializing student dashboard...");
         
-        let authenticated = false;
-        let userData = null;
+        // Get user info from sessionStorage instead of URL parameters
+        const userId = sessionStorage.getItem('userId');
+        const userRole = sessionStorage.getItem('userRole');
+        const userName = sessionStorage.getItem('userName');
         
-        // First, try session-based authentication as the primary method
-        console.log('Checking server authentication via session');
-        try {
-            const sessionResponse = await fetch(`${API_URL}/auth/check-auth`, {
+        // If no user info in sessionStorage, try to authenticate with the server
+        if (!userId || !userRole) {
+            console.log("No user info in sessionStorage, checking authentication...");
+            
+            // Check authentication status
+            const response = await fetch(`${API_URL}/auth/check-auth`, {
                 credentials: 'include',
                 headers: {
-                    'Accept': 'application/json',
-                    'Cache-Control': 'no-cache'
+                    'Accept': 'application/json'
                 }
             });
             
-            if (sessionResponse.ok) {
-                const sessionData = await sessionResponse.json();
-                console.log('Session auth response:', sessionData);
+            if (response.ok) {
+                const data = await response.json();
+                console.log("Authentication successful:", data);
                 
-                if (sessionData.authenticated && sessionData.user?.role === 'student') {
-                    console.log('Successfully authenticated via session');
-                    authenticated = true;
-                    userData = sessionData.user;
-                    
-                    // Store in localStorage for fallback
-                    localStorage.setItem('userId', userData.id);
-                    localStorage.setItem('userRole', 'student');
-                    if (userData.firstName) localStorage.setItem('firstName', userData.firstName);
-                    if (userData.lastName) localStorage.setItem('lastName', userData.lastName);
+                // Store user info in sessionStorage
+                sessionStorage.setItem('userId', data.user.id);
+                sessionStorage.setItem('userRole', data.role);
+                sessionStorage.setItem('userName', `${data.user.firstName} ${data.user.lastName}`);
+                
+                // Update welcome message
+                const welcomeMessage = document.getElementById('welcome-message');
+                if (welcomeMessage) {
+                    welcomeMessage.textContent = `Welcome, ${data.user.firstName} ${data.user.lastName}!`;
                 }
+                
+                // Show student section
+                const studentSection = document.getElementById('student-section');
+                if (studentSection) {
+                    studentSection.style.display = 'block';
+                }
+                
+                // Load enrolled classes
+                loadEnrolledClasses();
+            } else {
+                console.error("Authentication failed, redirecting to login...");
+                window.location.href = getBasePath() + '/index.html';
             }
-        } catch (sessionError) {
-            console.error('Session authentication error:', sessionError);
-        }
-        
-        // If session auth failed, try URL parameters (from login redirect)
-        if (!authenticated) {
-            const urlParams = new URLSearchParams(window.location.search);
-            const urlUserId = urlParams.get('userId');
-            const urlRole = urlParams.get('role');
-            const urlFirstName = urlParams.get('firstName');
-            const urlLastName = urlParams.get('lastName');
+        } else {
+            // User info found in sessionStorage
+            console.log("User info found in sessionStorage:", { userId, userRole, userName });
             
-            if (urlUserId && urlRole === 'student') {
-                console.log('Using URL parameters for authentication');
-                authenticated = true;
-                userData = {
-                    id: urlUserId,
-                    role: 'student',
-                    firstName: urlFirstName,
-                    lastName: urlLastName
-                };
-                
-                // Store the user info in localStorage
-                localStorage.setItem('userId', urlUserId);
-                localStorage.setItem('userRole', 'student');
-                if (urlFirstName) localStorage.setItem('firstName', urlFirstName);
-                if (urlLastName) localStorage.setItem('lastName', urlLastName);
-                
-                // Try to establish a session with the server using URL params
-                try {
-                    const reAuthResponse = await fetch(`${API_URL}/auth/reauth`, {
-                        method: 'POST',
-                        credentials: 'include',
-                        headers: {
-                            'Content-Type': 'application/json'
-                        },
-                        body: JSON.stringify({
-                            userId: urlUserId,
-                            role: 'student'
-                        })
-                    });
-                    
-                    if (reAuthResponse.ok) {
-                        console.log('Successfully created session from URL parameters');
-                    }
-                } catch (reAuthError) {
-                    console.error('Error creating session from URL parameters:', reAuthError);
-                }
-            }
-        }
-        
-        // If still not authenticated, check localStorage as last resort
-        if (!authenticated) {
-            const localUserId = localStorage.getItem('userId');
-            const localRole = localStorage.getItem('userRole');
-            
-            if (localUserId && localRole === 'student') {
-                console.log('Using localStorage for authentication as last resort');
-                
-                // Try to establish a session with the server using localStorage data
-                try {
-                    const reAuthResponse = await fetch(`${API_URL}/auth/reauth`, {
-                        method: 'POST',
-                        credentials: 'include',
-                        headers: {
-                            'Content-Type': 'application/json',
-                            'X-User-ID': localUserId,
-                            'X-User-Role': localRole
-                        },
-                        body: JSON.stringify({
-                            userId: localUserId,
-                            role: localRole
-                        })
-                    });
-                    
-                    if (reAuthResponse.ok) {
-                        const reAuthData = await reAuthResponse.json();
-                        console.log('Re-authentication response:', reAuthData);
-                        
-                        if (reAuthData.success) {
-                            console.log('Successfully re-established session from localStorage');
-                            authenticated = true;
-                            userData = reAuthData.user;
-                        }
-                    }
-                } catch (reAuthError) {
-                    console.error('Error re-authenticating with localStorage:', reAuthError);
-                }
-                
-                // If session creation failed but we have localStorage data, use it
-                if (!authenticated) {
-                    authenticated = true;
-                    userData = {
-                        id: localUserId,
-                        role: 'student',
-                        firstName: localStorage.getItem('firstName') || '',
-                        lastName: localStorage.getItem('lastName') || ''
-                    };
-                }
-            }
-        }
-        
-        // Handle authentication result
-        if (authenticated && userData) {
-            // Display welcome message
+            // Update welcome message
+            const welcomeMessage = document.getElementById('welcome-message');
             if (welcomeMessage) {
-                welcomeMessage.textContent = `Welcome, ${userData.firstName || 'Student'} ${userData.lastName || ''}!`;
+                welcomeMessage.textContent = `Welcome, ${userName}!`;
             }
             
             // Show student section
-            if (loadingSection) loadingSection.style.display = 'none';
-            if (studentSection) studentSection.style.display = 'block';
+            const studentSection = document.getElementById('student-section');
+            if (studentSection) {
+                studentSection.style.display = 'block';
+            }
             
-            // Load attendance history
-            loadAttendanceHistory();
-        } else {
-            console.log('Not authenticated, redirecting to login');
-            const basePath = getBasePath();
-            window.location.href = `${basePath}/index.html`;
+            // Load enrolled classes
+            loadEnrolledClasses();
         }
-        
     } catch (error) {
-        console.error('Dashboard initialization error:', error);
-        if (authDebug) {
-            authDebug.textContent = `Error: ${error.message}`;
-        }
-        alert('Error initializing dashboard. Please try logging in again.');
-        const basePath = getBasePath();
-        window.location.href = `${basePath}/index.html`;
+        console.error("Error initializing dashboard:", error);
+        showError("Failed to initialize dashboard. Please try again.");
     }
 }
 
 // Load attendance history
 async function loadAttendanceHistory() {
     try {
-        const historyDiv = document.getElementById('attendanceHistory');
+        const historyDiv = document.getElementById('attendance-records');
+        if (!historyDiv) {
+            console.error("Attendance records element not found");
+            return;
+        }
+        
         historyDiv.innerHTML = '<p>Loading your attendance history...</p>';
         
         const response = await fetch(`${API_URL}/auth/student-attendance-history`, {
@@ -253,28 +186,84 @@ async function loadAttendanceHistory() {
         }
     } catch (error) {
         console.error('Error loading attendance history:', error);
-        const historyDiv = document.getElementById('attendanceHistory');
-        historyDiv.innerHTML = `
-            <div class="error-state">
-                <h3>Error Loading History</h3>
-                <p>There was an error loading your attendance history. Please try again later.</p>
-            </div>
-        `;
+        const historyDiv = document.getElementById('attendance-records');
+        if (historyDiv) {
+            historyDiv.innerHTML = `
+                <div class="error-state">
+                    <h3>Error Loading History</h3>
+                    <p>There was an error loading your attendance history. Please try again later.</p>
+                </div>
+            `;
+        }
+    }
+}
+
+// Load enrolled classes for the student
+async function loadEnrolledClasses() {
+    try {
+        const classSelect = document.getElementById('class-select');
+        if (!classSelect) {
+            console.error("Class select element not found");
+            return;
+        }
+        
+        classSelect.innerHTML = '<option value="">Select a class</option>';
+        
+        const userId = sessionStorage.getItem('userId');
+        console.log(`Fetching enrolled classes for student ID: ${userId}`);
+        
+        const response = await fetch(`${API_URL}/auth/student-classes/${userId}`, {
+            credentials: 'include',
+            headers: {
+                'Accept': 'application/json',
+                'Cache-Control': 'no-cache'
+            }
+        });
+        
+        if (!response.ok) {
+            throw new Error(`Server returned ${response.status}: ${response.statusText}`);
+        }
+        
+        const data = await response.json();
+        console.log('Enrolled classes data:', data);
+        
+        if (data.success && data.classes && data.classes.length > 0) {
+            data.classes.forEach(cls => {
+                const option = document.createElement('option');
+                option.value = cls.id;
+                option.textContent = cls.class_name || cls.name;
+                classSelect.appendChild(option);
+            });
+        } else {
+            classSelect.innerHTML += '<option disabled>No classes found</option>';
+        }
+    } catch (error) {
+        console.error('Error loading enrolled classes:', error);
+        const classSelect = document.getElementById('class-select');
+        if (classSelect) {
+            classSelect.innerHTML = '<option value="">Select a class</option>';
+            classSelect.innerHTML += `<option disabled>Error loading classes: ${error.message}</option>`;
+        }
     }
 }
 
 // Record attendance from QR code
 async function recordAttendance() {
     try {
-        const sessionId = localStorage.getItem('currentSessionId');
+        const sessionId = sessionStorage.getItem('currentSessionId');
         
         if (!sessionId) {
             alert('No QR session found. Please scan a valid QR code.');
             return;
         }
         
-        const btnElement = document.getElementById('recordAttendanceBtn');
-        const statusElement = document.getElementById('attendanceStatus');
+        const btnElement = document.getElementById('record-attendance-btn');
+        const statusElement = document.getElementById('attendance-status');
+        
+        if (!btnElement || !statusElement) {
+            console.error("Required elements for attendance recording not found");
+            return;
+        }
         
         // Disable button and show processing
         btnElement.disabled = true;
@@ -305,15 +294,18 @@ async function recordAttendance() {
             `;
             
             // Clear session data after successful recording
-            localStorage.removeItem('currentSessionId');
-            localStorage.removeItem('currentTeacherId');
+            sessionStorage.removeItem('currentSessionId');
+            sessionStorage.removeItem('currentTeacherId');
             
             // Reload attendance history
             loadAttendanceHistory();
             
             // Hide the QR attendance section after a delay
             setTimeout(() => {
-                document.getElementById('qrAttendance').style.display = 'none';
+                const qrAttendance = document.getElementById('qr-scanner-section');
+                if (qrAttendance) {
+                    qrAttendance.style.display = 'none';
+                }
             }, 5000);
         } else {
             statusElement.innerHTML = `<div class="error-message">${data.message || 'Error recording attendance'}</div>`;
@@ -325,13 +317,17 @@ async function recordAttendance() {
         
     } catch (error) {
         console.error('Attendance recording error:', error);
-        const statusElement = document.getElementById('attendanceStatus');
-        statusElement.innerHTML = `<div class="error-message">Server error: ${error.message}. Please try again.</div>`;
+        const statusElement = document.getElementById('attendance-status');
+        if (statusElement) {
+            statusElement.innerHTML = `<div class="error-message">Server error: ${error.message}. Please try again.</div>`;
+        }
         
         // Re-enable button
-        const btnElement = document.getElementById('recordAttendanceBtn');
-        btnElement.disabled = false;
-        btnElement.textContent = 'Record Attendance';
+        const btnElement = document.getElementById('record-attendance-btn');
+        if (btnElement) {
+            btnElement.disabled = false;
+            btnElement.textContent = 'Record Attendance';
+        }
     }
 }
 
@@ -355,40 +351,43 @@ function formatDateToUTC8(date) {
     }
 }
 
+// Function to show error messages
+function showError(message) {
+    console.error(message);
+    const errorDiv = document.getElementById('error-message');
+    if (errorDiv) {
+        errorDiv.textContent = message;
+        errorDiv.style.display = 'block';
+        
+        // Auto-hide after 5 seconds
+        setTimeout(() => {
+            errorDiv.style.display = 'none';
+        }, 5000);
+    }
+}
+
 // Logout function
 async function logout() {
     try {
-        console.log('Logging out...');
-        
-        // Clear localStorage first
-        localStorage.clear();
-        
-        // Clear session cookies
-        document.cookie.split(";").forEach(function(c) { 
-            document.cookie = c.replace(/^ +/, "").replace(/=.*/, "=;expires=" + new Date().toUTCString() + ";path=/"); 
-        });
-        
-        // Call server logout endpoint
+        // Call the logout endpoint
         const response = await fetch(`${API_URL}/auth/logout`, {
             method: 'POST',
-            credentials: 'include'
+            credentials: 'include',
+            headers: {
+                'Accept': 'application/json'
+            }
         });
         
-        const data = await response.json();
+        // Clear sessionStorage
+        sessionStorage.clear();
         
-        if (data.success) {
-            console.log('Logged out successfully');
-        } else {
-            console.warn('Server logout returned error:', data.message);
-        }
+        // Redirect to login page
+        window.location.href = getBasePath() + '/index.html';
     } catch (error) {
         console.error('Logout error:', error);
-    } finally {
-        // Get the base path for proper redirect
-        const basePath = getBasePath();
-        
-        // Always redirect to login page with proper path
-        window.location.href = `${basePath}/index.html`;
+        // Even if the server request fails, clear local storage and redirect
+        sessionStorage.clear();
+        window.location.href = getBasePath() + '/index.html';
     }
 }
 
@@ -403,5 +402,61 @@ function getBasePath() {
     } else {
         // In local development, include the QrCode-Attendance prefix
         return '/QrCode-Attendance';
+    }
+}
+
+// Function that attaches event listeners for debug buttons
+function setupDebugListeners() {
+    // Debug buttons
+    const testCookiesBtn = document.getElementById('test-cookies-btn');
+    const checkAuthBtn = document.getElementById('check-auth-btn');
+    
+    if (testCookiesBtn) {
+        testCookiesBtn.addEventListener('click', async function() {
+            try {
+                const response = await fetch(`${API_URL}/auth/debug-cookies`, {
+                    credentials: 'include'
+                });
+                const data = await response.json();
+                
+                console.log('Cookie test response:', data);
+                alert(`Cookie test: ${JSON.stringify(data)}`);
+            } catch (error) {
+                console.error('Cookie test error:', error);
+                alert(`Error: ${error.message}`);
+            }
+        });
+    }
+    
+    if (checkAuthBtn) {
+        checkAuthBtn.addEventListener('click', async function() {
+            try {
+                // Use the same authentication approach as the main dashboard init
+                const userId = sessionStorage.getItem('userId');
+                const userRole = sessionStorage.getItem('userRole');
+                const headers = {
+                    'Accept': 'application/json',
+                    'Cache-Control': 'no-cache'
+                };
+                
+                // Add user headers if available in sessionStorage as fallback
+                if (userId && userRole) {
+                    headers['X-User-ID'] = userId;
+                    headers['X-User-Role'] = userRole;
+                }
+                
+                const response = await fetch(`${API_URL}/auth/check-auth`, {
+                    credentials: 'include',
+                    headers: headers
+                });
+                const data = await response.json();
+                
+                console.log('Auth check response:', data);
+                alert(`Auth check: ${JSON.stringify(data)}`);
+            } catch (error) {
+                console.error('Auth check error:', error);
+                alert(`Error: ${error.message}`);
+            }
+        });
     }
 } 
