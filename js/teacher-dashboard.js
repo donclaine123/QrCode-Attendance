@@ -358,33 +358,40 @@ async function initDashboard() {
         
         console.log('Checking server authentication');
         
-        // First, try to authenticate with session cookies only
-        const sessionAuthResponse = await fetch(`${API_URL}/auth/check-auth`, {
-            credentials: 'include',
-            headers: {
-                'Accept': 'application/json',
-                'Cache-Control': 'no-cache'
-            }
-        });
+        // AUTHENTICATION FLOW:
+        // 1. First try to authenticate using session cookies (most secure)
+        // 2. If that fails, use header-based authentication with localStorage credentials (fallback)
+        // 3. Only if both fail and localStorage credentials exist, use reauth endpoint (last resort)
         
+        // Step 1: Try to authenticate with session cookies
         let authenticated = false;
         let authData = null;
         
-        if (sessionAuthResponse.ok) {
-            authData = await sessionAuthResponse.json();
-            console.log('Session auth response:', authData);
+        try {
+            const sessionAuthResponse = await fetch(`${API_URL}/auth/check-auth`, {
+                credentials: 'include',
+                headers: {
+                    'Accept': 'application/json',
+                    'Cache-Control': 'no-cache'
+                }
+            });
             
-            if (authData.authenticated) {
-                console.log('Successfully authenticated via session');
-                authenticated = true;
+            if (sessionAuthResponse.ok) {
+                authData = await sessionAuthResponse.json();
+                console.log('Session auth response:', authData);
+                
+                if (authData.authenticated) {
+                    console.log('Successfully authenticated via session cookies');
+                    authenticated = true;
+                }
             } else {
-                console.log('Session authentication failed, will try header-based auth');
+                console.log(`Session auth check failed with status ${sessionAuthResponse.status}`);
             }
-        } else {
-            console.log(`Session auth check failed with status ${sessionAuthResponse.status}`);
+        } catch (sessionAuthError) {
+            console.error('Session auth error:', sessionAuthError);
         }
         
-        // If session authentication failed, try with localStorage headers as fallback
+        // Step 2: If session authentication failed, try with localStorage headers
         if (!authenticated) {
             const userId = localStorage.getItem('userId');
             const userRole = localStorage.getItem('userRole');
@@ -420,18 +427,18 @@ async function initDashboard() {
             }
         }
         
-        // Handle successful authentication
+        // Handle successful authentication from either method
         if (authenticated && authData && authData.user) {
             // Check if user is a teacher
             if (authData.user.role === 'teacher') {
                 console.log('Successfully authenticated as teacher');
                 
-                // Store in localStorage as fallback, but ONLY store the credentials
-                // NOT any session-specific information that could cause re-auth
-                localStorage.setItem('userId', authData.user.id);
-                localStorage.setItem('userRole', 'teacher');
-                localStorage.setItem('firstName', authData.user.firstName || '');
-                localStorage.setItem('lastName', authData.user.lastName || '');
+                // Store in localStorage as fallback, but ONLY update if the data is more complete
+                // than what we currently have stored
+                if (authData.user.id) localStorage.setItem('userId', authData.user.id);
+                if (authData.user.role) localStorage.setItem('userRole', 'teacher');
+                if (authData.user.firstName) localStorage.setItem('firstName', authData.user.firstName);
+                if (authData.user.lastName) localStorage.setItem('lastName', authData.user.lastName);
                 
                 // Display teacher information
                 teacherInfoDiv.innerHTML = `
@@ -439,7 +446,7 @@ async function initDashboard() {
                     <p>User ID: ${authData.user.id}</p>
                 `;
                 
-                // Load teacher's classes
+                // Load teacher's classes - this will use the same authenticated session
                 await loadClasses();
                 return;
             } else if (authData.user.role === 'student') {
@@ -449,21 +456,18 @@ async function initDashboard() {
                 window.location.href = `${basePath}/pages/student-dashboard.html`;
                 return;
             }
-        } else {
-            console.log('Authentication failed:', authData ? authData.message : 'No response');
         }
         
-        // If ALL authentication methods failed AND localStorage data exists, try re-auth as last resort
-        // This is where the duplicate session was being created, so only do this if we failed all other methods
+        // Step 3: If ALL authentication methods failed AND localStorage data exists, 
+        // do token-based re-authentication as last resort
         if (!authenticated) {
-        const localUserId = localStorage.getItem('userId');
-        const localRole = localStorage.getItem('userRole');
-        
-        if (localUserId && localRole === 'teacher') {
-                console.log('Attempting re-auth with localStorage data as last resort');
+            const localUserId = localStorage.getItem('userId');
+            const localRole = localStorage.getItem('userRole');
+            
+            if (localUserId && localRole === 'teacher') {
+                console.log('Attempting token-based re-authentication as last resort');
                 
                 try {
-                    // No need to set headers here since we're explicitly creating a session
                     const reAuthResponse = await fetch(`${API_URL}/auth/reauth`, {
                         method: 'POST',
                         credentials: 'include',
@@ -481,60 +485,75 @@ async function initDashboard() {
                         console.log("Re-authentication response:", reAuthData);
                         
                         if (reAuthData.success) {
-                            console.log("Successfully re-established session:", reAuthData.sessionId);
-            
-            // Display teacher information from localStorage
-            const firstName = localStorage.getItem('firstName') || '';
-            const lastName = localStorage.getItem('lastName') || '';
-            
-            teacherInfoDiv.innerHTML = `
-                <p>Welcome, ${firstName || 'Teacher'} ${lastName || ''}!</p>
-                <p>User ID: ${localUserId}</p>
-            `;
-            
-            // Load teacher's classes
-            await loadClasses();
-            return;
+                            console.log("Successfully re-established authentication:", reAuthData.sessionId);
+                            
+                            // Update localStorage with fresh data if available
+                            if (reAuthData.user) {
+                                if (reAuthData.user.firstName) 
+                                    localStorage.setItem('firstName', reAuthData.user.firstName);
+                                if (reAuthData.user.lastName) 
+                                    localStorage.setItem('lastName', reAuthData.user.lastName);
+                            }
+                            
+                            // Display teacher information from localStorage or reAuthData
+                            const firstName = reAuthData.user?.firstName || localStorage.getItem('firstName') || '';
+                            const lastName = reAuthData.user?.lastName || localStorage.getItem('lastName') || '';
+                            
+                            teacherInfoDiv.innerHTML = `
+                                <p>Welcome, ${firstName || 'Teacher'} ${lastName || ''}!</p>
+                                <p>User ID: ${localUserId}</p>
+                                <p><small>(Authenticated via localStorage)</small></p>
+                            `;
+                            
+                            // Load teacher's classes with the re-authenticated session
+                            await loadClasses();
+                            return;
                         }
+                    } else {
+                        console.error("Re-authentication failed:", await reAuthResponse.text());
                     }
                 } catch (reAuthError) {
-                    console.error("Error re-authenticating:", reAuthError);
+                    console.error("Re-authentication error:", reAuthError);
                 }
             }
-        }
-        
-        // Not authenticated at all, redirect to login
-        console.log('Not authenticated, redirecting to login');
-        const basePath = getBasePath();
-        window.location.href = `${basePath}/index.html`;
-        
-    } catch (error) {
-        console.error('Dashboard initialization error:', error);
-        // Check if we have localStorage fallback before redirecting
-        const localUserId = localStorage.getItem('userId');
-        const localRole = localStorage.getItem('userRole');
-        
-        if (localUserId && localRole === 'teacher') {
-            console.log('Using localStorage fallback due to server error');
             
-            // Display teacher information from localStorage
-            const firstName = localStorage.getItem('firstName') || '';
-            const lastName = localStorage.getItem('lastName') || '';
-            const teacherInfoDiv = document.getElementById('teacherInfo');
+            // If we get here, all authentication methods have failed
+            console.error("ALL AUTHENTICATION METHODS FAILED");
             
+            // Show login required message
             teacherInfoDiv.innerHTML = `
-                <p>Welcome, ${firstName || 'Teacher'} ${lastName || ''}!</p>
-                <p>User ID: ${localUserId}</p>
+                <div class="alert alert-danger">
+                    <p><strong>Authentication Failed</strong></p>
+                    <p>Your session has expired or you are not logged in.</p>
+                    <p>Please <a href="../index.html">log in again</a> to access the dashboard.</p>
+                </div>
             `;
             
-            // Load teacher's classes using header-based auth
-            loadClasses();
-            return;
+            // Add a login button for convenience
+            const loginButton = document.createElement('button');
+            loginButton.className = 'btn btn-primary';
+            loginButton.textContent = 'Return to Login';
+            loginButton.addEventListener('click', function() {
+                // Clear any stale auth data
+                localStorage.removeItem('sessionId');
+                window.location.href = '../index.html';
+            });
+            teacherInfoDiv.appendChild(loginButton);
         }
+    } catch (error) {
+        console.error("Dashboard initialization error:", error);
         
-        alert('Error initializing dashboard. Please try logging in again.');
-        const basePath = getBasePath();
-        window.location.href = `${basePath}/index.html`;
+        // Show error message on dashboard
+        const teacherInfoDiv = document.getElementById('teacherInfo');
+        if (teacherInfoDiv) {
+            teacherInfoDiv.innerHTML = `
+                <div class="alert alert-danger">
+                    <p><strong>Error Initializing Dashboard</strong></p>
+                    <p>${error.message || 'Unknown error occurred'}</p>
+                    <p>Please try refreshing the page or <a href="../index.html">log in again</a>.</p>
+                </div>
+            `;
+        }
     }
 }
 
@@ -1202,7 +1221,7 @@ document.addEventListener('DOMContentLoaded', function() {
     attendanceClassSelect.addEventListener('change', function() {
         loadSessions(this.value);
     });
-});
+}); 
 
 // Add this function to check session status
 async function checkSession() {

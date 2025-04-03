@@ -295,170 +295,210 @@ async function checkAuthentication() {
   }
 }
 
-// Process login form submission
-async function handleLogin(event) {
-    const email = document.getElementById('email')?.value;
-    const password = document.getElementById('password')?.value;
+// Check if cookies are enabled
+function areCookiesEnabled() {
+    // Try to set a test cookie
+    document.cookie = "testcookie=1; SameSite=None; Secure";
+    const cookiesEnabled = document.cookie.indexOf("testcookie") !== -1;
     
-    // Fix for the null reference error - add null check and fallback
-    const userTypeElement = document.querySelector('input[name="userType"]:checked');
-    const userType = userTypeElement ? userTypeElement.value : 'teacher'; // Default to teacher if not found
-    
-    // Validate required fields
-    if (!email || !password) {
-        // Show error without trying to access non-existent elements
-        console.error('Email or password is missing');
-        const errorElement = document.getElementById('errorMsg');
-        if (errorElement) {
-            errorElement.textContent = 'Email and password are required';
-            errorElement.style.display = 'block';
-            errorElement.className = 'error-message';
-        }
-        return;
+    // Display warning if cookies are disabled
+    if (!cookiesEnabled) {
+        const warningDiv = document.createElement('div');
+        warningDiv.className = 'cookie-warning';
+        warningDiv.innerHTML = `
+            <div class="alert alert-warning" role="alert">
+                <strong>Cookies appear to be disabled!</strong> This may affect your login experience.
+                <a href="#" class="cookie-help-link">Why do I need cookies?</a>
+            </div>
+        `;
+        document.body.insertBefore(warningDiv, document.body.firstChild);
+        
+        // Add cookie help modal
+        const helpModal = document.createElement('div');
+        helpModal.innerHTML = `
+            <div class="modal fade" id="cookieHelpModal" tabindex="-1" aria-hidden="true">
+                <div class="modal-dialog">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h5 class="modal-title">Why Cookies Are Needed</h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                        </div>
+                        <div class="modal-body">
+                            <p>This application uses cookies to keep you logged in and provide a seamless experience.</p>
+                            <p>Without cookies, you may experience issues with:</p>
+                            <ul>
+                                <li>Staying logged in</li>
+                                <li>QR code generation</li>
+                                <li>Attendance tracking</li>
+                            </ul>
+                            <p>We will still try to authenticate you using alternative methods, but the experience may be limited.</p>
+                            <h6>How to enable cookies:</h6>
+                            <p><strong>Chrome:</strong> Settings → Privacy and security → Cookies and other site data → Allow all cookies</p>
+                            <p><strong>Firefox:</strong> Settings → Privacy & Security → Cookies and Site Data → Enable cookies</p>
+                            <p><strong>Edge:</strong> Settings → Cookies and site permissions → Manage and delete cookies and site data → Allow</p>
+                            <p><strong>Safari:</strong> Settings → Privacy → Website tracking → Unselect "Prevent cross-site tracking"</p>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `;
+        document.body.appendChild(helpModal);
+        
+        // Add event listener to the help link
+        document.querySelector('.cookie-help-link').addEventListener('click', function(e) {
+            e.preventDefault();
+            const modal = new bootstrap.Modal(document.getElementById('cookieHelpModal'));
+            modal.show();
+        });
     }
     
+    return cookiesEnabled;
+}
+
+// Handle login form submission
+async function handleLogin(event) {
+    event.preventDefault();
+    
     try {
-        // First check if cookies are accepted
-        if (localStorage.getItem('cookiesAccepted') !== 'true') {
-            // Show cookie consent banner before proceeding
-            const errorElement = document.getElementById('errorMsg');
-            if (errorElement) {
-                errorElement.textContent = 'Please accept cookies before logging in.';
-                errorElement.style.display = 'block';
-                errorElement.className = 'error-message';
-            }
-            
-            // Initialize cookie consent banner
-            if (typeof initCookieConsent === 'function') {
-                initCookieConsent();
-            } else {
-                console.error('Cookie consent function not found!');
-            }
-            
+        // Get form data - with null checks to avoid "Cannot read properties of null" errors
+        const emailElement = document.getElementById('email');
+        const passwordElement = document.getElementById('password');
+        
+        if (!emailElement || !passwordElement) {
+            showMessage('Error: Form elements not found', 'error');
+            console.error('Form elements not found', { 
+                emailElement: !!emailElement, 
+                passwordElement: !!passwordElement 
+            });
             return;
         }
-    
-        // Show loading state - safely access elements
-        const loginBtn = document.querySelector('#loginForm button[type="submit"]') || 
-                         document.querySelector('#login-form button[type="submit"]');
         
-        if (!loginBtn) {
-            console.error('Login button not found in the DOM');
-            return; // Exit if we can't find the login button
+        const email = emailElement.value;
+        const password = passwordElement.value;
+        
+        // Get the selected user type (teacher or student)
+        const userTypeElement = document.querySelector('input[name="userType"]:checked');
+        const userType = userTypeElement ? userTypeElement.value : 'teacher'; // Default to teacher if nothing selected
+        
+        // Validate input
+        if (!email || !password) {
+            showMessage('Please enter both email and password', 'error');
+            return;
         }
         
-        const originalBtnText = loginBtn.innerHTML;
-        loginBtn.disabled = true;
-        loginBtn.innerHTML = '<span class="spinner"></span> Logging in...';
+        // Check if cookies are enabled and show a warning if not
+        const cookiesEnabled = areCookiesEnabled();
+        if (!cookiesEnabled) {
+            console.warn('Cookies are disabled. Will use localStorage fallback for authentication.');
+        }
         
-        // Clear previous error messages - safely
-        const loginError = document.getElementById('loginError');
-        const errorMsg = document.getElementById('errorMsg');
-        if (loginError) loginError.textContent = '';
-        if (errorMsg) errorMsg.style.display = 'none';
+        // Show loading state
+        const loginBtn = document.querySelector('#loginForm button[type="submit"]') || 
+                          document.querySelector('#login-form button[type="submit"]');
+        if (loginBtn) {
+            loginBtn.disabled = true;
+            loginBtn.innerHTML = 'Logging in...';
+        }
         
-        // API URL is defined globally or use a default
-        const apiUrl = window.API_URL || 'https://qrattendance-backend-production.up.railway.app';
-        
-        const response = await fetch(`${apiUrl}/auth/login`, {
+        // Send login request
+        const response = await fetch(`${API_URL}/auth/login`, {
             method: 'POST',
+            credentials: 'include',
             headers: {
                 'Content-Type': 'application/json'
             },
-            body: JSON.stringify({
-                email,
-                password,
-                userType
-            }),
-            credentials: 'include' // Important for storing cookies!
+            body: JSON.stringify({ email, password })
         });
         
         const data = await response.json();
         
-        if (data.success) {
-            // Save user data in localStorage for fallback authentication
-            localStorage.setItem('userId', data.user.id);
-            localStorage.setItem('userName', data.user.name || `${data.user.firstName} ${data.user.lastName}`);
-            localStorage.setItem('userEmail', data.user.email || email);
-            localStorage.setItem('userRole', userType);
-            localStorage.setItem('isAuthenticated', 'true');
-            localStorage.setItem('loginTime', new Date().toISOString());
+        if (response.ok && data.success) {
+            console.log('Login successful:', data);
             
-            // Check if cookies are being set properly
-            setTimeout(() => {
-                // Wait a bit to allow cookies to be set
-                const hasCookies = document.cookie.length > 0;
-                const hasSessionCookie = document.cookie.includes('qr_attendance_sid');
-                
-                if (!hasSessionCookie) {
-                    console.warn("⚠️ WARNING: Session cookie not detected! This may affect your login session.");
-                    console.warn("Your browser may be blocking third-party cookies needed for authentication.");
-                    console.warn("The application will attempt to use localStorage as a fallback for authentication.");
-                    
-                    // Show cookie help instead of inline warning
-                    if (typeof showCookieHelp === 'function') {
-                        showCookieHelp();
-                    }
-                }
-                
-                // Continue with redirection regardless of cookie status
-                redirectToDashboard(userType);
-            }, 500);
-        } else {
-            // Display error message - safely handle potential missing elements
-            if (loginError) {
-                loginError.textContent = data.message || 'Login failed. Please check your credentials.';
-            } else if (errorMsg) {
-                errorMsg.textContent = data.message || 'Login failed. Please check your credentials.';
-                errorMsg.style.display = 'block';
-                errorMsg.className = 'error-message';
-            } else {
-                console.error('Login failed:', data.message || 'Unknown error');
-                alert('Login failed: ' + (data.message || 'Please check your credentials.'));
+            // Store important user data in localStorage for fallback authentication
+            localStorage.setItem('userId', data.user.id);
+            localStorage.setItem('userRole', data.role);
+            localStorage.setItem('firstName', data.user.firstName || '');
+            localStorage.setItem('lastName', data.user.lastName || '');
+            
+            // Check if cookies are working - if not, show a warning
+            if (!cookiesEnabled) {
+                showMessage('Login successful, but cookies are disabled. Some features may not work correctly.', 'warning');
+                // Small delay to ensure user sees the message
+                await new Promise(resolve => setTimeout(resolve, 1500));
             }
             
-            // Reset button
+            // Redirect based on role
+            const basePath = getBasePath();
+            window.location.href = `${basePath}${data.redirect || (data.role === 'teacher' ? '/pages/teacher-dashboard.html' : '/pages/student-dashboard.html')}`;
+        } else {
+            // Reset button state
             if (loginBtn) {
                 loginBtn.disabled = false;
-                loginBtn.innerHTML = originalBtnText;
+                loginBtn.innerHTML = 'Login';
             }
+            
+            // Show error message
+            const errorMessage = data.message || 'Login failed. Please check your credentials.';
+            showMessage(errorMessage, 'error');
         }
     } catch (error) {
         console.error('Login error:', error);
         
-        // Handle error display safely
-        const loginError = document.getElementById('loginError');
-        const errorMsg = document.getElementById('errorMsg');
-        
-        if (loginError) {
-            loginError.textContent = 'An error occurred during login. Please try again.';
-        } else if (errorMsg) {
-            errorMsg.textContent = 'An error occurred during login. Please try again.';
-            errorMsg.style.display = 'block'; 
-            errorMsg.className = 'error-message';
-        } else {
-            alert('Login error: ' + error.message);
-        }
-        
-        // Reset button - safely
+        // Reset button state
         const loginBtn = document.querySelector('#loginForm button[type="submit"]') || 
                          document.querySelector('#login-form button[type="submit"]');
         if (loginBtn) {
             loginBtn.disabled = false;
-            loginBtn.innerHTML = 'Log In';
+            loginBtn.innerHTML = 'Login';
         }
+        
+        showMessage('An error occurred during login. Please try again.', 'error');
     }
 }
 
-// Helper function to redirect to the dashboard based on user type
-function redirectToDashboard(userType) {
-    const basePath = window.location.pathname.includes('/pages/') 
-        ? '..' 
-        : '.';
+// Helper function to show messages to the user
+function showMessage(message, type = 'info') {
+    const messageContainer = document.getElementById('messageContainer');
+    
+    if (!messageContainer) {
+        // Create message container if it doesn't exist
+        const newContainer = document.createElement('div');
+        newContainer.id = 'messageContainer';
+        newContainer.style.position = 'fixed';
+        newContainer.style.top = '10px';
+        newContainer.style.left = '50%';
+        newContainer.style.transform = 'translateX(-50%)';
+        newContainer.style.zIndex = '9999';
+        newContainer.style.width = '80%';
+        newContainer.style.maxWidth = '500px';
+        document.body.appendChild(newContainer);
         
-    if (userType === 'teacher') {
-        window.location.href = `${basePath}/pages/teacher-dashboard.html`;
+        const alertDiv = createAlertElement(message, type);
+        newContainer.appendChild(alertDiv);
     } else {
-        window.location.href = `${basePath}/pages/student-dashboard.html`;
+        // Clear existing messages
+        messageContainer.innerHTML = '';
+        const alertDiv = createAlertElement(message, type);
+        messageContainer.appendChild(alertDiv);
     }
+}
+
+// Helper function to create alert elements
+function createAlertElement(message, type) {
+    const alertDiv = document.createElement('div');
+    alertDiv.className = `alert alert-${type === 'error' ? 'danger' : type}`;
+    alertDiv.innerHTML = message;
+    
+    // Auto-dismiss after 5 seconds
+    setTimeout(() => {
+        alertDiv.style.opacity = '0';
+        alertDiv.style.transition = 'opacity 0.5s';
+        setTimeout(() => alertDiv.remove(), 5000);
+    }, 5000);
+    
+    return alertDiv;
 }
