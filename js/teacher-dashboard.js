@@ -872,6 +872,11 @@ async function viewCurrentSessionAttendance() {
 // Logout function
 async function logout() {
     try {
+        console.log('Logging out...');
+        
+        // Store the base path for redirect before clearing localStorage
+        const basePath = getBasePath();
+        
         // Clear localStorage first
         localStorage.clear();
         
@@ -883,23 +888,27 @@ async function logout() {
         // Call server logout endpoint
         const response = await fetch(`${API_URL}/auth/logout`, {
             method: 'POST',
-            credentials: 'include'
+            credentials: 'include',
+            headers: {
+                'Content-Type': 'application/json',
+                'Cache-Control': 'no-cache'
+            }
         });
         
-        const data = await response.json();
-        
-        if (data.success) {
-            console.log('Logged out successfully');
+        if (response.ok) {
+            const data = await response.json();
+            console.log('Server logout response:', data);
         } else {
-            console.warn('Server logout returned error:', data.message);
+            console.warn(`Server logout failed with status: ${response.status}`);
         }
     } catch (error) {
         console.error('Logout error:', error);
     } finally {
-        // Get the base path for proper redirect
+        // Always redirect to login page with proper path, even if the server logout fails
         const basePath = getBasePath();
+        console.log(`Redirecting to ${basePath}/index.html`);
         
-        // Always redirect to login page with proper path
+        // Use replace instead of href to prevent back-button issues
         window.location.replace(`${basePath}/index.html`);
     }
 }
