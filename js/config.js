@@ -1,5 +1,5 @@
 // API configuration
-const API_URL = "https://qrattendance-backend-production.up.railway.app";
+const API_URL = "/api";
 
 // Make API_URL available globally instead of using export
 window.API_URL = API_URL;
@@ -46,7 +46,7 @@ const defaultFetchOptions = {
       errorDiv.style.borderRadius = '5px';
       errorDiv.innerHTML = `
         <h3>Connection Error</h3>
-        <p>Cannot connect to the backend server at ${API_URL}</p>
+        <p>Cannot connect to the backend server</p>
         <p>Please make sure the server is running and try again.</p>
       `;
       document.body.prepend(errorDiv);

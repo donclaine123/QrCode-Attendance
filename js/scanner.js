@@ -352,13 +352,26 @@ document.addEventListener("DOMContentLoaded", async () => {
         return;
       }
       
+      // Handle different URL formats (direct, proxy, or relative)
+      let sessionId, teacherId, subject;
+      
       // Check if it's a URL for our attendance system
       if (qrData.includes('/attend?') || qrData.includes('/auth/attend?')) {
-        // Extract session ID and teacher ID from URL
-        const url = new URL(qrData);
-        const sessionId = url.searchParams.get('session');
-        const teacherId = url.searchParams.get('teacher');
-        const subject = url.searchParams.get('subject');
+        try {
+          // Extract session ID and teacher ID from URL
+          const url = new URL(qrData);
+          sessionId = url.searchParams.get('session');
+          teacherId = url.searchParams.get('teacher');
+          subject = url.searchParams.get('subject');
+        } catch (urlError) {
+          console.error("URL parsing error:", urlError);
+          
+          // Try to extract parameters directly from the string as fallback
+          const urlParams = new URLSearchParams(qrData.split('?')[1]);
+          sessionId = urlParams.get('session');
+          teacherId = urlParams.get('teacher');
+          subject = urlParams.get('subject');
+        }
         
         if (!sessionId || !teacherId) {
           scanStatus.textContent = "Invalid QR code. Missing required parameters.";
