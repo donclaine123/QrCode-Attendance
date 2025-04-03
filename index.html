@@ -4,79 +4,80 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Attendance System</title>
-  <link rel="stylesheet" href="css/style.css">
+  <title>QR Code Attendance System</title>
+  <link rel="stylesheet" href="css/styles.css">
+  <!-- Add storage utility before other scripts -->
+  <script src="js/storage.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.min.js"></script>
   <link rel="icon" href="data:," />
 </head>
 
 <body>
   <div class="container">
-    <h1>Attendance System</h1>
+    <div class="auth-container">
+      <div class="auth-box">
+        <h1>QR Code Attendance System</h1>
 
-    <!-- Login Section -->
-    <div id="login-section">
-      <h2>Login</h2>
-      <form id="login-form">
-        <div id="errorMsg" style="display: none;" class="error-message"></div>
-        <label for="email">Email:</label>
-        <input type="email" id="email" name="email" required>
-        <label for="password">Password:</label>
-        <input type="password" id="password" name="password" required>
-        <button type="submit" id="loginBtn">Login</button>
-      </form>
-       <!-- Add Register Button -->
-       <button id="show-register">Register</button>
-    </div>
-
-    <!-- Register Section -->
-    <div id="register-section" style="display: none;">
-      <h2>Register</h2>
-      <form id="register-form">
-        <!-- Role Selection -->
-        <label for="role">Role:</label>
-        <select id="role" name="role" required>
-          <option value="">Select Role</option>
-          <option value="teacher">Teacher</option>
-          <option value="student">Student</option>
-        </select>
-
-        <!-- Email -->
-        <label for="reg-email">Email:</label>
-        <input type="email" id="reg-email" name="email" required>
-
-        <!-- First Name -->
-        <label for="first-name">First Name:</label>
-        <input type="text" id="first-name" name="first-name" required>
-
-        <!-- Last Name -->
-        <label for="last-name">Last Name:</label>
-        <input type="text" id="last-name" name="last-name" required>
-
-        <!-- Password -->
-        <label for="reg-password">Password:</label>
-        <input type="password" id="reg-password" name="password" required>
-
-        <!-- Confirm Password --> 
-        <label for="confirm-password">Confirm Password:</label>
-        <input type="password" id="confirm-password" name="confirm-password" required>
-
-        <!-- Student ID (Visible only for students) -->
-        <div id="student-id-field" style="display: none;">
-          <label for="student-id">Student ID Number:</label>
-          <input type="text" id="student-id" name="student-id">
+        <!-- Login Form -->
+        <div id="login-section" class="auth-section">
+          <h2>Login</h2>
+          <form id="login-form">
+            <div class="form-group">
+              <label for="login-email">Email:</label>
+              <input type="email" id="login-email" required>
+            </div>
+            <div class="form-group">
+              <label for="login-password">Password:</label>
+              <input type="password" id="login-password" required>
+            </div>
+            <button type="submit" id="login-btn">Login</button>
+          </form>
+          <p>Don't have an account? <a href="#" id="show-register">Register</a></p>
         </div>
 
-        <!-- Submit Button -->
-        <button type="submit">Register</button>
-      </form>
-    </div>
+        <!-- Register Form -->
+        <div id="register-section" class="auth-section" style="display: none;">
+          <h2>Register</h2>
+          <form id="register-form">
+            <div class="form-group">
+              <label for="register-first-name">First Name:</label>
+              <input type="text" id="register-first-name" required>
+            </div>
+            <div class="form-group">
+              <label for="register-last-name">Last Name:</label>
+              <input type="text" id="register-last-name" required>
+            </div>
+            <div class="form-group">
+              <label for="register-email">Email:</label>
+              <input type="email" id="register-email" required>
+            </div>
+            <div class="form-group">
+              <label for="register-password">Password:</label>
+              <input type="password" id="register-password" required>
+            </div>
+            <div class="form-group">
+              <label for="register-role">Role:</label>
+              <select id="register-role" required>
+                <option value="">Select Role</option>
+                <option value="teacher">Teacher</option>
+                <option value="student">Student</option>
+              </select>
+            </div>
+            <button type="submit" id="register-btn">Register</button>
+          </form>
+          <p>Already have an account? <a href="#" id="show-login">Login</a></p>
+        </div>
 
-    <!-- Load config.js first to define API_URL -->
-    <script src="./js/config.js"></script>
-    <!-- Then load login.js which uses API_URL -->
-    <script src="./js/login.js"></script>
+        <!-- Error Message Display -->
+        <div id="error-message" class="error-message"></div>
+      </div>
+    </div>
   </div>
+
+  <!-- Load config.js first to define API_URL -->
+  <script src="./js/config.js"></script>
+  <!-- Then load login.js which uses API_URL -->
+  <script src="./js/login.js"></script>
 </body>
 
 </html>

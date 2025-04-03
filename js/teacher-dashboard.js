@@ -1,5 +1,8 @@
 // Teacher Dashboard functionality
 
+// Use global API_URL instead of import
+// import API_URL from "./config.js";
+
 document.addEventListener('DOMContentLoaded', function() {
     // Skip initialization if already done by qrcode.js
     if (window.dashboardInitialized) {
@@ -339,63 +342,91 @@ function setupDebugListeners() {
 
 // Initialize dashboard
 async function initDashboard() {
-  try {
-    console.log("Initializing teacher dashboard...");
-    
-    // Get user info from localStorage instead of URL parameters
-    const userId = localStorage.getItem('userId');
-    const userRole = localStorage.getItem('userRole');
-    const userName = localStorage.getItem('userName');
-    
-    // If no user info in localStorage, try to authenticate with the server
-    if (!userId || !userRole) {
-      console.log("No user info in localStorage, checking authentication...");
-      
-      // Check authentication status
-      const response = await fetch(`${API_URL}/auth/check-auth`, {
-        credentials: 'include',
-        headers: {
-          'Accept': 'application/json'
+    try {
+        console.log("Initializing teacher dashboard...");
+        
+        // Get user info from storage
+        const userData = StorageUtil.getUserData();
+        
+        // If no user info in storage, try to authenticate with the server
+        if (!userData.userId || !userData.userRole) {
+            console.log("No user info in storage, checking authentication...");
+            
+            // Check authentication status
+            const response = await fetch(`${API_URL}/auth/check-auth`, {
+                credentials: 'include',
+                headers: {
+                    'Accept': 'application/json'
+                }
+            });
+            
+            if (response.ok) {
+                const data = await response.json();
+                console.log("Authentication successful:", data);
+                
+                // Store user info using StorageUtil
+                const newUserData = {
+                    userId: data.user.id,
+                    userRole: data.role,
+                    userName: `${data.user.firstName} ${data.user.lastName}`
+                };
+                
+                if (StorageUtil.setUserData(newUserData)) {
+                    // Update welcome message
+                    const welcomeMessage = document.getElementById('welcome-message');
+                    if (welcomeMessage) {
+                        welcomeMessage.textContent = `Welcome, ${data.user.firstName} ${data.user.lastName}!`;
+                    }
+                    
+                    // Show teacher section
+                    const teacherSection = document.getElementById('teacher-section');
+                    if (teacherSection) {
+                        teacherSection.style.display = 'block';
+                    }
+                    
+                    // Load classes
+                    loadClasses();
+                } else {
+                    console.warn("Failed to store user data, but continuing with server session");
+                    // Still proceed with server session
+                    const welcomeMessage = document.getElementById('welcome-message');
+                    if (welcomeMessage) {
+                        welcomeMessage.textContent = `Welcome, ${data.user.firstName} ${data.user.lastName}!`;
+                    }
+                    
+                    const teacherSection = document.getElementById('teacher-section');
+                    if (teacherSection) {
+                        teacherSection.style.display = 'block';
+                    }
+                    
+                    loadClasses();
+                }
+            } else {
+                console.error("Authentication failed, redirecting to login...");
+                window.location.href = getBasePath() + '/index.html';
+            }
+        } else {
+            // User info found in storage
+            console.log("User info found in storage:", userData);
+            
+            // Update welcome message
+            const welcomeMessage = document.getElementById('welcome-message');
+            if (welcomeMessage) {
+                welcomeMessage.textContent = `Welcome, ${userData.userName}!`;
+            }
+            
+            // Show teacher section
+            const teacherSection = document.getElementById('teacher-section');
+            if (teacherSection) {
+                teacherSection.style.display = 'block';
+            }
+            
+            // Load classes
+            loadClasses();
         }
-      });
-      
-      if (response.ok) {
-        const data = await response.json();
-        console.log("Authentication successful:", data);
-        
-        // Store user info in localStorage
-        localStorage.setItem('userId', data.user.id);
-        localStorage.setItem('userRole', data.role);
-        localStorage.setItem('userName', `${data.user.firstName} ${data.user.lastName}`);
-        
-        // Update welcome message
-        document.getElementById('welcome-message').textContent = `Welcome, ${data.user.firstName} ${data.user.lastName}!`;
-        
-        // Show teacher section
-        document.getElementById('teacher-section').style.display = 'block';
-        
-        // Load classes
-        loadClasses();
-      } else {
-        console.error("Authentication failed, redirecting to login...");
-        window.location.href = getBasePath() + '/index.html';
-      }
-    } else {
-      // User info found in localStorage
-      console.log("User info found in localStorage:", { userId, userRole, userName });
-      
-      // Update welcome message
-      document.getElementById('welcome-message').textContent = `Welcome, ${userName}!`;
-      
-      // Show teacher section
-      document.getElementById('teacher-section').style.display = 'block';
-      
-      // Load classes
-      loadClasses();
-    }
-  } catch (error) {
-    console.error("Error initializing dashboard:", error);
-    showError("Failed to initialize dashboard. Please try again.");
+    } catch (error) {
+        console.error("Error initializing dashboard:", error);
+        showError("Failed to initialize dashboard. Please try again.");
     }
 }
 
@@ -851,26 +882,26 @@ async function viewCurrentSessionAttendance() {
 // Logout function
 async function logout() {
     try {
-    // Call the logout endpoint
+        // Call the logout endpoint
         const response = await fetch(`${API_URL}/auth/logout`, {
             method: 'POST',
-      credentials: 'include',
-      headers: {
-        'Accept': 'application/json'
-      }
-    });
-    
-    // Clear localStorage
-    localStorage.clear();
-    
-    // Redirect to login page
-    window.location.href = getBasePath() + '/index.html';
+            credentials: 'include',
+            headers: {
+                'Accept': 'application/json'
+            }
+        });
+        
+        // Clear storage using StorageUtil
+        StorageUtil.clearUserData();
+        
+        // Redirect to login page
+        window.location.href = getBasePath() + '/index.html';
     } catch (error) {
         console.error('Logout error:', error);
-    // Even if the server request fails, clear local storage and redirect
-    localStorage.clear();
-    window.location.href = getBasePath() + '/index.html';
-  }
+        // Even if the server request fails, clear storage and redirect
+        StorageUtil.clearUserData();
+        window.location.href = getBasePath() + '/index.html';
+    }
 }
 
 // Helper function to get base path - same as in login.js

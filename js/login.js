@@ -1,5 +1,5 @@
 // Use global API_URL instead of import
-// import { API_URL } from "./config.js";
+// import API_URL from "./config.js";
 
 document.addEventListener('DOMContentLoaded', function() {
   console.log('Login page loaded');
@@ -83,15 +83,15 @@ document.addEventListener('DOMContentLoaded', function() {
         }
       });
       
-      // Clear localStorage
-      localStorage.clear();
+      // Clear storage using StorageUtil
+      StorageUtil.clearUserData();
       
       // Redirect to login page
       window.location.href = getBasePath() + '/index.html';
     } catch (error) {
       console.error('Logout error:', error);
-      // Even if the server request fails, clear local storage and redirect
-      localStorage.clear();
+      // Even if the server request fails, clear storage and redirect
+      StorageUtil.clearUserData();
       window.location.href = getBasePath() + '/index.html';
     }
   }
@@ -161,35 +161,45 @@ async function checkAuth() {
       const data = await response.json();
       console.log("Authentication successful:", data);
       
-      // Store user info in localStorage
-      localStorage.setItem('userId', data.user.id);
-      localStorage.setItem('userRole', data.role);
-      localStorage.setItem('userName', `${data.user.firstName} ${data.user.lastName}`);
+      // Store user info using StorageUtil
+      const userData = {
+        userId: data.user.id,
+        userRole: data.role,
+        userName: `${data.user.firstName} ${data.user.lastName}`
+      };
       
-      // Redirect based on role
-      if (data.role === 'teacher') {
-        window.location.href = getBasePath() + '/teacher-dashboard.html';
-      } else if (data.role === 'student') {
-        window.location.href = getBasePath() + '/student-dashboard.html';
+      if (StorageUtil.setUserData(userData)) {
+        // Redirect based on role
+        if (data.role === 'teacher') {
+          window.location.href = getBasePath() + '/teacher-dashboard.html';
+        } else if (data.role === 'student') {
+          window.location.href = getBasePath() + '/student-dashboard.html';
+        }
+      } else {
+        console.warn("Failed to store user data, but continuing with server session");
+        // Still redirect even if storage fails
+        if (data.role === 'teacher') {
+          window.location.href = getBasePath() + '/teacher-dashboard.html';
+        } else if (data.role === 'student') {
+          window.location.href = getBasePath() + '/student-dashboard.html';
+        }
       }
     } else {
-      // If server auth fails, check localStorage as fallback
-      const userId = localStorage.getItem('userId');
-      const userRole = localStorage.getItem('userRole');
-      
-      if (userId && userRole) {
-        console.log("Using localStorage fallback for authentication");
-        if (userRole === 'teacher') {
+      // If server auth fails, check storage as fallback
+      const userData = StorageUtil.getUserData();
+      if (userData.userId && userData.userRole) {
+        console.log("Using storage fallback for authentication");
+        if (userData.userRole === 'teacher') {
           window.location.href = getBasePath() + '/teacher-dashboard.html';
-        } else if (userRole === 'student') {
+        } else if (userData.userRole === 'student') {
           window.location.href = getBasePath() + '/student-dashboard.html';
         }
       }
     }
   } catch (error) {
     console.error("Error checking authentication:", error);
-    // If there's an error, clear localStorage and stay on login page
-    localStorage.clear();
+    // If there's an error, clear storage and stay on login page
+    StorageUtil.clearUserData();
   }
 }
 
@@ -219,16 +229,28 @@ async function login() {
       const data = await response.json();
       console.log("Login successful:", data);
       
-      // Store user info in localStorage
-      localStorage.setItem('userId', data.user.id);
-      localStorage.setItem('userRole', data.role);
-      localStorage.setItem('userName', `${data.user.firstName} ${data.user.lastName}`);
+      // Store user info using StorageUtil
+      const userData = {
+        userId: data.user.id,
+        userRole: data.role,
+        userName: `${data.user.firstName} ${data.user.lastName}`
+      };
       
-      // Redirect based on role
-      if (data.role === 'teacher') {
-        window.location.href = getBasePath() + '/teacher-dashboard.html';
-      } else if (data.role === 'student') {
-        window.location.href = getBasePath() + '/student-dashboard.html';
+      if (StorageUtil.setUserData(userData)) {
+        // Redirect based on role
+        if (data.role === 'teacher') {
+          window.location.href = getBasePath() + '/teacher-dashboard.html';
+        } else if (data.role === 'student') {
+          window.location.href = getBasePath() + '/student-dashboard.html';
+        }
+      } else {
+        console.warn("Failed to store user data, but continuing with server session");
+        // Still redirect even if storage fails
+        if (data.role === 'teacher') {
+          window.location.href = getBasePath() + '/teacher-dashboard.html';
+        } else if (data.role === 'student') {
+          window.location.href = getBasePath() + '/student-dashboard.html';
+        }
       }
     } else {
       const errorData = await response.json();
@@ -282,16 +304,28 @@ async function register() {
       const data = await response.json();
       console.log("Registration successful:", data);
       
-      // Store user info in localStorage
-      localStorage.setItem('userId', data.user.id);
-      localStorage.setItem('userRole', data.role);
-      localStorage.setItem('userName', `${data.user.firstName} ${data.user.lastName}`);
+      // Store user info using StorageUtil
+      const userData = {
+        userId: data.user.id,
+        userRole: data.role,
+        userName: `${data.user.firstName} ${data.user.lastName}`
+      };
       
-      // Redirect based on role
-      if (data.role === 'teacher') {
-        window.location.href = getBasePath() + '/teacher-dashboard.html';
-      } else if (data.role === 'student') {
-        window.location.href = getBasePath() + '/student-dashboard.html';
+      if (StorageUtil.setUserData(userData)) {
+        // Redirect based on role
+        if (data.role === 'teacher') {
+          window.location.href = getBasePath() + '/teacher-dashboard.html';
+        } else if (data.role === 'student') {
+          window.location.href = getBasePath() + '/student-dashboard.html';
+        }
+      } else {
+        console.warn("Failed to store user data, but continuing with server session");
+        // Still redirect even if storage fails
+        if (data.role === 'teacher') {
+          window.location.href = getBasePath() + '/teacher-dashboard.html';
+        } else if (data.role === 'student') {
+          window.location.href = getBasePath() + '/student-dashboard.html';
+        }
       }
     } else {
       const errorData = await response.json();
@@ -322,15 +356,15 @@ async function logout() {
       }
     });
     
-    // Clear localStorage
-    localStorage.clear();
+    // Clear storage using StorageUtil
+    StorageUtil.clearUserData();
     
     // Redirect to login page
     window.location.href = getBasePath() + '/index.html';
   } catch (error) {
     console.error('Logout error:', error);
-    // Even if the server request fails, clear local storage and redirect
-    localStorage.clear();
+    // Even if the server request fails, clear storage and redirect
+    StorageUtil.clearUserData();
     window.location.href = getBasePath() + '/index.html';
   }
 }

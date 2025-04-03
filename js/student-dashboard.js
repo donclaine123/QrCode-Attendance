@@ -48,14 +48,12 @@ async function initDashboard() {
     try {
         console.log("Initializing student dashboard...");
         
-        // Get user info from localStorage instead of URL parameters
-        const userId = localStorage.getItem('userId');
-        const userRole = localStorage.getItem('userRole');
-        const userName = localStorage.getItem('userName');
+        // Get user info from storage
+        const userData = StorageUtil.getUserData();
         
-        // If no user info in localStorage, try to authenticate with the server
-        if (!userId || !userRole) {
-            console.log("No user info in localStorage, checking authentication...");
+        // If no user info in storage, try to authenticate with the server
+        if (!userData.userId || !userData.userRole) {
+            console.log("No user info in storage, checking authentication...");
             
             // Check authentication status
             const response = await fetch(`${API_URL}/auth/check-auth`, {
@@ -69,37 +67,55 @@ async function initDashboard() {
                 const data = await response.json();
                 console.log("Authentication successful:", data);
                 
-                // Store user info in localStorage
-                localStorage.setItem('userId', data.user.id);
-                localStorage.setItem('userRole', data.role);
-                localStorage.setItem('userName', `${data.user.firstName} ${data.user.lastName}`);
+                // Store user info using StorageUtil
+                const newUserData = {
+                    userId: data.user.id,
+                    userRole: data.role,
+                    userName: `${data.user.firstName} ${data.user.lastName}`
+                };
                 
-                // Update welcome message
-                const welcomeMessage = document.getElementById('welcome-message');
-                if (welcomeMessage) {
-                    welcomeMessage.textContent = `Welcome, ${data.user.firstName} ${data.user.lastName}!`;
+                if (StorageUtil.setUserData(newUserData)) {
+                    // Update welcome message
+                    const welcomeMessage = document.getElementById('welcome-message');
+                    if (welcomeMessage) {
+                        welcomeMessage.textContent = `Welcome, ${data.user.firstName} ${data.user.lastName}!`;
+                    }
+                    
+                    // Show student section
+                    const studentSection = document.getElementById('student-section');
+                    if (studentSection) {
+                        studentSection.style.display = 'block';
+                    }
+                    
+                    // Load enrolled classes
+                    loadEnrolledClasses();
+                } else {
+                    console.warn("Failed to store user data, but continuing with server session");
+                    // Still proceed with server session
+                    const welcomeMessage = document.getElementById('welcome-message');
+                    if (welcomeMessage) {
+                        welcomeMessage.textContent = `Welcome, ${data.user.firstName} ${data.user.lastName}!`;
+                    }
+                    
+                    const studentSection = document.getElementById('student-section');
+                    if (studentSection) {
+                        studentSection.style.display = 'block';
+                    }
+                    
+                    loadEnrolledClasses();
                 }
-                
-                // Show student section
-                const studentSection = document.getElementById('student-section');
-                if (studentSection) {
-                    studentSection.style.display = 'block';
-                }
-                
-                // Load enrolled classes
-                loadEnrolledClasses();
             } else {
                 console.error("Authentication failed, redirecting to login...");
                 window.location.href = getBasePath() + '/index.html';
             }
         } else {
-            // User info found in localStorage
-            console.log("User info found in localStorage:", { userId, userRole, userName });
+            // User info found in storage
+            console.log("User info found in storage:", userData);
             
             // Update welcome message
             const welcomeMessage = document.getElementById('welcome-message');
             if (welcomeMessage) {
-                welcomeMessage.textContent = `Welcome, ${userName}!`;
+                welcomeMessage.textContent = `Welcome, ${userData.userName}!`;
             }
             
             // Show student section
@@ -198,136 +214,95 @@ async function loadAttendanceHistory() {
     }
 }
 
-// Load enrolled classes for the student
+// Load enrolled classes
 async function loadEnrolledClasses() {
     try {
-        const classSelect = document.getElementById('class-select');
+        const classSelect = document.getElementById('attendance-class-select');
         if (!classSelect) {
-            console.error("Class select element not found");
+            console.error('Class select element not found');
             return;
         }
         
         classSelect.innerHTML = '<option value="">Select a class</option>';
         
-        const userId = localStorage.getItem('userId');
-        console.log(`Fetching enrolled classes for student ID: ${userId}`);
+        const userData = StorageUtil.getUserData();
+        console.log(`Fetching enrolled classes for student ID: ${userData.userId}`);
         
-        const response = await fetch(`${API_URL}/auth/student-classes/${userId}`, {
+        const response = await fetch(`${API_URL}/student/enrolled-classes`, {
             credentials: 'include',
             headers: {
                 'Accept': 'application/json',
-                'Cache-Control': 'no-cache'
+                'X-User-ID': userData.userId,
+                'X-User-Role': userData.userRole
             }
         });
         
         if (!response.ok) {
-            throw new Error(`Server returned ${response.status}: ${response.statusText}`);
+            throw new Error('Failed to fetch enrolled classes');
         }
         
         const data = await response.json();
-        console.log('Enrolled classes data:', data);
+        console.log('Enrolled classes data received:', data);
         
         if (data.success && data.classes && data.classes.length > 0) {
-            data.classes.forEach(cls => {
+            data.classes.forEach(classItem => {
                 const option = document.createElement('option');
-                option.value = cls.id;
-                option.textContent = cls.class_name || cls.name;
+                option.value = classItem.id;
+                option.textContent = classItem.subject;
                 classSelect.appendChild(option);
             });
         } else {
-            classSelect.innerHTML += '<option disabled>No classes found</option>';
+            classSelect.innerHTML += '<option disabled>No enrolled classes found</option>';
         }
     } catch (error) {
         console.error('Error loading enrolled classes:', error);
-        const classSelect = document.getElementById('class-select');
-        if (classSelect) {
-            classSelect.innerHTML = '<option value="">Select a class</option>';
-            classSelect.innerHTML += `<option disabled>Error loading classes: ${error.message}</option>`;
-        }
+        showError('Failed to load enrolled classes. Please try again.');
     }
 }
 
-// Record attendance from QR code
+// Record attendance
 async function recordAttendance() {
     try {
-        const sessionId = localStorage.getItem('currentSessionId');
+        const sessionId = StorageUtil.getItem('currentSessionId');
         
         if (!sessionId) {
             alert('No QR session found. Please scan a valid QR code.');
             return;
         }
         
-        const btnElement = document.getElementById('record-attendance-btn');
-        const statusElement = document.getElementById('attendance-status');
+        const userData = StorageUtil.getUserData();
+        console.log(`Recording attendance for student ID: ${userData.userId}, session ID: ${sessionId}`);
         
-        if (!btnElement || !statusElement) {
-            console.error("Required elements for attendance recording not found");
-            return;
-        }
-        
-        // Disable button and show processing
-        btnElement.disabled = true;
-        btnElement.textContent = 'Processing...';
-        statusElement.innerHTML = '<p class="processing">Recording your attendance...</p>';
-        
-        const response = await fetch(`${API_URL}/record-attendance`, {
+        const response = await fetch(`${API_URL}/attendance/record`, {
             method: 'POST',
             headers: {
-                'Content-Type': 'application/json'
+                'Content-Type': 'application/json',
+                'Accept': 'application/json'
             },
-            credentials: 'include',
             body: JSON.stringify({
+                student_id: userData.userId,
                 session_id: sessionId
             })
         });
         
+        if (!response.ok) {
+            throw new Error('Failed to record attendance');
+        }
+        
         const data = await response.json();
-        console.log('Attendance recording response:', data);
+        console.log('Attendance recorded:', data);
         
-        if (data.success) {
-            statusElement.innerHTML = `
-                <div class="success-message">
-                    <p>Attendance recorded successfully!</p>
-                    <p>Subject: ${data.subject || 'N/A'}</p>
-                    <p>Time: ${formatDateToUTC8(new Date())}</p>
-                </div>
-            `;
-            
-            // Clear session data after successful recording
-            localStorage.removeItem('currentSessionId');
-            localStorage.removeItem('currentTeacherId');
-            
-            // Reload attendance history
-            loadAttendanceHistory();
-            
-            // Hide the QR attendance section after a delay
-            setTimeout(() => {
-                const qrAttendance = document.getElementById('qr-scanner-section');
-                if (qrAttendance) {
-                    qrAttendance.style.display = 'none';
-                }
-            }, 5000);
-        } else {
-            statusElement.innerHTML = `<div class="error-message">${data.message || 'Error recording attendance'}</div>`;
-        }
+        // Clear session data after successful recording
+        StorageUtil.removeItem('currentSessionId');
+        StorageUtil.removeItem('currentTeacherId');
         
-        // Re-enable button
-        btnElement.disabled = false;
-        btnElement.textContent = 'Record Attendance';
+        // Reload attendance history
+        loadAttendanceHistory();
         
+        alert('Attendance recorded successfully!');
     } catch (error) {
-        console.error('Attendance recording error:', error);
-        const statusElement = document.getElementById('attendance-status');
-        if (statusElement) {
-            statusElement.innerHTML = `<div class="error-message">Server error: ${error.message}. Please try again.</div>`;
-        }
-        
-        // Re-enable button
-        const btnElement = document.getElementById('record-attendance-btn');
-        if (btnElement) {
-            btnElement.disabled = false;
-            btnElement.textContent = 'Record Attendance';
-        }
+        console.error('Error recording attendance:', error);
+        showError('Failed to record attendance. Please try again.');
     }
 }
 
@@ -378,15 +353,15 @@ async function logout() {
             }
         });
         
-        // Clear localStorage
-        localStorage.clear();
+        // Clear storage using StorageUtil
+        StorageUtil.clearUserData();
         
         // Redirect to login page
         window.location.href = getBasePath() + '/index.html';
     } catch (error) {
         console.error('Logout error:', error);
-        // Even if the server request fails, clear local storage and redirect
-        localStorage.clear();
+        // Even if the server request fails, clear storage and redirect
+        StorageUtil.clearUserData();
         window.location.href = getBasePath() + '/index.html';
     }
 }
