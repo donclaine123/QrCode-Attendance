@@ -654,10 +654,32 @@ async function loadSessions(classId) {
     try {
         console.log(`Loading sessions for class ID: ${classId}`);
         
+        // Include both cookie-based and header-based auth
+        const headers = { 
+            'Accept': 'application/json',
+            'Cache-Control': 'no-cache'
+        };
+        
+        // Add fallback header auth
+        const userId = localStorage.getItem('userId');
+        const userRole = localStorage.getItem('userRole');
+        if (userId && userRole) {
+            headers['X-User-ID'] = userId;
+            headers['X-User-Role'] = userRole;
+        }
+        
         const response = await fetch(`${API_URL}/auth/class-sessions/${classId}`, {
             method: 'GET',
-            credentials: 'include'
+            credentials: 'include',
+            headers: headers
         });
+        
+        // Handle Unauthorized error specifically
+        if (response.status === 401) {
+            console.error('Authentication failed when loading sessions');
+            sessionSelect.innerHTML += '<option disabled>Authentication failed. Please try logging in again.</option>';
+            return;
+        }
         
         if (!response.ok) {
             throw new Error(`Server returned ${response.status}: ${response.statusText}`);
@@ -666,7 +688,7 @@ async function loadSessions(classId) {
         const data = await response.json();
         console.log('Sessions data received:', data);
         
-        if (data.success && data.sessions.length > 0) {
+        if (data.success && data.sessions && data.sessions.length > 0) {
             data.sessions.forEach(session => {
                 const option = document.createElement('option');
                 // Use session_id if available, otherwise use id
@@ -698,6 +720,8 @@ async function loadSessions(classId) {
                 option.textContent = `Session #${session.id} - ${formattedDate}`;
                 sessionSelect.appendChild(option);
             });
+            
+            console.log(`Loaded ${data.sessions.length} sessions successfully`);
         } else {
             sessionSelect.innerHTML += '<option disabled>No sessions found</option>';
         }
