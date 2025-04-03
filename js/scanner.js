@@ -522,9 +522,24 @@ document.addEventListener("DOMContentLoaded", async () => {
     }
     
     try {
+      // Use the same authentication approach as in other areas
+      const userId = localStorage.getItem('userId');
+      const userRole = localStorage.getItem('userRole');
+      const headers = {
+        'Accept': 'application/json',
+        'Cache-Control': 'no-cache'
+      };
+      
+      // Add user headers if available in localStorage as fallback
+      if (userId && userRole) {
+        headers['X-User-ID'] = userId;
+        headers['X-User-Role'] = userRole;
+      }
+      
       const response = await fetch(`${API_URL}/auth/check-auth`, {
         method: "GET",
-        credentials: "include"
+        credentials: "include",
+        headers: headers
       });
       
       const data = await response.json();
