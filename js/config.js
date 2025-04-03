@@ -71,9 +71,9 @@ async function fetchWithAuth(url, options = {}) {
     const response = await fetch(`${API_URL}${url}`, mergedOptions);
     
     // If unauthorized and we have stored credentials, try with Authorization header
-    if (response.status === 401 && localStorage.getItem('userEmail') && localStorage.getItem('userPassword')) {
-      const email = localStorage.getItem('userEmail');
-      const password = localStorage.getItem('userPassword');
+    if (response.status === 401 && sessionStorage.getItem('userEmail') && sessionStorage.getItem('userPassword')) {
+      const email = sessionStorage.getItem('userEmail');
+      const password = sessionStorage.getItem('userPassword');
       const base64Credentials = btoa(`${email}:${password}`);
       
       console.log("Retrying with Authorization header");

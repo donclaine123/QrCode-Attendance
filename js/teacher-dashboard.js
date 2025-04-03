@@ -621,8 +621,8 @@ async function loadSessions(classId) {
         
         // Only add header auth if no valid cookie exists
         if (!document.cookie.includes('qr_attendance_sid')) {
-            const userId = localStorage.getItem('userId');
-            const userRole = localStorage.getItem('userRole');
+            const userId = sessionStorage.getItem('userId');
+            const userRole = sessionStorage.getItem('userRole');
             if (userId && userRole) {
                 headers['X-User-ID'] = userId;
                 headers['X-User-Role'] = userRole;
@@ -691,9 +691,15 @@ async function loadSessions(classId) {
 
 // Load attendance records for a session
 async function loadAttendanceRecords() {
-    const sessionId = document.getElementById('sessionSelect').value;
-    const recordsDiv = document.getElementById('attendanceRecords');
+    const sessionSelect = document.getElementById('sessionSelect');
+    const recordsDiv = document.getElementById('attendance-records');
     
+    if (!sessionSelect || !recordsDiv) {
+        console.error("Required elements for attendance records not found");
+        return;
+    }
+    
+    const sessionId = sessionSelect.value;
     if (!sessionId) {
         recordsDiv.innerHTML = '<div class="error-message">Please select a session</div>';
         return;
@@ -710,8 +716,8 @@ async function loadAttendanceRecords() {
         };
         
         // Add fallback header auth
-        const userId = localStorage.getItem('userId');
-        const userRole = localStorage.getItem('userRole');
+        const userId = sessionStorage.getItem('userId');
+        const userRole = sessionStorage.getItem('userRole');
         if (userId && userRole) {
             headers['X-User-ID'] = userId;
             headers['X-User-Role'] = userRole;
@@ -806,7 +812,7 @@ async function loadAttendanceRecords() {
 
 // View attendance for current session
 async function viewCurrentSessionAttendance() {
-    const currentSessionId = localStorage.getItem('currentSessionId');
+    const currentSessionId = sessionStorage.getItem('currentSessionId');
     
     if (!currentSessionId) {
         alert('No active session found. Generate a QR code first.');
