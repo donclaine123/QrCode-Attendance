@@ -16,6 +16,26 @@ const defaultFetchOptions = {
   }
 };
 
+// Safe storage access function to handle storage access restrictions
+function safeStorageGet(key, storage = sessionStorage) {
+  try {
+    return storage.getItem(key);
+  } catch (error) {
+    console.warn(`Storage access error for key ${key}:`, error);
+    return null;
+  }
+}
+
+function safeStorageSet(key, value, storage = sessionStorage) {
+  try {
+    storage.setItem(key, value);
+    return true;
+  } catch (error) {
+    console.warn(`Storage access error for key ${key}:`, error);
+    return false;
+  }
+}
+
 // Verify that the backend server is running
 (async function() {
   try {
@@ -71,16 +91,19 @@ async function fetchWithAuth(url, options = {}) {
     const response = await fetch(`${API_URL}${url}`, mergedOptions);
     
     // If unauthorized and we have stored credentials, try with Authorization header
-    if (response.status === 401 && localStorage.getItem('userEmail') && localStorage.getItem('userPassword')) {
-      const email = localStorage.getItem('userEmail');
-      const password = localStorage.getItem('userPassword');
-      const base64Credentials = btoa(`${email}:${password}`);
+    if (response.status === 401) {
+      const userEmail = safeStorageGet('userEmail');
+      const userPassword = safeStorageGet('userPassword');
       
-      console.log("Retrying with Authorization header");
-      
-      // Retry with Authorization header
-      mergedOptions.headers['Authorization'] = `Basic ${base64Credentials}`;
-      return fetch(`${API_URL}${url}`, mergedOptions);
+      if (userEmail && userPassword) {
+        const base64Credentials = btoa(`${userEmail}:${userPassword}`);
+        
+        console.log("Retrying with Authorization header");
+        
+        // Retry with Authorization header
+        mergedOptions.headers['Authorization'] = `Basic ${base64Credentials}`;
+        return fetch(`${API_URL}${url}`, mergedOptions);
+      }
     }
     
     return response;
