@@ -916,23 +916,15 @@ async function logout() {
       }
     });
     
-    // Clear sessionStorage
-    try {
-      sessionStorage.clear();
-    } catch (error) {
-      console.warn("Error clearing sessionStorage:", error);
-    }
+    // Clear sessionStorage using safe function
+    safeStorageClear();
     
     // Redirect to login page
     window.location.href = getBasePath() + '/index.html';
   } catch (error) {
     console.error('Logout error:', error);
-    // Even if the server request fails, clear local storage and redirect
-    try {
-      sessionStorage.clear();
-    } catch (error) {
-      console.warn("Error clearing sessionStorage:", error);
-    }
+    // Even if the server request fails, clear storage and redirect
+    safeStorageClear();
     window.location.href = getBasePath() + '/index.html';
   }
 }

@@ -16,22 +16,79 @@ const defaultFetchOptions = {
   }
 };
 
-// Safe storage access function to handle storage access restrictions
+// In-memory fallback storage when sessionStorage is not available
+const memoryStorage = {};
+
+// Enhanced safe storage access function to handle storage access restrictions
 function safeStorageGet(key, storage = sessionStorage) {
   try {
-    return storage.getItem(key);
+    // First try to access the specified storage
+    const value = storage.getItem(key);
+    if (value !== null) {
+      return value;
+    }
+    
+    // If not found in primary storage, check memory fallback
+    return memoryStorage[key] || null;
   } catch (error) {
     console.warn(`Storage access error for key ${key}:`, error);
-    return null;
+    
+    // Fall back to memory storage
+    return memoryStorage[key] || null;
   }
 }
 
 function safeStorageSet(key, value, storage = sessionStorage) {
   try {
+    // Try to set in the specified storage
     storage.setItem(key, value);
+    
+    // Also store in memory as backup
+    memoryStorage[key] = value;
     return true;
   } catch (error) {
     console.warn(`Storage access error for key ${key}:`, error);
+    
+    // Fall back to memory storage
+    memoryStorage[key] = value;
+    return false;
+  }
+}
+
+function safeStorageRemove(key, storage = sessionStorage) {
+  try {
+    // Try to remove from the specified storage
+    storage.removeItem(key);
+    
+    // Also remove from memory
+    delete memoryStorage[key];
+    return true;
+  } catch (error) {
+    console.warn(`Storage access error for key ${key}:`, error);
+    
+    // Fall back to memory storage
+    delete memoryStorage[key];
+    return false;
+  }
+}
+
+function safeStorageClear(storage = sessionStorage) {
+  try {
+    // Try to clear the specified storage
+    storage.clear();
+    
+    // Also clear memory storage
+    Object.keys(memoryStorage).forEach(key => {
+      delete memoryStorage[key];
+    });
+    return true;
+  } catch (error) {
+    console.warn(`Storage clear error:`, error);
+    
+    // Fall back to clearing memory storage
+    Object.keys(memoryStorage).forEach(key => {
+      delete memoryStorage[key];
+    });
     return false;
   }
 }
