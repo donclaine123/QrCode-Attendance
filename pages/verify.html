@@ -14,8 +14,9 @@
     <h2 id="verification-status">Verifying your email...</h2>
     <p id="message">Please wait...</p>
 
-    <script type="module">
-      import { API_URL } from "../js/config.js";
+    <script>
+      // Define API_URL directly to avoid module import issues
+      const API_URL = "/api";
       
       async function verifyEmail() {
         const urlParams = new URLSearchParams(window.location.search);
@@ -31,7 +32,7 @@
         }
 
         try {
-          // Use the correct API URL from config
+          // Use the API URL directly
           const response = await fetch(`${API_URL}/auth/verify?token=${token}`, {
             credentials: 'include'
           });
