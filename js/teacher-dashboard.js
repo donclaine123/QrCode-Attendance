@@ -228,16 +228,52 @@ function setupDebugListeners() {
         testCookiesBtn.addEventListener('click', async function() {
             if (debugOutput) debugOutput.innerHTML = 'Testing cookies...';
             try {
+                // Before making the request, log current cookies
+                console.log('Current cookies before request:', document.cookie || 'NONE');
+                
                 const response = await fetch(`${API_URL}/auth/debug-cookies`, {
-                    credentials: 'include'
+                    credentials: 'include',
+                    cache: 'no-store' // Prevent caching
                 });
                 const data = await response.json();
                 
+                // After the request, check cookies again
+                console.log('Current cookies after request:', document.cookie || 'NONE');
+                
+                // Test if we can set a cookie directly from JavaScript
+                const testDate = new Date();
+                testDate.setTime(testDate.getTime() + 60000); // 1 minute
+                document.cookie = `js_test_cookie=test; path=/; expires=${testDate.toUTCString()}`;
+                console.log('Tried to set JS cookie, current cookies:', document.cookie || 'NONE');
+                
                 if (debugOutput) {
+                    let cookieInfo = '';
+                    
+                    // Check if the session is active
+                    let sessionStatus = 'Unknown';
+                    if (data.sessionExists === false) {
+                        sessionStatus = '<span style="color:red">Not found in database</span>';
+                    } else if (data.sessionActive === false) {
+                        sessionStatus = '<span style="color:orange">Exists but inactive (is_active=FALSE)</span>';
+                    } else if (data.sessionActive === true) {
+                        sessionStatus = '<span style="color:green">Active</span>';
+                    }
+                    
+                    // Check current cookies
+                    const currentCookies = document.cookie || 'NONE';
+                    const cookieColor = currentCookies === 'NONE' ? 'red' : 'green';
+                    
                     debugOutput.innerHTML = `
                         <h5>Cookie Debug</h5>
+                        <p><strong>Browser cookies:</strong> <span style="color:${cookieColor}">${currentCookies}</span></p>
+                        <p><strong>Session ID:</strong> ${data.sessionID}</p>
+                        <p><strong>Session status:</strong> ${sessionStatus}</p>
+                        <hr>
+                        <p><strong>Cookie settings:</strong></p>
+                        <pre>${JSON.stringify(data.currentSettings, null, 2)}</pre>
+                        <hr>
+                        <p><strong>Full server response:</strong></p>
                         <pre>${JSON.stringify(data, null, 2)}</pre>
-                        <p>Current cookies: ${document.cookie}</p>
                     `;
                 }
             } catch (error) {
@@ -252,15 +288,23 @@ function setupDebugListeners() {
             if (debugOutput) debugOutput.innerHTML = 'Checking authentication...';
             try {
                 const response = await fetch(`${API_URL}/auth/check-auth`, {
-                    credentials: 'include'
+                    credentials: 'include',
+                    cache: 'no-store' // Prevent caching
                 });
                 const data = await response.json();
+                
+                // Check current cookies
+                const currentCookies = document.cookie || 'NONE';
                 
                 if (debugOutput) {
                     debugOutput.innerHTML = `
                         <h5>Auth Check</h5>
+                        <p><strong>Authentication status:</strong> ${data.authenticated ? '<span style="color:green">Authenticated</span>' : '<span style="color:red">Not authenticated</span>'}</p>
+                        <p><strong>Current cookies:</strong> ${currentCookies}</p>
+                        <p><strong>LocalStorage:</strong> userId=${localStorage.getItem('userId')}, role=${localStorage.getItem('userRole')}</p>
+                        <hr>
+                        <p><strong>Full response:</strong></p>
                         <pre>${JSON.stringify(data, null, 2)}</pre>
-                        <p>LocalStorage: userId=${localStorage.getItem('userId')}, role=${localStorage.getItem('userRole')}</p>
                     `;
                 }
             } catch (error) {
