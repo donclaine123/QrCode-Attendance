@@ -343,7 +343,8 @@ async function initDashboard() {
             if (authData.user.role === 'teacher') {
                 console.log('Successfully authenticated as teacher');
                 
-                // Store in localStorage as fallback
+                // Store in localStorage as fallback, but ONLY store the credentials
+                // NOT any session-specific information that could cause re-auth
                 localStorage.setItem('userId', authData.user.id);
                 localStorage.setItem('userRole', 'teacher');
                 localStorage.setItem('firstName', authData.user.firstName || '');
@@ -377,13 +378,12 @@ async function initDashboard() {
             console.log('Attempting re-auth with localStorage data as last resort');
             
             try {
+                // No need to set headers here since we're explicitly creating a session
                 const reAuthResponse = await fetch(`${API_URL}/auth/reauth`, {
                     method: 'POST',
                     credentials: 'include',
                     headers: {
-                        'Content-Type': 'application/json',
-                        'X-User-ID': localUserId,
-                        'X-User-Role': localRole
+                        'Content-Type': 'application/json'
                     },
                     body: JSON.stringify({
                         userId: localUserId,
@@ -398,18 +398,18 @@ async function initDashboard() {
                     if (reAuthData.success) {
                         console.log("Successfully re-established session:", reAuthData.sessionId);
             
-            // Display teacher information from localStorage
-            const firstName = localStorage.getItem('firstName') || '';
-            const lastName = localStorage.getItem('lastName') || '';
-            
-            teacherInfoDiv.innerHTML = `
-                <p>Welcome, ${firstName || 'Teacher'} ${lastName || ''}!</p>
-                <p>User ID: ${localUserId}</p>
-            `;
-            
-            // Load teacher's classes
-            await loadClasses();
-            return;
+                        // Display teacher information from localStorage
+                        const firstName = localStorage.getItem('firstName') || '';
+                        const lastName = localStorage.getItem('lastName') || '';
+                        
+                        teacherInfoDiv.innerHTML = `
+                            <p>Welcome, ${firstName || 'Teacher'} ${lastName || ''}!</p>
+                            <p>User ID: ${localUserId}</p>
+                        `;
+                        
+                        // Load teacher's classes
+                        await loadClasses();
+                        return;
                     }
                 }
             } catch (reAuthError) {
