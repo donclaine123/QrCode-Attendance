@@ -297,19 +297,45 @@ async function checkAuthentication() {
 
 // Process login form submission
 async function handleLogin(event) {
-    const email = document.getElementById('email').value;
-    const password = document.getElementById('password').value;
-    const userType = document.querySelector('input[name="userType"]:checked').value;
+    const email = document.getElementById('email')?.value;
+    const password = document.getElementById('password')?.value;
+    
+    // Fix for the null reference error - add null check and fallback
+    const userTypeElement = document.querySelector('input[name="userType"]:checked');
+    const userType = userTypeElement ? userTypeElement.value : 'teacher'; // Default to teacher if not found
+    
+    // Validate required fields
+    if (!email || !password) {
+        // Show error without trying to access non-existent elements
+        console.error('Email or password is missing');
+        const errorElement = document.getElementById('errorMsg');
+        if (errorElement) {
+            errorElement.textContent = 'Email and password are required';
+            errorElement.style.display = 'block';
+            errorElement.className = 'error-message';
+        }
+        return;
+    }
     
     try {
-        // Show loading state
-        const loginBtn = document.querySelector('#loginForm button[type="submit"]');
+        // Show loading state - safely access elements
+        const loginBtn = document.querySelector('#loginForm button[type="submit"]') || 
+                         document.querySelector('#login-form button[type="submit"]');
+        
+        if (!loginBtn) {
+            console.error('Login button not found in the DOM');
+            return; // Exit if we can't find the login button
+        }
+        
         const originalBtnText = loginBtn.innerHTML;
         loginBtn.disabled = true;
         loginBtn.innerHTML = '<span class="spinner"></span> Logging in...';
         
-        // Clear previous error messages
-        document.getElementById('loginError').textContent = '';
+        // Clear previous error messages - safely
+        const loginError = document.getElementById('loginError');
+        const errorMsg = document.getElementById('errorMsg');
+        if (loginError) loginError.textContent = '';
+        if (errorMsg) errorMsg.style.display = 'none';
         
         // API URL is defined globally or use a default
         const apiUrl = window.API_URL || 'https://qrattendance-backend-production.up.railway.app';
@@ -332,8 +358,8 @@ async function handleLogin(event) {
         if (data.success) {
             // Save user data in localStorage for fallback authentication
             localStorage.setItem('userId', data.user.id);
-            localStorage.setItem('userName', data.user.name);
-            localStorage.setItem('userEmail', data.user.email);
+            localStorage.setItem('userName', data.user.name || `${data.user.firstName} ${data.user.lastName}`);
+            localStorage.setItem('userEmail', data.user.email || email);
             localStorage.setItem('userRole', userType);
             localStorage.setItem('isAuthenticated', 'true');
             localStorage.setItem('loginTime', new Date().toISOString());
@@ -370,7 +396,7 @@ async function handleLogin(event) {
                     `;
                     
                     // Show warning if we're still on the login page (we might already be redirected)
-                    const loginForm = document.getElementById('loginForm');
+                    const loginForm = document.getElementById('loginForm') || document.getElementById('login-form');
                     if (loginForm) {
                         loginForm.parentNode.insertBefore(warningDiv, loginForm.nextSibling);
                     }
@@ -380,21 +406,48 @@ async function handleLogin(event) {
                 redirectToDashboard(userType);
             }, 500);
         } else {
-            // Display error message
-            document.getElementById('loginError').textContent = data.message || 'Login failed. Please check your credentials.';
+            // Display error message - safely handle potential missing elements
+            if (loginError) {
+                loginError.textContent = data.message || 'Login failed. Please check your credentials.';
+            } else if (errorMsg) {
+                errorMsg.textContent = data.message || 'Login failed. Please check your credentials.';
+                errorMsg.style.display = 'block';
+                errorMsg.className = 'error-message';
+            } else {
+                console.error('Login failed:', data.message || 'Unknown error');
+                alert('Login failed: ' + (data.message || 'Please check your credentials.'));
+            }
             
             // Reset button
-            loginBtn.disabled = false;
-            loginBtn.innerHTML = originalBtnText;
+            if (loginBtn) {
+                loginBtn.disabled = false;
+                loginBtn.innerHTML = originalBtnText;
+            }
         }
     } catch (error) {
         console.error('Login error:', error);
-        document.getElementById('loginError').textContent = 'An error occurred during login. Please try again.';
         
-        // Reset button
-        const loginBtn = document.querySelector('#loginForm button[type="submit"]');
-        loginBtn.disabled = false;
-        loginBtn.innerHTML = 'Log In';
+        // Handle error display safely
+        const loginError = document.getElementById('loginError');
+        const errorMsg = document.getElementById('errorMsg');
+        
+        if (loginError) {
+            loginError.textContent = 'An error occurred during login. Please try again.';
+        } else if (errorMsg) {
+            errorMsg.textContent = 'An error occurred during login. Please try again.';
+            errorMsg.style.display = 'block'; 
+            errorMsg.className = 'error-message';
+        } else {
+            alert('Login error: ' + error.message);
+        }
+        
+        // Reset button - safely
+        const loginBtn = document.querySelector('#loginForm button[type="submit"]') || 
+                         document.querySelector('#login-form button[type="submit"]');
+        if (loginBtn) {
+            loginBtn.disabled = false;
+            loginBtn.innerHTML = 'Log In';
+        }
     }
 }
 
