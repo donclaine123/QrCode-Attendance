@@ -261,10 +261,22 @@ async function checkAuthDebug() {
             debugMessage.textContent += "\n\nHeader data: " + JSON.stringify(headerData, null, 2);
         }
         
-    } catch (error) {
-        console.error("Debug check error:", error);
+        // Check localStorage
+        const userId = localStorage.getItem('userId');
+        const userRole = localStorage.getItem('userRole');
+        const userName = localStorage.getItem('userName');
+        
         if (debugMessage) {
-            debugMessage.textContent = "Error checking auth: " + error.message;
+            debugMessage.textContent += "\n\nlocalStorage data:";
+            debugMessage.textContent += "\nuserId: " + (userId || "Not found");
+            debugMessage.textContent += "\nuserRole: " + (userRole || "Not found");
+            debugMessage.textContent += "\nuserName: " + (userName || "Not found");
+        }
+        
+    } catch (error) {
+        console.error("Auth debug error:", error);
+        if (debugMessage) {
+            debugMessage.textContent = "Error: " + error.message;
         }
     }
 }
@@ -296,14 +308,14 @@ function setupDebugListeners() {
         checkAuthBtn.addEventListener('click', async function() {
             try {
                 // Use the same authentication approach as the main dashboard init
-                const userId = sessionStorage.getItem('userId');
-                const userRole = sessionStorage.getItem('userRole');
+                const userId = localStorage.getItem('userId');
+                const userRole = localStorage.getItem('userRole');
                 const headers = {
                     'Accept': 'application/json',
                     'Cache-Control': 'no-cache'
                 };
                 
-                // Add user headers if available in sessionStorage as fallback
+                // Add user headers if available in localStorage as fallback
                 if (userId && userRole) {
                     headers['X-User-ID'] = userId;
                     headers['X-User-Role'] = userRole;
@@ -330,14 +342,14 @@ async function initDashboard() {
   try {
     console.log("Initializing teacher dashboard...");
     
-    // Get user info from sessionStorage instead of URL parameters
-    const userId = sessionStorage.getItem('userId');
-    const userRole = sessionStorage.getItem('userRole');
-    const userName = sessionStorage.getItem('userName');
+    // Get user info from localStorage instead of URL parameters
+    const userId = localStorage.getItem('userId');
+    const userRole = localStorage.getItem('userRole');
+    const userName = localStorage.getItem('userName');
     
-    // If no user info in sessionStorage, try to authenticate with the server
+    // If no user info in localStorage, try to authenticate with the server
     if (!userId || !userRole) {
-      console.log("No user info in sessionStorage, checking authentication...");
+      console.log("No user info in localStorage, checking authentication...");
       
       // Check authentication status
       const response = await fetch(`${API_URL}/auth/check-auth`, {
@@ -351,10 +363,10 @@ async function initDashboard() {
         const data = await response.json();
         console.log("Authentication successful:", data);
         
-        // Store user info in sessionStorage
-        sessionStorage.setItem('userId', data.user.id);
-        sessionStorage.setItem('userRole', data.role);
-        sessionStorage.setItem('userName', `${data.user.firstName} ${data.user.lastName}`);
+        // Store user info in localStorage
+        localStorage.setItem('userId', data.user.id);
+        localStorage.setItem('userRole', data.role);
+        localStorage.setItem('userName', `${data.user.firstName} ${data.user.lastName}`);
         
         // Update welcome message
         document.getElementById('welcome-message').textContent = `Welcome, ${data.user.firstName} ${data.user.lastName}!`;
@@ -369,8 +381,8 @@ async function initDashboard() {
         window.location.href = getBasePath() + '/index.html';
       }
     } else {
-      // User info found in sessionStorage
-      console.log("User info found in sessionStorage:", { userId, userRole, userName });
+      // User info found in localStorage
+      console.log("User info found in localStorage:", { userId, userRole, userName });
       
       // Update welcome message
       document.getElementById('welcome-message').textContent = `Welcome, ${userName}!`;
@@ -399,7 +411,7 @@ async function loadClasses() {
             return;
         }
         
-        const userId = sessionStorage.getItem('userId');
+        const userId = localStorage.getItem('userId');
         console.log(`Fetching classes for user ID: ${userId}`);
         console.log(`Session cookies: ${document.cookie}`);
         
@@ -409,8 +421,8 @@ async function loadClasses() {
             'Cache-Control': 'no-cache'
         };
         
-        // Add auth from sessionStorage if available
-        const userRole = sessionStorage.getItem('userRole');
+        // Add auth from localStorage if available
+        const userRole = localStorage.getItem('userRole');
         if (userId && userRole) {
             headers['X-User-ID'] = userId;
             headers['X-User-Role'] = userRole;
@@ -691,9 +703,15 @@ async function loadSessions(classId) {
 
 // Load attendance records for a session
 async function loadAttendanceRecords() {
-    const sessionId = document.getElementById('sessionSelect').value;
-    const recordsDiv = document.getElementById('attendanceRecords');
+    const sessionSelect = document.getElementById('sessionSelect');
+    const recordsDiv = document.getElementById('attendance-records');
     
+    if (!sessionSelect || !recordsDiv) {
+        console.error("Required elements for attendance records not found");
+        return;
+    }
+    
+    const sessionId = sessionSelect.value;
     if (!sessionId) {
         recordsDiv.innerHTML = '<div class="error-message">Please select a session</div>';
         return;
@@ -842,15 +860,15 @@ async function logout() {
       }
     });
     
-    // Clear sessionStorage
-    sessionStorage.clear();
+    // Clear localStorage
+    localStorage.clear();
     
     // Redirect to login page
     window.location.href = getBasePath() + '/index.html';
     } catch (error) {
         console.error('Logout error:', error);
     // Even if the server request fails, clear local storage and redirect
-    sessionStorage.clear();
+    localStorage.clear();
     window.location.href = getBasePath() + '/index.html';
   }
 }

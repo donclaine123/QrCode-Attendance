@@ -48,14 +48,14 @@ async function initDashboard() {
     try {
         console.log("Initializing student dashboard...");
         
-        // Get user info from sessionStorage instead of URL parameters
-        const userId = sessionStorage.getItem('userId');
-        const userRole = sessionStorage.getItem('userRole');
-        const userName = sessionStorage.getItem('userName');
+        // Get user info from localStorage instead of URL parameters
+        const userId = localStorage.getItem('userId');
+        const userRole = localStorage.getItem('userRole');
+        const userName = localStorage.getItem('userName');
         
-        // If no user info in sessionStorage, try to authenticate with the server
+        // If no user info in localStorage, try to authenticate with the server
         if (!userId || !userRole) {
-            console.log("No user info in sessionStorage, checking authentication...");
+            console.log("No user info in localStorage, checking authentication...");
             
             // Check authentication status
             const response = await fetch(`${API_URL}/auth/check-auth`, {
@@ -69,10 +69,10 @@ async function initDashboard() {
                 const data = await response.json();
                 console.log("Authentication successful:", data);
                 
-                // Store user info in sessionStorage
-                sessionStorage.setItem('userId', data.user.id);
-                sessionStorage.setItem('userRole', data.role);
-                sessionStorage.setItem('userName', `${data.user.firstName} ${data.user.lastName}`);
+                // Store user info in localStorage
+                localStorage.setItem('userId', data.user.id);
+                localStorage.setItem('userRole', data.role);
+                localStorage.setItem('userName', `${data.user.firstName} ${data.user.lastName}`);
                 
                 // Update welcome message
                 const welcomeMessage = document.getElementById('welcome-message');
@@ -93,8 +93,8 @@ async function initDashboard() {
                 window.location.href = getBasePath() + '/index.html';
             }
         } else {
-            // User info found in sessionStorage
-            console.log("User info found in sessionStorage:", { userId, userRole, userName });
+            // User info found in localStorage
+            console.log("User info found in localStorage:", { userId, userRole, userName });
             
             // Update welcome message
             const welcomeMessage = document.getElementById('welcome-message');
@@ -209,7 +209,7 @@ async function loadEnrolledClasses() {
         
         classSelect.innerHTML = '<option value="">Select a class</option>';
         
-        const userId = sessionStorage.getItem('userId');
+        const userId = localStorage.getItem('userId');
         console.log(`Fetching enrolled classes for student ID: ${userId}`);
         
         const response = await fetch(`${API_URL}/auth/student-classes/${userId}`, {
@@ -250,7 +250,7 @@ async function loadEnrolledClasses() {
 // Record attendance from QR code
 async function recordAttendance() {
     try {
-        const sessionId = sessionStorage.getItem('currentSessionId');
+        const sessionId = localStorage.getItem('currentSessionId');
         
         if (!sessionId) {
             alert('No QR session found. Please scan a valid QR code.');
@@ -294,8 +294,8 @@ async function recordAttendance() {
             `;
             
             // Clear session data after successful recording
-            sessionStorage.removeItem('currentSessionId');
-            sessionStorage.removeItem('currentTeacherId');
+            localStorage.removeItem('currentSessionId');
+            localStorage.removeItem('currentTeacherId');
             
             // Reload attendance history
             loadAttendanceHistory();
@@ -378,15 +378,15 @@ async function logout() {
             }
         });
         
-        // Clear sessionStorage
-        sessionStorage.clear();
+        // Clear localStorage
+        localStorage.clear();
         
         // Redirect to login page
         window.location.href = getBasePath() + '/index.html';
     } catch (error) {
         console.error('Logout error:', error);
         // Even if the server request fails, clear local storage and redirect
-        sessionStorage.clear();
+        localStorage.clear();
         window.location.href = getBasePath() + '/index.html';
     }
 }
@@ -432,14 +432,14 @@ function setupDebugListeners() {
         checkAuthBtn.addEventListener('click', async function() {
             try {
                 // Use the same authentication approach as the main dashboard init
-                const userId = sessionStorage.getItem('userId');
-                const userRole = sessionStorage.getItem('userRole');
+                const userId = localStorage.getItem('userId');
+                const userRole = localStorage.getItem('userRole');
                 const headers = {
                     'Accept': 'application/json',
                     'Cache-Control': 'no-cache'
                 };
                 
-                // Add user headers if available in sessionStorage as fallback
+                // Add user headers if available in localStorage as fallback
                 if (userId && userRole) {
                     headers['X-User-ID'] = userId;
                     headers['X-User-Role'] = userRole;
