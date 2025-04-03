@@ -6,6 +6,14 @@ document.addEventListener('DOMContentLoaded', function() {
         console.log('Dashboard already initialized by qrcode.js, skipping duplicate initialization');
         return;
     }
+
+    const logoutBtn = document.getElementById('logout-btn');
+    if (logoutBtn) {
+        logoutBtn.addEventListener('click', function(e) {
+            e.preventDefault();
+            logout();
+        });
+    }
     
     window.dashboardInitialized = true;
     console.log('Teacher dashboard loaded');
@@ -64,6 +72,9 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
     
+
+
+
     // Set up event listeners for QR code generation
     const generateQrCodeBtn = document.getElementById('generate-qr-code-btn');
     const viewCurrentAttendanceBtn = document.getElementById('view-current-attendance-btn');
