@@ -296,8 +296,8 @@ function setupDebugListeners() {
         checkAuthBtn.addEventListener('click', async function() {
             try {
                 // Use the same authentication approach as the main dashboard init
-                const userId = safeStorageGet('userId');
-                const userRole = safeStorageGet('userRole');
+                const userId = sessionStorage.getItem('userId');
+                const userRole = sessionStorage.getItem('userRole');
                 const headers = {
                     'Accept': 'application/json',
                     'Cache-Control': 'no-cache'
@@ -331,9 +331,9 @@ async function initDashboard() {
     console.log("Initializing teacher dashboard...");
     
     // Get user info from sessionStorage instead of URL parameters
-    const userId = safeStorageGet('userId');
-    const userRole = safeStorageGet('userRole');
-    const userName = safeStorageGet('userName');
+    const userId = sessionStorage.getItem('userId');
+    const userRole = sessionStorage.getItem('userRole');
+    const userName = sessionStorage.getItem('userName');
     
     // If no user info in sessionStorage, try to authenticate with the server
     if (!userId || !userRole) {
@@ -352,21 +352,15 @@ async function initDashboard() {
         console.log("Authentication successful:", data);
         
         // Store user info in sessionStorage
-        safeStorageSet('userId', data.user.id);
-        safeStorageSet('userRole', data.role);
-        safeStorageSet('userName', `${data.user.firstName} ${data.user.lastName}`);
+        sessionStorage.setItem('userId', data.user.id);
+        sessionStorage.setItem('userRole', data.role);
+        sessionStorage.setItem('userName', `${data.user.firstName} ${data.user.lastName}`);
         
         // Update welcome message
-        const welcomeMessage = document.getElementById('welcome-message');
-        if (welcomeMessage) {
-          welcomeMessage.textContent = `Welcome, ${data.user.firstName} ${data.user.lastName}!`;
-        }
+        document.getElementById('welcome-message').textContent = `Welcome, ${data.user.firstName} ${data.user.lastName}!`;
         
         // Show teacher section
-        const teacherSection = document.getElementById('teacher-section');
-        if (teacherSection) {
-          teacherSection.style.display = 'block';
-        }
+        document.getElementById('teacher-section').style.display = 'block';
         
         // Load classes
         loadClasses();
@@ -379,16 +373,10 @@ async function initDashboard() {
       console.log("User info found in sessionStorage:", { userId, userRole, userName });
       
       // Update welcome message
-      const welcomeMessage = document.getElementById('welcome-message');
-      if (welcomeMessage) {
-        welcomeMessage.textContent = `Welcome, ${userName}!`;
-      }
+      document.getElementById('welcome-message').textContent = `Welcome, ${userName}!`;
       
       // Show teacher section
-      const teacherSection = document.getElementById('teacher-section');
-      if (teacherSection) {
-        teacherSection.style.display = 'block';
-      }
+      document.getElementById('teacher-section').style.display = 'block';
       
       // Load classes
       loadClasses();
@@ -396,7 +384,7 @@ async function initDashboard() {
   } catch (error) {
     console.error("Error initializing dashboard:", error);
     showError("Failed to initialize dashboard. Please try again.");
-  }
+    }
 }
 
 // Load classes for the teacher
@@ -411,7 +399,7 @@ async function loadClasses() {
             return;
         }
         
-        const userId = safeStorageGet('userId');
+        const userId = sessionStorage.getItem('userId');
         console.log(`Fetching classes for user ID: ${userId}`);
         console.log(`Session cookies: ${document.cookie}`);
         
@@ -422,7 +410,7 @@ async function loadClasses() {
         };
         
         // Add auth from sessionStorage if available
-        const userRole = safeStorageGet('userRole');
+        const userRole = sessionStorage.getItem('userRole');
         if (userId && userRole) {
             headers['X-User-ID'] = userId;
             headers['X-User-Role'] = userRole;
@@ -537,35 +525,29 @@ async function loadClasses() {
         const classesContainer = document.getElementById('classes-container');
         if (classesContainer) {
             classesContainer.innerHTML = `
-                <div class="empty-state error">
-                    <p>Error loading classes: ${error.message}</p>
-                    <p>Please check your connection and try again.</p>
-                </div>
-            `;
+            <div class="empty-state error">
+                <p>Error loading classes: ${error.message}</p>
+                <p>Please check your connection and try again.</p>
+            </div>
+        `;
         }
     }
 }
 
 // Add a new class
 async function addNewClass() {
-    const className = document.getElementById('class-name').value.trim();
-    const classSubject = document.getElementById('subject').value.trim();
-    const classDescription = document.getElementById('description').value.trim();
+    const className = document.getElementById('className').value.trim();
+    const classSubject = document.getElementById('classSubject').value.trim();
+    const classDescription = document.getElementById('classDescription').value.trim();
     const statusDiv = document.getElementById('addClassStatus');
     
     if (!className) {
-        if (statusDiv) {
-            statusDiv.innerHTML = '<div class="error-message">Please enter a class name</div>';
-        } else {
-            alert('Please enter a class name');
-        }
+        statusDiv.innerHTML = '<div class="error-message">Please enter a class name</div>';
         return;
     }
     
     try {
-        if (statusDiv) {
-            statusDiv.innerHTML = '<div class="processing-status">Adding class...</div>';
-        }
+        statusDiv.innerHTML = '<div class="processing-status">Adding class...</div>';
         
         const response = await fetch(`${API_URL}/auth/classes`, {
             method: 'POST',
@@ -583,30 +565,17 @@ async function addNewClass() {
         const data = await response.json();
         
         if (data.success) {
-            if (statusDiv) {
-                statusDiv.innerHTML = '<div class="success-message">Class added successfully!</div>';
-            } else {
-                alert('Class added successfully!');
-            }
-            
-            document.getElementById('class-name').value = '';
-            document.getElementById('subject').value = '';
-            document.getElementById('description').value = '';
+            statusDiv.innerHTML = '<div class="success-message">Class added successfully!</div>';
+            document.getElementById('className').value = '';
+            document.getElementById('classSubject').value = '';
+            document.getElementById('classDescription').value = '';
             await loadClasses(); // Reload classes
         } else {
-            if (statusDiv) {
-                statusDiv.innerHTML = `<div class="error-message">Error: ${data.message}</div>`;
-            } else {
-                alert(`Error: ${data.message}`);
-            }
+            statusDiv.innerHTML = `<div class="error-message">Error: ${data.message}</div>`;
         }
     } catch (error) {
         console.error('Error adding class:', error);
-        if (statusDiv) {
-            statusDiv.innerHTML = '<div class="error-message">Server error. Please try again.</div>';
-        } else {
-            alert('Server error. Please try again.');
-        }
+        statusDiv.innerHTML = '<div class="error-message">Server error. Please try again.</div>';
     }
 }
 
@@ -633,12 +602,7 @@ async function deleteClass(classId) {
 
 // Load sessions for a class
 async function loadSessions(classId) {
-    const sessionSelect = document.getElementById('session-select');
-    if (!sessionSelect) {
-        console.error("Session select element not found");
-        return;
-    }
-    
+    const sessionSelect = document.getElementById('sessionSelect');
     sessionSelect.innerHTML = '<option value="">Select a session</option>';
     
     if (!classId) {
@@ -657,8 +621,8 @@ async function loadSessions(classId) {
         
         // Only add header auth if no valid cookie exists
         if (!document.cookie.includes('qr_attendance_sid')) {
-            const userId = safeStorageGet('userId');
-            const userRole = safeStorageGet('userRole');
+            const userId = localStorage.getItem('userId');
+            const userRole = localStorage.getItem('userRole');
             if (userId && userRole) {
                 headers['X-User-ID'] = userId;
                 headers['X-User-Role'] = userRole;
@@ -688,7 +652,7 @@ async function loadSessions(classId) {
         if (data.success && data.sessions && data.sessions.length > 0) {
             data.sessions.forEach(session => {
                 const option = document.createElement('option');
-                option.value = session.session_id || session.id;
+                option.value = session.session_id || session.id; 
                 
                 // Format date safely with error handling
                 let formattedDate = 'Unknown Date';
@@ -727,23 +691,16 @@ async function loadSessions(classId) {
 
 // Load attendance records for a session
 async function loadAttendanceRecords() {
-    const sessionId = document.getElementById('session-select').value;
-    const recordsDiv = document.getElementById('attendance-records');
+    const sessionId = document.getElementById('sessionSelect').value;
+    const recordsDiv = document.getElementById('attendanceRecords');
     
     if (!sessionId) {
-        if (recordsDiv) {
-            recordsDiv.innerHTML = '<div class="error-message">Please select a session</div>';
-        } else {
-            alert('Please select a session');
-        }
+        recordsDiv.innerHTML = '<div class="error-message">Please select a session</div>';
         return;
     }
     
     try {
-        if (recordsDiv) {
-            recordsDiv.innerHTML = '<p>Loading attendance records...</p>';
-        }
-        
+        recordsDiv.innerHTML = '<p>Loading attendance records...</p>';
         console.log(`Loading attendance for session ID: ${sessionId}`);
         
         // Include both cookie-based and header-based auth
@@ -753,8 +710,8 @@ async function loadAttendanceRecords() {
         };
         
         // Add fallback header auth
-        const userId = safeStorageGet('userId');
-        const userRole = safeStorageGet('userRole');
+        const userId = localStorage.getItem('userId');
+        const userRole = localStorage.getItem('userRole');
         if (userId && userRole) {
             headers['X-User-ID'] = userId;
             headers['X-User-Role'] = userRole;
@@ -769,11 +726,7 @@ async function loadAttendanceRecords() {
         // Handle Unauthorized error specifically
         if (response.status === 401) {
             console.error('Authentication failed when loading attendance records');
-            if (recordsDiv) {
-                recordsDiv.innerHTML = '<div class="error-message">Authentication failed. Please try logging in again.</div>';
-            } else {
-                alert('Authentication failed. Please try logging in again.');
-            }
+            recordsDiv.innerHTML = '<div class="error-message">Authentication failed. Please try logging in again.</div>';
             return;
         }
         
@@ -786,11 +739,7 @@ async function loadAttendanceRecords() {
         
         if (data.success) {
             if (!data.attendanceRecords || data.attendanceRecords.length === 0) {
-                if (recordsDiv) {
-                    recordsDiv.innerHTML = '<p class="empty-message">No attendance records found for this session.</p>';
-                } else {
-                    alert('No attendance records found for this session.');
-                }
+                recordsDiv.innerHTML = '<p class="empty-message">No attendance records found for this session.</p>';
                 return;
             }
             
@@ -845,31 +794,19 @@ async function loadAttendanceRecords() {
                 </table>
             `;
             
-            if (recordsDiv) {
-                recordsDiv.innerHTML = tableHTML;
-            } else {
-                alert('Attendance records loaded successfully.');
-            }
+            recordsDiv.innerHTML = tableHTML;
         } else {
-            if (recordsDiv) {
-                recordsDiv.innerHTML = `<div class="error-message">Error: ${data.message || 'Failed to load attendance records'}</div>`;
-            } else {
-                alert(`Error: ${data.message || 'Failed to load attendance records'}`);
-            }
+            recordsDiv.innerHTML = `<div class="error-message">Error: ${data.message || 'Failed to load attendance records'}</div>`;
         }
     } catch (error) {
         console.error('Error loading attendance records:', error);
-        if (recordsDiv) {
-            recordsDiv.innerHTML = `<div class="error-message">Server error: ${error.message}. Please try again.</div>`;
-        } else {
-            alert(`Server error: ${error.message}. Please try again.`);
-        }
+        recordsDiv.innerHTML = `<div class="error-message">Server error: ${error.message}. Please try again.</div>`;
     }
 }
 
 // View attendance for current session
 async function viewCurrentSessionAttendance() {
-    const currentSessionId = safeStorageGet('currentSessionId');
+    const currentSessionId = localStorage.getItem('currentSessionId');
     
     if (!currentSessionId) {
         alert('No active session found. Generate a QR code first.');
@@ -877,54 +814,43 @@ async function viewCurrentSessionAttendance() {
     }
     
     // Switch to attendance tab
-    const attendanceTab = document.querySelector('[data-tab="attendance-tab"]');
-    if (attendanceTab) {
-        attendanceTab.click();
-    }
+    document.querySelector('[data-tab="attendance-tab"]').click();
     
     // Select the current class in the dropdown
-    const classSelect = document.getElementById('class-select');
-    const attendanceClassSelect = document.getElementById('attendance-class-select');
+    const classId = document.getElementById('classSelect').value;
+    document.getElementById('attendanceClassSelect').value = classId;
     
-    if (classSelect && attendanceClassSelect) {
-        const classId = classSelect.value;
-        attendanceClassSelect.value = classId;
-        
-        // Load sessions for this class
-        await loadSessions(classId);
-        
-        // Select the current session
-        const sessionSelect = document.getElementById('session-select');
-        if (sessionSelect) {
-            sessionSelect.value = currentSessionId;
-            
-            // Load attendance records
-            loadAttendanceRecords();
-        }
-    }
+    // Load sessions for this class
+    await loadSessions(classId);
+    
+    // Select the current session
+    document.getElementById('sessionSelect').value = currentSessionId;
+    
+    // Load attendance records
+    loadAttendanceRecords();
 }
 
 // Logout function
 async function logout() {
-  try {
+    try {
     // Call the logout endpoint
-    const response = await fetch(`${API_URL}/auth/logout`, {
-      method: 'POST',
+        const response = await fetch(`${API_URL}/auth/logout`, {
+            method: 'POST',
       credentials: 'include',
       headers: {
         'Accept': 'application/json'
       }
     });
     
-    // Clear sessionStorage using safe function
-    safeStorageClear();
+    // Clear sessionStorage
+    sessionStorage.clear();
     
     // Redirect to login page
     window.location.href = getBasePath() + '/index.html';
-  } catch (error) {
-    console.error('Logout error:', error);
-    // Even if the server request fails, clear storage and redirect
-    safeStorageClear();
+    } catch (error) {
+        console.error('Logout error:', error);
+    // Even if the server request fails, clear local storage and redirect
+    sessionStorage.clear();
     window.location.href = getBasePath() + '/index.html';
   }
 }
@@ -946,9 +872,7 @@ function getBasePath() {
 // Event listener for attendance class select
 document.addEventListener('DOMContentLoaded', function() {
     const attendanceClassSelect = document.getElementById('attendance-class-select');
-    if (attendanceClassSelect) {
-        attendanceClassSelect.addEventListener('change', function() {
-            loadSessions(this.value);
-        });
-    }
+    attendanceClassSelect.addEventListener('change', function() {
+        loadSessions(this.value);
+    });
 }); 
