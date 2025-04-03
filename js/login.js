@@ -318,6 +318,26 @@ async function handleLogin(event) {
     }
     
     try {
+        // First check if cookies are accepted
+        if (localStorage.getItem('cookiesAccepted') !== 'true') {
+            // Show cookie consent banner before proceeding
+            const errorElement = document.getElementById('errorMsg');
+            if (errorElement) {
+                errorElement.textContent = 'Please accept cookies before logging in.';
+                errorElement.style.display = 'block';
+                errorElement.className = 'error-message';
+            }
+            
+            // Initialize cookie consent banner
+            if (typeof initCookieConsent === 'function') {
+                initCookieConsent();
+            } else {
+                console.error('Cookie consent function not found!');
+            }
+            
+            return;
+        }
+    
         // Show loading state - safely access elements
         const loginBtn = document.querySelector('#loginForm button[type="submit"]') || 
                          document.querySelector('#login-form button[type="submit"]');
@@ -375,30 +395,9 @@ async function handleLogin(event) {
                     console.warn("Your browser may be blocking third-party cookies needed for authentication.");
                     console.warn("The application will attempt to use localStorage as a fallback for authentication.");
                     
-                    // Display a warning to the user in a non-intrusive way
-                    const warningDiv = document.createElement('div');
-                    warningDiv.className = 'cookie-warning';
-                    warningDiv.innerHTML = `
-                        <div style="background-color:#fff3cd; border:1px solid #ffeeba; padding:10px; margin:10px 0; border-radius:4px;">
-                            <h4 style="color:#856404; margin-top:0;">Cookie Warning</h4>
-                            <p>Your browser appears to be blocking cookies required for optimal performance.</p>
-                            <p>You can still use the app, but you may need to log in more frequently.</p>
-                            <details>
-                                <summary>How to fix this?</summary>
-                                <p>To fix this issue:</p>
-                                <ol>
-                                    <li>Check your browser settings and enable third-party cookies</li>
-                                    <li>Whitelist this website in your cookie settings</li>
-                                    <li>Try using a different browser if the issue persists</li>
-                                </ol>
-                            </details>
-                        </div>
-                    `;
-                    
-                    // Show warning if we're still on the login page (we might already be redirected)
-                    const loginForm = document.getElementById('loginForm') || document.getElementById('login-form');
-                    if (loginForm) {
-                        loginForm.parentNode.insertBefore(warningDiv, loginForm.nextSibling);
+                    // Show cookie help instead of inline warning
+                    if (typeof showCookieHelp === 'function') {
+                        showCookieHelp();
                     }
                 }
                 

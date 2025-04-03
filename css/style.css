@@ -527,3 +527,81 @@ button:active {
 .form-header p {
   color: #6c757d;
 }
+
+/* Cookie Consent Banner Styles */
+.cookie-consent-banner {
+  animation: slide-up 0.3s ease-out;
+}
+
+.cookie-help-banner {
+  animation: fade-in 0.3s ease-out;
+}
+
+@keyframes slide-up {
+  from {
+    transform: translateY(100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+@keyframes fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+/* User Type Selection Styles */
+.user-type-selection {
+  margin: 10px 0 20px;
+}
+
+.radio-group {
+  display: flex;
+  gap: 15px;
+  margin-top: 8px;
+}
+
+.radio-group label {
+  display: flex;
+  align-items: center;
+  cursor: pointer;
+}
+
+.radio-group input[type="radio"] {
+  margin-right: 5px;
+}
+
+/* Responsive Styles for Cookie Settings */
+@media (max-width: 500px) {
+  .cookie-actions {
+    flex-direction: column;
+  }
+  
+  .cookie-consent-banner button {
+    width: 100%;
+    margin-bottom: 8px;
+  }
+}
+
+/* Spinner Animation for Login Button */
+.spinner {
+  display: inline-block;
+  width: 12px;
+  height: 12px;
+  border: 2px solid rgba(255,255,255,0.3);
+  border-radius: 50%;
+  border-top-color: #fff;
+  animation: spin 1s ease-in-out infinite;
+  margin-right: 8px;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
