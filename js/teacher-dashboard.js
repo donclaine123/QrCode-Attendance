@@ -59,33 +59,11 @@ document.addEventListener('DOMContentLoaded', function() {
     .then(data => {
         console.log("Debug headers response:", data);
         
-        // Check if we don't have any cookies but have localStorage auth
+        // Remove automatic re-auth that creates duplicate sessions
+        // This was previously creating extra sessions in the database
         if (!document.cookie && localStorage.getItem('userId')) {
-            console.log("No cookies found but localStorage has auth data - trying to establish session");
-            
-            // Try to establish a session using localStorage data
-            fetch(`${API_URL}/auth/reauth`, {
-                method: 'POST',
-                credentials: 'include',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Cache-Control': 'no-cache'
-                },
-                body: JSON.stringify({
-                    userId: localStorage.getItem('userId'),
-                    role: localStorage.getItem('userRole')
-                })
-            })
-            .then(response => response.json())
-            .then(authData => {
-                console.log("Re-auth response:", authData);
-                if (authData.success) {
-                    console.log("Session re-established successfully");
-                }
-            })
-            .catch(error => {
-                console.error("Re-auth error:", error);
-            });
+            console.log("No cookies found but localStorage has auth data - will use header-based auth instead");
+            // We'll rely on header-based auth without creating a new session
         }
     })
     .catch(error => {
@@ -128,18 +106,7 @@ async function checkAuthStatus() {
         // Otherwise check localStorage as fallback
         if (userRole === "teacher" && userId) {
             console.log("Using localStorage fallback authentication");
-            // Try to create a session using localStorage data
-            const reAuthResponse = await fetch(`${API_URL}/auth/test-session-store`, {
-                method: "GET",
-                credentials: "include",
-                headers: { "Accept": "application/json" }
-            });
-            
-            if (reAuthResponse.ok) {
-                console.log("Re-established session from localStorage data");
-                return true;
-            }
-            return true; // Still return true for localStorage auth
+            return true; // Use localStorage auth without creating a new session
         }
         
         console.log("Authentication failed - no valid session or localStorage data");
@@ -405,31 +372,8 @@ async function initDashboard() {
         if (localUserId && localRole === 'teacher') {
             console.log('Using localStorage authentication as fallback');
             
-            // Try to establish a session using localStorage data
-            try {
-                const reAuthResponse = await fetch(`${API_URL}/auth/reauth`, {
-                    method: 'POST',
-                    credentials: 'include',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'Cache-Control': 'no-cache'
-                    },
-                    body: JSON.stringify({
-                        userId: localUserId,
-                        role: localRole
-                    })
-                });
-                
-                const reAuthData = await reAuthResponse.json();
-                console.log("Re-auth response:", reAuthData);
-                
-                if (reAuthData.success) {
-                    console.log("Session re-established successfully");
-                }
-            } catch (reAuthError) {
-                console.error("Re-auth error:", reAuthError);
-                // Continue anyway, we'll use localStorage
-            }
+            // Skip re-authentication - this was creating duplicate sessions
+            // We'll use header-based authentication directly in each request
             
             // Display teacher information from localStorage
             const firstName = localStorage.getItem('firstName') || '';
@@ -469,7 +413,7 @@ async function initDashboard() {
                 <p>User ID: ${localUserId}</p>
             `;
             
-            // Load teacher's classes
+            // Load teacher's classes using header-based auth
             loadClasses();
             return;
         }
