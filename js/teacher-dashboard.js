@@ -296,14 +296,14 @@ function setupDebugListeners() {
         checkAuthBtn.addEventListener('click', async function() {
             try {
                 // Use the same authentication approach as the main dashboard init
-                const userId = sessionStorage.getItem('userId');
-                const userRole = sessionStorage.getItem('userRole');
+                const userId = secureStorage.getItem('userId');
+                const userRole = secureStorage.getItem('userRole');
                 const headers = {
                     'Accept': 'application/json',
                     'Cache-Control': 'no-cache'
                 };
                 
-                // Add user headers if available in sessionStorage as fallback
+                // Add user headers if available in storage as fallback
                 if (userId && userRole) {
                     headers['X-User-ID'] = userId;
                     headers['X-User-Role'] = userRole;
@@ -330,14 +330,14 @@ async function initDashboard() {
   try {
     console.log("Initializing teacher dashboard...");
     
-    // Get user info from sessionStorage instead of URL parameters
-    const userId = sessionStorage.getItem('userId');
-    const userRole = sessionStorage.getItem('userRole');
-    const userName = sessionStorage.getItem('userName');
+    // Get user info from secureStorage instead of sessionStorage
+    const userId = secureStorage.getItem('userId');
+    const userRole = secureStorage.getItem('userRole');
+    const userName = secureStorage.getItem('userName');
     
-    // If no user info in sessionStorage, try to authenticate with the server
+    // If no user info in secureStorage, try to authenticate with the server
     if (!userId || !userRole) {
-      console.log("No user info in sessionStorage, checking authentication...");
+      console.log("No user info in storage, checking authentication...");
       
       // Check authentication status
       const response = await fetch(`${API_URL}/auth/check-auth`, {
@@ -351,16 +351,22 @@ async function initDashboard() {
         const data = await response.json();
         console.log("Authentication successful:", data);
         
-        // Store user info in sessionStorage
-        sessionStorage.setItem('userId', data.user.id);
-        sessionStorage.setItem('userRole', data.role);
-        sessionStorage.setItem('userName', `${data.user.firstName} ${data.user.lastName}`);
+        // Store user info in secureStorage
+        secureStorage.setItem('userId', data.user.id);
+        secureStorage.setItem('userRole', data.role);
+        secureStorage.setItem('userName', `${data.user.firstName} ${data.user.lastName}`);
         
         // Update welcome message
-        document.getElementById('welcome-message').textContent = `Welcome, ${data.user.firstName} ${data.user.lastName}!`;
+        const welcomeMsg = document.getElementById('welcome-message');
+        if (welcomeMsg) {
+          welcomeMsg.textContent = `Welcome, ${data.user.firstName} ${data.user.lastName}!`;
+        }
         
         // Show teacher section
-        document.getElementById('teacher-section').style.display = 'block';
+        const teacherSection = document.getElementById('teacher-section');
+        if (teacherSection) {
+          teacherSection.style.display = 'block';
+        }
         
         // Load classes
         loadClasses();
@@ -369,14 +375,20 @@ async function initDashboard() {
         window.location.href = getBasePath() + '/index.html';
       }
     } else {
-      // User info found in sessionStorage
-      console.log("User info found in sessionStorage:", { userId, userRole, userName });
+      // User info found in secureStorage
+      console.log("User info found in storage:", { userId, userRole, userName });
       
       // Update welcome message
-      document.getElementById('welcome-message').textContent = `Welcome, ${userName}!`;
+      const welcomeMsg = document.getElementById('welcome-message');
+      if (welcomeMsg) {
+        welcomeMsg.textContent = `Welcome, ${userName}!`;
+      }
       
       // Show teacher section
-      document.getElementById('teacher-section').style.display = 'block';
+      const teacherSection = document.getElementById('teacher-section');
+      if (teacherSection) {
+        teacherSection.style.display = 'block';
+      }
       
       // Load classes
       loadClasses();
@@ -384,7 +396,7 @@ async function initDashboard() {
   } catch (error) {
     console.error("Error initializing dashboard:", error);
     showError("Failed to initialize dashboard. Please try again.");
-    }
+  }
 }
 
 // Load classes for the teacher
@@ -399,7 +411,7 @@ async function loadClasses() {
             return;
         }
         
-        const userId = sessionStorage.getItem('userId');
+        const userId = secureStorage.getItem('userId');
         console.log(`Fetching classes for user ID: ${userId}`);
         console.log(`Session cookies: ${document.cookie}`);
         
@@ -409,8 +421,8 @@ async function loadClasses() {
             'Cache-Control': 'no-cache'
         };
         
-        // Add auth from sessionStorage if available
-        const userRole = sessionStorage.getItem('userRole');
+        // Add auth from secureStorage if available
+        const userRole = secureStorage.getItem('userRole');
         if (userId && userRole) {
             headers['X-User-ID'] = userId;
             headers['X-User-Role'] = userRole;
@@ -621,8 +633,8 @@ async function loadSessions(classId) {
         
         // Only add header auth if no valid cookie exists
         if (!document.cookie.includes('qr_attendance_sid')) {
-            const userId = sessionStorage.getItem('userId');
-            const userRole = sessionStorage.getItem('userRole');
+            const userId = secureStorage.getItem('userId');
+            const userRole = secureStorage.getItem('userRole');
             if (userId && userRole) {
                 headers['X-User-ID'] = userId;
                 headers['X-User-Role'] = userRole;
@@ -716,8 +728,8 @@ async function loadAttendanceRecords() {
         };
         
         // Add fallback header auth
-        const userId = sessionStorage.getItem('userId');
-        const userRole = sessionStorage.getItem('userRole');
+        const userId = secureStorage.getItem('userId');
+        const userRole = secureStorage.getItem('userRole');
         if (userId && userRole) {
             headers['X-User-ID'] = userId;
             headers['X-User-Role'] = userRole;
@@ -812,7 +824,7 @@ async function loadAttendanceRecords() {
 
 // View attendance for current session
 async function viewCurrentSessionAttendance() {
-    const currentSessionId = sessionStorage.getItem('currentSessionId');
+    const currentSessionId = secureStorage.getItem('currentSessionId');
     
     if (!currentSessionId) {
         alert('No active session found. Generate a QR code first.');
@@ -839,26 +851,26 @@ async function viewCurrentSessionAttendance() {
 // Logout function
 async function logout() {
     try {
-    // Call the logout endpoint
+        // Call the logout endpoint
         const response = await fetch(`${API_URL}/auth/logout`, {
             method: 'POST',
-      credentials: 'include',
-      headers: {
-        'Accept': 'application/json'
-      }
-    });
-    
-    // Clear sessionStorage
-    sessionStorage.clear();
-    
-    // Redirect to login page
-    window.location.href = getBasePath() + '/index.html';
+            credentials: 'include',
+            headers: {
+                'Accept': 'application/json'
+            }
+        });
+        
+        // Clear secureStorage
+        secureStorage.clear();
+        
+        // Redirect to login page
+        window.location.href = getBasePath() + '/index.html';
     } catch (error) {
         console.error('Logout error:', error);
-    // Even if the server request fails, clear local storage and redirect
-    sessionStorage.clear();
-    window.location.href = getBasePath() + '/index.html';
-  }
+        // Even if the server request fails, clear storage and redirect
+        secureStorage.clear();
+        window.location.href = getBasePath() + '/index.html';
+    }
 }
 
 // Helper function to get base path - same as in login.js

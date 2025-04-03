@@ -21,8 +21,8 @@ async function generateQRCode() {
   }
 
   try {
-    // Get teacher ID from session or sessionStorage fallback
-    const teacherId = sessionStorage.getItem('userId');
+    // Get teacher ID from secureStorage fallback
+    const teacherId = secureStorage.getItem('userId');
     console.log("Teacher ID:", teacherId);
     
     // Get the selected class
@@ -180,7 +180,7 @@ async function generateQRCode() {
       }
       
       // Save the current session ID for attendance tracking
-      sessionStorage.setItem('currentSessionId', sessionId);
+      secureStorage.setItem('currentSessionId', sessionId);
       
       // Enable the attendance view button
       const attendanceBtn = document.getElementById('viewAttendanceBtn');
@@ -199,7 +199,7 @@ async function generateQRCode() {
 // Function to populate class dropdown
 async function populateClassDropdown() {
   const classSelect = document.getElementById('classSelect');
-  const teacherId = sessionStorage.getItem('userId');
+  const teacherId = secureStorage.getItem('userId');
   
   if (!classSelect || !teacherId) return;
   
@@ -243,7 +243,7 @@ async function viewAttendance() {
       return;
     }
     
-    const sessionId = sessionStorage.getItem('currentSessionId');
+    const sessionId = secureStorage.getItem('currentSessionId');
     
     if (!sessionId) {
       statusDiv.textContent = 'No active session found. Please generate a QR code first.';
