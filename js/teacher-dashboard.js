@@ -965,37 +965,104 @@ function addSessionIndicator() {
         position: fixed;
         bottom: 10px;
         right: 10px;
-        background: rgba(0, 0, 0, 0.7);
+        background: rgba(0, 0, 0, 0.8);
         color: #fff;
-        padding: 5px 10px;
+        padding: 8px 12px;
         border-radius: 4px;
         font-size: 12px;
         z-index: 1000;
         font-family: monospace;
+        box-shadow: 0 2px 5px rgba(0,0,0,0.3);
+        transition: background-color 0.3s;
     `;
     indicator.innerHTML = `
-        <div>Session ID: <span id="currentSessionId">checking...</span></div>
+        <div style="margin-bottom: 3px; font-weight: bold; display: flex; justify-content: space-between; align-items: center;">
+            <span>Session Monitor</span>
+            <span id="sessionStatusIcon" style="height: 10px; width: 10px; background-color: #ffeb3b; border-radius: 50%; display: inline-block;"></span>
+        </div>
+        <div>ID: <span id="currentSessionId" style="font-weight: bold;">checking...</span></div>
+        <div id="sessionCount" style="margin-top: 3px; font-size: 10px; color: #ccc;">Active sessions: checking...</div>
     `;
     document.body.appendChild(indicator);
+    
+    // Add a click handler to expand/collapse additional details
+    indicator.addEventListener('click', () => {
+        const details = document.getElementById('sessionDetails');
+        if (details) {
+            details.style.display = details.style.display === 'none' ? 'block' : 'none';
+        } else {
+            // Create details panel if it doesn't exist
+            const detailsPanel = document.createElement('div');
+            detailsPanel.id = 'sessionDetails';
+            detailsPanel.style.cssText = `
+                margin-top: 8px;
+                padding-top: 8px;
+                border-top: 1px solid #444;
+                font-size: 10px;
+            `;
+            
+            // Add a button to fetch all sessions
+            const refreshButton = document.createElement('button');
+            refreshButton.textContent = 'Check All Sessions';
+            refreshButton.style.cssText = `
+                background: #2196F3;
+                border: none;
+                color: white;
+                padding: 3px 6px;
+                border-radius: 3px;
+                cursor: pointer;
+                font-size: 10px;
+                margin-bottom: 5px;
+            `;
+            refreshButton.addEventListener('click', (e) => {
+                e.stopPropagation();
+                checkAllSessions();
+            });
+            
+            detailsPanel.appendChild(refreshButton);
+            
+            // Session list container
+            const sessionList = document.createElement('div');
+            sessionList.id = 'sessionList';
+            sessionList.textContent = 'Click the button to check sessions';
+            detailsPanel.appendChild(sessionList);
+            
+            indicator.appendChild(detailsPanel);
+        }
+    });
+    
+    // Schedule periodic checks for active session count
+    checkSessionCount();
+    setInterval(checkSessionCount, 30000); // Every 30 seconds
 }
 
 // Function to log the current session ID
 async function logCurrentSessionId() {
     try {
-        // Method 1: Check cookie directly
-        const sessionCookie = document.cookie
-            .split(';')
-            .map(c => c.trim())
-            .find(c => c.startsWith('qr_attendance_sid='));
-            
-        const cookieSessionId = sessionCookie ? sessionCookie.split('=')[1] : 'none';
+        // Parse cookies more reliably
+        const cookies = document.cookie.split(';').reduce((acc, cookie) => {
+            const [name, value] = cookie.trim().split('=');
+            acc[name] = value;
+            return acc;
+        }, {});
+        
+        // Get sessionId from cookie - more reliable parsing
+        const cookieSessionId = cookies['qr_attendance_sid'] || 'none';
+        
+        // Store previous session ID to avoid flashing between values
+        if (!window.lastKnownSessionId) {
+            window.lastKnownSessionId = cookieSessionId !== 'none' ? cookieSessionId : null;
+        }
+        
+        // Only update UI and log when session ID actually changes
+        const sessionIdElement = document.getElementById('currentSessionId');
         
         // Method 2: Check via API (this is more reliable but makes extra requests)
-        let serverSessionId = 'unknown';
+        let serverSessionId = window.lastKnownSessionId || 'unknown';
         
-        // Only make this request every 5 seconds to reduce server load
+        // Check API less frequently (every 3 seconds) to reduce server load
         const now = new Date().getTime();
-        if (!window.lastSessionCheck || now - window.lastSessionCheck > 5000) {
+        if (!window.lastSessionCheck || now - window.lastSessionCheck > 3000) {
             try {
                 const response = await fetch(`${API_URL}/auth/check-auth`, {
                     method: 'GET',
@@ -1010,11 +1077,16 @@ async function logCurrentSessionId() {
                     const data = await response.json();
                     if (data.authenticated && data.sessionID) {
                         serverSessionId = data.sessionID;
+                        window.lastKnownSessionId = serverSessionId; // Store reliable server value
                         
-                        // Update the session indicator
-                        const sessionIdElement = document.getElementById('currentSessionId');
-                        if (sessionIdElement) {
+                        // Update the session indicator if changed
+                        if (sessionIdElement && sessionIdElement.textContent !== serverSessionId) {
                             sessionIdElement.textContent = serverSessionId;
+                            // Add highlight effect to show it changed
+                            sessionIdElement.style.backgroundColor = '#4CAF50';
+                            setTimeout(() => {
+                                sessionIdElement.style.backgroundColor = 'transparent';
+                            }, 300);
                         }
                     }
                 }
@@ -1024,17 +1096,142 @@ async function logCurrentSessionId() {
             }
         }
         
-        // Update with cookie data if server data not yet available
-        if (serverSessionId === 'unknown') {
-            const sessionIdElement = document.getElementById('currentSessionId');
-            if (sessionIdElement && sessionIdElement.textContent === 'checking...') {
+        // If we have no server ID but have a cookie ID, use that
+        if ((serverSessionId === 'unknown' || !serverSessionId) && cookieSessionId !== 'none') {
+            serverSessionId = cookieSessionId;
+            window.lastKnownSessionId = cookieSessionId;
+            
+            // Update UI with cookie value if needed
+            if (sessionIdElement && sessionIdElement.textContent !== cookieSessionId) {
                 sessionIdElement.textContent = cookieSessionId;
             }
         }
         
-        // Log the session ID
-        console.log(`🔑 Current Session ID: ${serverSessionId !== 'unknown' ? serverSessionId : cookieSessionId}`);
+        // Keep last valid session ID if current check gives none but we had one before
+        if ((serverSessionId === 'unknown' || serverSessionId === 'none') && window.lastKnownSessionId) {
+            serverSessionId = window.lastKnownSessionId;
+            
+            // If session appears to be lost but we had one, show as potentially expired
+            if (cookieSessionId === 'none' && window.lastKnownSessionId) {
+                if (sessionIdElement && !sessionIdElement.textContent.includes('(expired?)')) {
+                    sessionIdElement.textContent = `${window.lastKnownSessionId} (expired?)`;
+                    sessionIdElement.style.color = '#ff9800'; // Warn with orange text
+                }
+            }
+        }
+        
+        // If truly no session found after checking both server and cookies
+        if ((serverSessionId === 'unknown' || serverSessionId === 'none') && !window.lastKnownSessionId) {
+            if (sessionIdElement && sessionIdElement.textContent !== 'none') {
+                sessionIdElement.textContent = 'none';
+                sessionIdElement.style.color = '#f44336'; // Red for no session
+            }
+        }
+        
+        // Only log when session ID changes to avoid console spam
+        if (!window.lastLoggedSessionId || window.lastLoggedSessionId !== serverSessionId) {
+            console.log(`🔑 Current Session ID: ${serverSessionId}`);
+            window.lastLoggedSessionId = serverSessionId;
+        }
     } catch (error) {
         console.error('Error in session monitor:', error);
+    }
+}
+
+// Function to check how many active sessions exist for this user
+async function checkSessionCount() {
+    try {
+        const userId = localStorage.getItem('userId');
+        if (!userId) return;
+        
+        // Make API request to check session count
+        const response = await fetch(`${API_URL}/auth/debug-sessions?userId=${userId}`, {
+            credentials: 'include',
+            headers: {
+                'Accept': 'application/json', 
+                'Cache-Control': 'no-cache'
+            }
+        });
+        
+        if (response.ok) {
+            const data = await response.json();
+            const countElement = document.getElementById('sessionCount');
+            if (countElement && data.activeSessions) {
+                const count = data.activeSessions.length;
+                countElement.textContent = `Active sessions: ${count}`;
+                
+                // Update status indicator
+                const statusIcon = document.getElementById('sessionStatusIcon');
+                if (statusIcon) {
+                    if (count > 1) {
+                        // Multiple sessions - warning
+                        statusIcon.style.backgroundColor = '#ff9800';
+                        countElement.style.color = '#ff9800';
+                    } else if (count === 1) {
+                        // Just one session - good
+                        statusIcon.style.backgroundColor = '#4CAF50';
+                        countElement.style.color = '#8bc34a';
+                    } else {
+                        // No sessions - error
+                        statusIcon.style.backgroundColor = '#f44336';
+                        countElement.style.color = '#f44336';
+                    }
+                }
+            }
+        }
+    } catch (error) {
+        console.error('Error checking session count:', error);
+    }
+}
+
+// Function to check all active sessions
+async function checkAllSessions() {
+    const sessionList = document.getElementById('sessionList');
+    if (!sessionList) return;
+    
+    sessionList.innerHTML = 'Loading sessions...';
+    
+    try {
+        const userId = localStorage.getItem('userId');
+        if (!userId) {
+            sessionList.innerHTML = 'No user ID found in localStorage';
+            return;
+        }
+        
+        const response = await fetch(`${API_URL}/auth/debug-sessions?userId=${userId}`, {
+            credentials: 'include',
+            headers: {
+                'Accept': 'application/json',
+                'Cache-Control': 'no-cache'
+            }
+        });
+        
+        if (response.ok) {
+            const data = await response.json();
+            
+            if (data.activeSessions && data.activeSessions.length > 0) {
+                let html = '<ul style="padding-left: 15px; margin: 5px 0;">';
+                
+                data.activeSessions.forEach(session => {
+                    const isCurrentSession = session.session_id === window.lastKnownSessionId;
+                    const style = isCurrentSession ? 'color: #4CAF50; font-weight: bold;' : '';
+                    
+                    html += `<li style="${style}">
+                        ${session.session_id} 
+                        ${isCurrentSession ? '(current)' : ''}
+                    </li>`;
+                });
+                
+                html += '</ul>';
+                sessionList.innerHTML = html;
+            } else {
+                sessionList.innerHTML = 'No active sessions found';
+            }
+        } else {
+            sessionList.innerHTML = 'Failed to fetch sessions';
+        }
+    } catch (error) {
+        console.error('Error fetching all sessions:', error);
+        sessionList.innerHTML = `Error: ${error.message}`;
     }
 } 
