@@ -35,69 +35,14 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     });
     
-    // Set up event listeners for dashboard actions
-    const generateQrBtn = document.getElementById('generate-qr-btn');
-    const manageClassesBtn = document.getElementById('manage-classes-btn');
-    const viewAttendanceBtn = document.getElementById('view-attendance-btn');
+    // Set up event listeners
+    document.getElementById('generateQRBtn').addEventListener('click', generateQRCode);
+    document.getElementById('viewAttendanceBtn').addEventListener('click', viewCurrentSessionAttendance);
+    document.getElementById('loadAttendance').addEventListener('click', loadAttendanceRecords);
+    document.getElementById('addClass').addEventListener('click', addNewClass);
+    document.getElementById('logoutBtn').addEventListener('click', logout);
     
-    if (generateQrBtn) {
-        generateQrBtn.addEventListener('click', function() {
-            document.getElementById('qr-section').style.display = 'block';
-            document.getElementById('classes-section').style.display = 'none';
-            document.getElementById('attendance-section').style.display = 'none';
-        });
-    }
-    
-    if (manageClassesBtn) {
-        manageClassesBtn.addEventListener('click', function() {
-            document.getElementById('qr-section').style.display = 'none';
-            document.getElementById('classes-section').style.display = 'block';
-            document.getElementById('attendance-section').style.display = 'none';
-        });
-    }
-    
-    if (viewAttendanceBtn) {
-        viewAttendanceBtn.addEventListener('click', function() {
-            document.getElementById('qr-section').style.display = 'none';
-            document.getElementById('classes-section').style.display = 'none';
-            document.getElementById('attendance-section').style.display = 'block';
-        });
-    }
-    
-    // Set up event listeners for QR code generation
-    const generateQrCodeBtn = document.getElementById('generate-qr-code-btn');
-    const viewCurrentAttendanceBtn = document.getElementById('view-current-attendance-btn');
-    
-    if (generateQrCodeBtn) {
-        generateQrCodeBtn.addEventListener('click', generateQRCode);
-    }
-    
-    if (viewCurrentAttendanceBtn) {
-        viewCurrentAttendanceBtn.addEventListener('click', viewCurrentSessionAttendance);
-    }
-    
-    // Set up event listeners for class management
-    const addClassBtn = document.getElementById('add-class-btn');
-    
-    if (addClassBtn) {
-        addClassBtn.addEventListener('click', addNewClass);
-    }
-    
-    // Set up event listeners for attendance viewing
-    const loadAttendanceBtn = document.getElementById('load-attendance-btn');
-    const attendanceClassSelect = document.getElementById('attendance-class-select');
-    
-    if (loadAttendanceBtn) {
-        loadAttendanceBtn.addEventListener('click', loadAttendanceRecords);
-    }
-    
-    if (attendanceClassSelect) {
-        attendanceClassSelect.addEventListener('change', function() {
-            loadSessions(this.value);
-        });
-    }
-    
-    // Set up debug listeners
+    // Setup debug listeners
     setupDebugListeners();
     
     // Log cookies for debugging
@@ -272,38 +217,46 @@ async function checkAuthDebug() {
 // Function that attaches event listeners for debug buttons
 function setupDebugListeners() {
     // Debug buttons
-    const testCookiesBtn = document.getElementById('test-cookies-btn');
-    const checkAuthBtn = document.getElementById('check-auth-btn');
+    const testCookiesBtn = document.getElementById('testCookiesBtn');
+    const checkAuthBtn = document.getElementById('checkAuthBtn');
+    const debugOutput = document.getElementById('debugOutput');
     
     if (testCookiesBtn) {
         testCookiesBtn.addEventListener('click', async function() {
+            if (debugOutput) debugOutput.innerHTML = 'Testing cookies...';
             try {
                 const response = await fetch(`${API_URL}/auth/debug-cookies`, {
                     credentials: 'include'
                 });
                 const data = await response.json();
                 
-                console.log('Cookie test response:', data);
-                alert(`Cookie test: ${JSON.stringify(data)}`);
+                if (debugOutput) {
+                    debugOutput.innerHTML = `
+                        <h5>Cookie Debug</h5>
+                        <pre>${JSON.stringify(data, null, 2)}</pre>
+                        <p>Current cookies: ${document.cookie}</p>
+                    `;
+                }
             } catch (error) {
                 console.error('Cookie test error:', error);
-                alert(`Error: ${error.message}`);
+                if (debugOutput) debugOutput.innerHTML = `Error: ${error.message}`;
             }
         });
     }
     
     if (checkAuthBtn) {
         checkAuthBtn.addEventListener('click', async function() {
+            if (debugOutput) debugOutput.innerHTML = 'Checking authentication...';
             try {
                 // Use the same authentication approach as the main dashboard init
-                const userId = secureStorage.getItem('userId');
-                const userRole = secureStorage.getItem('userRole');
+                const userId = localStorage.getItem('userId');
+                const userRole = localStorage.getItem('userRole');
                 const headers = {
                     'Accept': 'application/json',
                     'Cache-Control': 'no-cache'
                 };
                 
-                // Add user headers if available in storage as fallback
+                // Add user headers if available in localStorage as fallback
                 if (userId && userRole) {
                     headers['X-User-ID'] = userId;
                     headers['X-User-Role'] = userRole;
@@ -315,11 +268,16 @@ function setupDebugListeners() {
                 });
                 const data = await response.json();
                 
-                console.log('Auth check response:', data);
-                alert(`Auth check: ${JSON.stringify(data)}`);
+                if (debugOutput) {
+                    debugOutput.innerHTML = `
+                        <h5>Auth Check</h5>
+                        <pre>${JSON.stringify(data, null, 2)}</pre>
+                        <p>LocalStorage: userId=${localStorage.getItem('userId')}, role=${localStorage.getItem('userRole')}</p>
+                    `;
+                }
             } catch (error) {
                 console.error('Auth check error:', error);
-                alert(`Error: ${error.message}`);
+                if (debugOutput) debugOutput.innerHTML = `Error: ${error.message}`;
             }
         });
     }
@@ -327,91 +285,147 @@ function setupDebugListeners() {
 
 // Initialize dashboard
 async function initDashboard() {
-  try {
-    console.log("Initializing teacher dashboard...");
-    
-    // Get user info from secureStorage instead of sessionStorage
-    const userId = secureStorage.getItem('userId');
-    const userRole = secureStorage.getItem('userRole');
-    const userName = secureStorage.getItem('userName');
-    
-    // If no user info in secureStorage, try to authenticate with the server
-    if (!userId || !userRole) {
-      console.log("No user info in storage, checking authentication...");
-      
-      // Check authentication status
-      const response = await fetch(`${API_URL}/auth/check-auth`, {
-        credentials: 'include',
-        headers: {
-          'Accept': 'application/json'
-        }
-      });
-      
-      if (response.ok) {
-        const data = await response.json();
-        console.log("Authentication successful:", data);
+    try {
+        const teacherInfoDiv = document.getElementById('teacherInfo');
         
-        // Store user info in secureStorage
-        secureStorage.setItem('userId', data.user.id);
-        secureStorage.setItem('userRole', data.role);
-        secureStorage.setItem('userName', `${data.user.firstName} ${data.user.lastName}`);
+        console.log('Checking server authentication');
         
-        // Update welcome message
-        const welcomeMsg = document.getElementById('welcome-message');
-        if (welcomeMsg) {
-          welcomeMsg.textContent = `Welcome, ${data.user.firstName} ${data.user.lastName}!`;
+        // First, try to authenticate with session cookies only
+        const sessionAuthResponse = await fetch(`${API_URL}/auth/check-auth`, {
+            credentials: 'include',
+            headers: {
+                'Accept': 'application/json',
+                'Cache-Control': 'no-cache'
+            }
+        });
+        
+        let authenticated = false;
+        let authData = null;
+        
+        if (sessionAuthResponse.ok) {
+            authData = await sessionAuthResponse.json();
+            console.log('Session auth response:', authData);
+            
+            if (authData.authenticated) {
+                console.log('Successfully authenticated via session');
+                authenticated = true;
+            } else {
+                console.log('Session authentication failed, will try header-based auth');
+            }
+        } else {
+            console.log(`Session auth check failed with status ${sessionAuthResponse.status}`);
         }
         
-        // Show teacher section
-        const teacherSection = document.getElementById('teacher-section');
-        if (teacherSection) {
-          teacherSection.style.display = 'block';
+        // If session authentication failed, try with localStorage headers as fallback
+        if (!authenticated) {
+            const userId = localStorage.getItem('userId');
+            const userRole = localStorage.getItem('userRole');
+            
+            if (userId && userRole) {
+                console.log('Attempting header-based authentication as fallback');
+                
+                try {
+                    const headerAuthResponse = await fetch(`${API_URL}/auth/check-auth`, {
+                        credentials: 'include',
+                        headers: {
+                            'Accept': 'application/json',
+                            'Cache-Control': 'no-cache',
+                            'X-User-ID': userId,
+                            'X-User-Role': userRole
+                        }
+                    });
+                    
+                    if (headerAuthResponse.ok) {
+                        authData = await headerAuthResponse.json();
+                        console.log('Header-based auth response:', authData);
+                        
+                        if (authData.authenticated) {
+                            console.log('Successfully authenticated via header-based auth');
+                            authenticated = true;
+                        }
+                    }
+                } catch (headerAuthError) {
+                    console.error('Header-based auth error:', headerAuthError);
+                }
+            } else {
+                console.log('No localStorage credentials available for fallback authentication');
+            }
         }
         
-        // Load classes
-        loadClasses();
-      } else {
-        console.error("Authentication failed, redirecting to login...");
-        window.location.href = getBasePath() + '/index.html';
-      }
-    } else {
-      // User info found in secureStorage
-      console.log("User info found in storage:", { userId, userRole, userName });
-      
-      // Update welcome message
-      const welcomeMsg = document.getElementById('welcome-message');
-      if (welcomeMsg) {
-        welcomeMsg.textContent = `Welcome, ${userName}!`;
-      }
-      
-      // Show teacher section
-      const teacherSection = document.getElementById('teacher-section');
-      if (teacherSection) {
-        teacherSection.style.display = 'block';
-      }
-      
-      // Load classes
-      loadClasses();
+        // Handle successful authentication
+        if (authenticated && authData && authData.user) {
+            // Check if user is a teacher
+            if (authData.user.role === 'teacher') {
+                console.log('Successfully authenticated as teacher');
+                
+                // Store in localStorage as fallback, but ONLY store the credentials
+                // NOT any session-specific information that could cause re-auth
+                localStorage.setItem('userId', authData.user.id);
+                localStorage.setItem('userRole', 'teacher');
+                localStorage.setItem('firstName', authData.user.firstName || '');
+                localStorage.setItem('lastName', authData.user.lastName || '');
+                
+                // Display teacher information
+                teacherInfoDiv.innerHTML = `
+                    <p>Welcome, ${authData.user.firstName || 'Teacher'} ${authData.user.lastName || ''}!</p>
+                    <p>User ID: ${authData.user.id}</p>
+                `;
+                
+                // Load teacher's classes
+                await loadClasses();
+                return;
+            } else if (authData.user.role === 'student') {
+                // User is a student, redirect to student dashboard
+                console.log('User is a student, redirecting to student dashboard');
+                const basePath = getBasePath();
+                window.location.href = `${basePath}/pages/student-dashboard.html`;
+                return;
+            }
+        }
+        
+        // If we reach here, authentication failed - redirect to login
+        console.log('Authentication failed, redirecting to login');
+        const basePath = getBasePath();
+        window.location.href = `${basePath}/index.html`;
+        
+    } catch (error) {
+        console.error('Dashboard initialization error:', error);
+        // Check if we have localStorage fallback before redirecting
+        const localUserId = localStorage.getItem('userId');
+        const localRole = localStorage.getItem('userRole');
+        
+        if (localUserId && localRole === 'teacher') {
+            console.log('Using localStorage fallback due to server error');
+            
+            // Display teacher information from localStorage
+            const firstName = localStorage.getItem('firstName') || '';
+            const lastName = localStorage.getItem('lastName') || '';
+            const teacherInfoDiv = document.getElementById('teacherInfo');
+            
+            teacherInfoDiv.innerHTML = `
+                <p>Welcome, ${firstName || 'Teacher'} ${lastName || ''}!</p>
+                <p>User ID: ${localUserId}</p>
+            `;
+            
+            // Load teacher's classes using header-based auth
+            loadClasses();
+            return;
+        }
+        
+        alert('Error initializing dashboard. Please try logging in again.');
+        const basePath = getBasePath();
+        window.location.href = `${basePath}/index.html`;
     }
-  } catch (error) {
-    console.error("Error initializing dashboard:", error);
-    showError("Failed to initialize dashboard. Please try again.");
-  }
 }
 
 // Load classes for the teacher
 async function loadClasses() {
     try {
-        const classSelect = document.getElementById('class-select');
-        const attendanceClassSelect = document.getElementById('attendance-class-select');
-        const classesContainer = document.getElementById('classes-container');
+        const classSelect = document.getElementById('classSelect');
+        const attendanceClassSelect = document.getElementById('attendanceClassSelect');
+        const classListDiv = document.getElementById('classList');
         
-        if (!classSelect || !attendanceClassSelect || !classesContainer) {
-            console.error("Required elements for class loading not found");
-            return;
-        }
-        
-        const userId = secureStorage.getItem('userId');
+        const userId = localStorage.getItem('userId');
         console.log(`Fetching classes for user ID: ${userId}`);
         console.log(`Session cookies: ${document.cookie}`);
         
@@ -421,8 +435,8 @@ async function loadClasses() {
             'Cache-Control': 'no-cache'
         };
         
-        // Add auth from secureStorage if available
-        const userRole = secureStorage.getItem('userRole');
+        // Add auth from localStorage if available
+        const userRole = localStorage.getItem('userRole');
         if (userId && userRole) {
             headers['X-User-ID'] = userId;
             headers['X-User-Role'] = userRole;
@@ -455,7 +469,7 @@ async function loadClasses() {
             
             if (response.status === 401 || response.status >= 500) {
                 console.error('Both authenticated and direct methods failed');
-                classesContainer.innerHTML = `
+                classListDiv.innerHTML = `
                     <div class="empty-state error">
                         <p>Authentication failed. Please try logging in again.</p>
                         <button class="btn" id="reloginBtn">Login Again</button>
@@ -478,7 +492,7 @@ async function loadClasses() {
         
         if (data.success) {
             // Clear existing class list
-            classesContainer.innerHTML = '';
+            classListDiv.innerHTML = '';
             
             if (data.classes && data.classes.length > 0) {
                 // Add classes to selects and class list
@@ -504,7 +518,7 @@ async function loadClasses() {
                         <p class="description">${cls.description || 'No description'}</p>
                         <button class="btn btn-sm btn-danger delete-class" data-id="${cls.id}">Delete</button>
                     `;
-                    classesContainer.appendChild(classCard);
+                    classListDiv.appendChild(classCard);
                 });
                 
                 // Add event listeners to delete buttons
@@ -517,7 +531,7 @@ async function loadClasses() {
                     });
                 });
             } else {
-                classesContainer.innerHTML = `
+                classListDiv.innerHTML = `
                     <div class="empty-state">
                         <p>You haven't created any classes yet.</p>
                         <p>Add your first class using the form below.</p>
@@ -525,7 +539,7 @@ async function loadClasses() {
                 `;
             }
         } else {
-            classesContainer.innerHTML = `
+            classListDiv.innerHTML = `
                 <div class="empty-state error">
                     <p>Failed to load classes: ${data.message || 'Unknown error'}</p>
                     <p>Please try again or contact support.</p>
@@ -534,15 +548,13 @@ async function loadClasses() {
         }
     } catch (error) {
         console.error('Error loading classes:', error);
-        const classesContainer = document.getElementById('classes-container');
-        if (classesContainer) {
-            classesContainer.innerHTML = `
+        const classListDiv = document.getElementById('classList');
+        classListDiv.innerHTML = `
             <div class="empty-state error">
                 <p>Error loading classes: ${error.message}</p>
                 <p>Please check your connection and try again.</p>
             </div>
         `;
-        }
     }
 }
 
@@ -633,8 +645,8 @@ async function loadSessions(classId) {
         
         // Only add header auth if no valid cookie exists
         if (!document.cookie.includes('qr_attendance_sid')) {
-            const userId = secureStorage.getItem('userId');
-            const userRole = secureStorage.getItem('userRole');
+            const userId = localStorage.getItem('userId');
+            const userRole = localStorage.getItem('userRole');
             if (userId && userRole) {
                 headers['X-User-ID'] = userId;
                 headers['X-User-Role'] = userRole;
@@ -703,15 +715,9 @@ async function loadSessions(classId) {
 
 // Load attendance records for a session
 async function loadAttendanceRecords() {
-    const sessionSelect = document.getElementById('sessionSelect');
-    const recordsDiv = document.getElementById('attendance-records');
+    const sessionId = document.getElementById('sessionSelect').value;
+    const recordsDiv = document.getElementById('attendanceRecords');
     
-    if (!sessionSelect || !recordsDiv) {
-        console.error("Required elements for attendance records not found");
-        return;
-    }
-    
-    const sessionId = sessionSelect.value;
     if (!sessionId) {
         recordsDiv.innerHTML = '<div class="error-message">Please select a session</div>';
         return;
@@ -728,8 +734,8 @@ async function loadAttendanceRecords() {
         };
         
         // Add fallback header auth
-        const userId = secureStorage.getItem('userId');
-        const userRole = secureStorage.getItem('userRole');
+        const userId = localStorage.getItem('userId');
+        const userRole = localStorage.getItem('userRole');
         if (userId && userRole) {
             headers['X-User-ID'] = userId;
             headers['X-User-Role'] = userRole;
@@ -824,7 +830,7 @@ async function loadAttendanceRecords() {
 
 // View attendance for current session
 async function viewCurrentSessionAttendance() {
-    const currentSessionId = secureStorage.getItem('currentSessionId');
+    const currentSessionId = localStorage.getItem('currentSessionId');
     
     if (!currentSessionId) {
         alert('No active session found. Generate a QR code first.');
@@ -851,25 +857,35 @@ async function viewCurrentSessionAttendance() {
 // Logout function
 async function logout() {
     try {
-        // Call the logout endpoint
-        const response = await fetch(`${API_URL}/auth/logout`, {
-            method: 'POST',
-            credentials: 'include',
-            headers: {
-                'Accept': 'application/json'
-            }
+        // Clear localStorage first
+        localStorage.clear();
+        
+        // Clear session cookies
+        document.cookie.split(";").forEach(function(c) { 
+            document.cookie = c.replace(/^ +/, "").replace(/=.*/, "=;expires=" + new Date().toUTCString() + ";path=/"); 
         });
         
-        // Clear secureStorage
-        secureStorage.clear();
+        // Call server logout endpoint
+        const response = await fetch(`${API_URL}/auth/logout`, {
+            method: 'POST',
+            credentials: 'include'
+        });
         
-        // Redirect to login page
-        window.location.href = getBasePath() + '/index.html';
+        const data = await response.json();
+        
+        if (data.success) {
+            console.log('Logged out successfully');
+        } else {
+            console.warn('Server logout returned error:', data.message);
+        }
     } catch (error) {
         console.error('Logout error:', error);
-        // Even if the server request fails, clear storage and redirect
-        secureStorage.clear();
-        window.location.href = getBasePath() + '/index.html';
+    } finally {
+        // Get the base path for proper redirect
+        const basePath = getBasePath();
+        
+        // Always redirect to login page with proper path
+        window.location.replace(`${basePath}/index.html`);
     }
 }
 
@@ -889,7 +905,7 @@ function getBasePath() {
 
 // Event listener for attendance class select
 document.addEventListener('DOMContentLoaded', function() {
-    const attendanceClassSelect = document.getElementById('attendance-class-select');
+    const attendanceClassSelect = document.getElementById('attendanceClassSelect');
     attendanceClassSelect.addEventListener('change', function() {
         loadSessions(this.value);
     });

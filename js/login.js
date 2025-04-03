@@ -13,7 +13,7 @@ document.addEventListener('DOMContentLoaded', function() {
   const errorMsgElement = document.getElementById('errorMsg');
 
   // Check if user is already logged in
-  checkAuth();
+  checkAuthentication();
 
   // Show/hide student ID field based on role selection
   if (roleSelect && studentIdField) {
@@ -55,45 +55,119 @@ document.addEventListener('DOMContentLoaded', function() {
 
   // Handle login form submission
   if (loginForm) {
-    loginForm.addEventListener('submit', login);
+    loginForm.addEventListener('submit', async function(e) {
+      e.preventDefault();
+      
+      const email = document.getElementById('email').value;
+      const password = document.getElementById('password').value;
+      
+      // Show loading state
+      const submitButton = e.target.querySelector('button[type="submit"]');
+      const originalButtonText = submitButton.textContent;
+      submitButton.textContent = 'Logging in...';
+      submitButton.disabled = true;
+      
+      try {
+        const result = await login(email, password);
+        
+        if (result.success) {
+          console.log('Login successful, redirecting...');
+          
+          // Increase delay to ensure session is properly established
+          // before any other requests are made
+          setTimeout(() => {
+            // Store all user data in URL parameters for dashboard
+            const params = new URLSearchParams();
+            params.append('userId', result.userData.id);
+            params.append('role', result.userData.role);
+            params.append('firstName', result.userData.firstName);
+            params.append('lastName', result.userData.lastName);
+            
+            const basePath = getBasePath();
+            
+            // Redirect based on role with parameters
+            if (result.userData.role === 'teacher') {
+              window.location.href = `${basePath}/pages/teacher-dashboard.html?${params.toString()}`;
+            } else if (result.userData.role === 'student') {
+              window.location.href = `${basePath}/pages/student-dashboard.html?${params.toString()}`;
+            }
+          }, 1000); // Increased from 500ms to 1000ms
+        } else {
+          showError(result.message);
+          submitButton.textContent = originalButtonText;
+          submitButton.disabled = false;
+        }
+      } catch (error) {
+        console.error('Login error:', error);
+        showError('An error occurred during login. Please try again.');
+        submitButton.textContent = originalButtonText;
+        submitButton.disabled = false;
+      }
+    });
   }
 
   // Handle registration form submission
   if (registerForm) {
-    registerForm.addEventListener('submit', register);
-  }
-
-  // Logout function
-  async function logout() {
-    try {
-      // Call the logout endpoint
-      const response = await fetch(`${API_URL}/auth/logout`, {
-        method: 'POST',
-        credentials: 'include',
-        headers: {
-          'Accept': 'application/json'
-        }
-      });
-      
-      // Clear secureStorage
-      secureStorage.clear();
-      
-      // Redirect to login page
-      window.location.href = getBasePath() + '/index.html';
-    } catch (error) {
-      console.error('Logout error:', error);
-      // Even if the server request fails, clear storage and redirect
-      secureStorage.clear();
-      window.location.href = getBasePath() + '/index.html';
-    }
-  }
-
-  // Add event listener for logout button
-  const logoutBtn = document.getElementById('logout-btn');
-  if (logoutBtn) {
-    logoutBtn.addEventListener('click', function(e) {
+    registerForm.addEventListener('submit', async function(e) {
       e.preventDefault();
-      logout();
+      
+      const role = document.getElementById('role').value;
+      const email = document.getElementById('reg-email').value;
+      const firstName = document.getElementById('first-name').value;
+      const lastName = document.getElementById('last-name').value;
+      const password = document.getElementById('reg-password').value;
+      const confirmPassword = document.getElementById('confirm-password').value;
+      const studentId = document.getElementById('student-id')?.value || null;
+      
+      // Check if passwords match
+      if (password !== confirmPassword) {
+        showError('Passwords do not match');
+        return;
+      }
+      
+      // Show loading state
+      const submitButton = e.target.querySelector('button[type="submit"]');
+      const originalButtonText = submitButton.textContent;
+      submitButton.textContent = 'Registering...';
+      submitButton.disabled = true;
+      
+      try {
+        const response = await fetch(`${API_URL}/auth/register`, {
+          method: 'POST',
+          headers: { 
+            'Content-Type': 'application/json',
+            'Accept': 'application/json'
+          },
+          body: JSON.stringify({ 
+            role, 
+            email, 
+            firstName, 
+            lastName, 
+            password, 
+            studentId 
+          }),
+          credentials: 'include'
+        });
+
+        const data = await response.json();
+
+        if (data.success) {
+          showSuccess('Registration successful! You can now log in.');
+          // Switch back to login form
+          registerSection.style.display = 'none';
+          loginSection.style.display = 'block';
+        } else {
+          showError(data.message || 'Registration failed');
+        }
+        
+        submitButton.textContent = originalButtonText;
+        submitButton.disabled = false;
+      } catch (error) {
+        console.error('Registration error:', error);
+        showError('Server error. Please try again later.');
+        submitButton.textContent = originalButtonText;
+        submitButton.disabled = false;
+      }
     });
   }
 
@@ -137,207 +211,131 @@ function getBasePath() {
 }
 
 // Login function
-async function login(event) {
-  // Prevent default form submission
-  event.preventDefault();
-  
-  const email = document.getElementById('login-email').value;
-  const password = document.getElementById('login-password').value;
-  const loginBtn = document.getElementById('login-btn');
-  const loginError = document.getElementById('login-error');
-  
-  // Basic validation
-  if (!email || !password) {
-    loginError.textContent = 'Please enter both email and password';
-    loginError.style.display = 'block';
-    return;
-  }
-  
+async function login(email, password) {
   try {
-    // Show loading state
-    loginBtn.disabled = true;
-    loginBtn.textContent = 'Logging in...';
-    loginError.style.display = 'none';
+    console.log('Attempting login with:', email);
     
-    // Make login request
     const response = await fetch(`${API_URL}/auth/login`, {
       method: 'POST',
       headers: {
-        'Content-Type': 'application/json'
+        'Content-Type': 'application/json',
+        'Accept': 'application/json'
       },
-      credentials: 'include', // Important for cookies
-      body: JSON.stringify({ email, password })
+      body: JSON.stringify({ email, password }),
+      credentials: 'include'
     });
     
-    const data = await response.json();
+    console.log('Login response status:', response.status);
     
-    if (data.success) {
-      console.log('Login successful:', data);
-      
-      // Store user data in secureStorage
-      secureStorage.setItem('userId', data.user.id);
-      secureStorage.setItem('userRole', data.role);
-      secureStorage.setItem('userName', `${data.user.firstName} ${data.user.lastName}`);
-      secureStorage.setItem('userEmail', email);
-      secureStorage.setItem('loginTime', new Date().toString());
-      
-      // Redirect based on role
-      if (data.role === 'teacher') {
-        window.location.href = getBasePath() + '/pages/teacher-dashboard.html';
-      } else {
-        window.location.href = getBasePath() + '/pages/student-dashboard.html';
-      }
-    } else {
-      // Show error message
-      loginError.textContent = data.message || 'Login failed. Please check your credentials.';
-      loginError.style.display = 'block';
-      loginBtn.disabled = false;
-      loginBtn.textContent = 'Login';
+    if (!response.ok) {
+      const errorData = await response.json();
+      console.error('Login failed:', errorData);
+      return {
+        success: false,
+        message: errorData.message || 'Login failed. Please check your credentials.'
+      };
     }
+
+    const data = await response.json();
+    console.log('Login successful:', data);
+    
+    // Store user data in localStorage as fallback
+    localStorage.setItem('userId', data.user.id);
+    localStorage.setItem('userRole', data.role);
+    localStorage.setItem('userName', `${data.user.firstName} ${data.user.lastName}`);
+    localStorage.setItem('userEmail', email);
+    localStorage.setItem('loginTime', new Date().toISOString());
+    
+    return {
+      success: true,
+      message: 'Login successful!',
+      userData: {
+        id: data.user.id,
+        firstName: data.user.firstName,
+        lastName: data.user.lastName,
+        role: data.role
+      }
+    };
   } catch (error) {
     console.error('Login error:', error);
-    loginError.textContent = 'Server error. Please try again later.';
-    loginError.style.display = 'block';
-    loginBtn.disabled = false;
-    loginBtn.textContent = 'Login';
+    return {
+      success: false,
+      message: 'An error occurred during login. Please try again.'
+    };
   }
 }
 
 // Check if user is already logged in
-async function checkAuth() {
+async function checkAuthentication() {
   try {
-    // First try server-side authentication
+    console.log('Checking authentication status...');
+    
+    // First try server authentication
     const response = await fetch(`${API_URL}/auth/check-auth`, {
-      credentials: 'include',
-      headers: {
-        'Accept': 'application/json'
-      }
+      credentials: 'include'
     });
-    
-    if (response.ok) {
-      const data = await response.json();
-      
-      if (data.authenticated) {
-        // Store user data
-        secureStorage.setItem('userId', data.user.id);
-        secureStorage.setItem('userRole', data.role);
-        secureStorage.setItem('userName', `${data.user.firstName} ${data.user.lastName}`);
-        
-        // Redirect based on role
-        if (data.role === 'teacher') {
-          window.location.href = getBasePath() + '/pages/teacher-dashboard.html';
-          return true;
-        } else {
-          window.location.href = getBasePath() + '/pages/student-dashboard.html';
-          return true;
-        }
-      }
-    }
-    
-    // If server auth fails, check secureStorage
-    const userId = secureStorage.getItem('userId');
-    const userRole = secureStorage.getItem('userRole');
-    
-    if (userId && userRole) {
-      // Redirect based on role from secureStorage
-      if (userRole === 'teacher') {
-        window.location.href = getBasePath() + '/pages/teacher-dashboard.html';
-        return true;
-      } else {
-        window.location.href = getBasePath() + '/pages/student-dashboard.html';
-        return true;
-      }
-    }
-    
-    return false;
-  } catch (error) {
-    console.error('Auth check error:', error);
-    return false;
-  }
-}
 
-// Registration form submission
-async function register(event) {
-  // Prevent default form submission
-  event.preventDefault();
-  
-  const firstName = document.getElementById('register-firstName').value;
-  const lastName = document.getElementById('register-lastName').value;
-  const email = document.getElementById('register-email').value;
-  const password = document.getElementById('register-password').value;
-  const confirmPassword = document.getElementById('register-confirmPassword').value;
-  const role = document.querySelector('input[name="register-role"]:checked').value;
-  const studentId = document.getElementById('register-studentId').value;
-  const registerBtn = document.getElementById('register-btn');
-  const registerError = document.getElementById('register-error');
-  
-  // Basic validation
-  if (!firstName || !lastName || !email || !password) {
-    registerError.textContent = 'Please fill in all required fields';
-    registerError.style.display = 'block';
-    return;
-  }
-  
-  if (password !== confirmPassword) {
-    registerError.textContent = 'Passwords do not match';
-    registerError.style.display = 'block';
-    return;
-  }
-  
-  if (role === 'student' && !studentId) {
-    registerError.textContent = 'Student ID is required for student accounts';
-    registerError.style.display = 'block';
-    return;
-  }
-  
-  try {
-    // Show loading state
-    registerBtn.disabled = true;
-    registerBtn.textContent = 'Registering...';
-    registerError.style.display = 'none';
-    
-    // Prepare request data
-    const requestData = {
-      firstName,
-      lastName,
-      email,
-      password,
-      role
-    };
-    
-    // Add student ID if role is student
-    if (role === 'student') {
-      requestData.studentId = studentId;
-    }
-    
-    // Make registration request
-    const response = await fetch(`${API_URL}/auth/register`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify(requestData)
-    });
-    
     const data = await response.json();
+    console.log('Auth check response:', data);
     
-    if (data.success) {
-      // Show success message and switch to login tab
-      document.getElementById('login-tab').click();
-      alert('Registration successful! Please check your email to verify your account.');
-    } else {
-      // Show error message
-      registerError.textContent = data.message || 'Registration failed. Please try again.';
-      registerError.style.display = 'block';
+    if (data.authenticated && data.user) {
+      console.log('User is authenticated, checking role:', data.user.role);
+      
+      // Store user data in localStorage as fallback
+      localStorage.setItem('userId', data.user.id);
+      localStorage.setItem('userRole', data.user.role);
+      localStorage.setItem('firstName', data.user.firstName || '');
+      localStorage.setItem('lastName', data.user.lastName || '');
+      
+      const basePath = getBasePath();
+      
+      // Redirect based on role with correct path
+      if (data.user.role === 'teacher') {
+        console.log('Redirecting to teacher dashboard');
+        window.location.href = `${basePath}/pages/teacher-dashboard.html`;
+      } else if (data.user.role === 'student') {
+        console.log('Redirecting to student dashboard');
+        window.location.href = `${basePath}/pages/student-dashboard.html`;
+      }
+      return;
     }
     
-    registerBtn.disabled = false;
-    registerBtn.textContent = 'Register';
+    // If server auth fails, check localStorage
+    const localRole = localStorage.getItem('userRole');
+    const localUserId = localStorage.getItem('userId');
+    
+    if (localUserId && localRole) {
+      console.log('Using localStorage authentication, role:', localRole);
+      
+      const basePath = getBasePath();
+      
+      // Redirect based on localStorage role with correct path
+      if (localRole === 'teacher') {
+        console.log('Redirecting to teacher dashboard (localStorage)');
+        window.location.href = `${basePath}/pages/teacher-dashboard.html`;
+      } else if (localRole === 'student') {
+        console.log('Redirecting to student dashboard (localStorage)');
+        window.location.href = `${basePath}/pages/student-dashboard.html`;
+      }
+      return;
+    }
+    
+    // Not authenticated at all
+    console.log('User is not authenticated');
+    
   } catch (error) {
-    console.error('Registration error:', error);
-    registerError.textContent = 'Server error. Please try again later.';
-    registerError.style.display = 'block';
-    registerBtn.disabled = false;
-    registerBtn.textContent = 'Register';
+    console.error('Authentication check error:', error);
+    // On error, check localStorage as fallback
+    const localRole = localStorage.getItem('userRole');
+    const localUserId = localStorage.getItem('userId');
+    
+    if (localUserId && localRole) {
+      console.log('Using localStorage fallback due to server error, role:', localRole);
+      if (localRole === 'teacher') {
+        window.location.href = '/QrCode-Attendance/pages/teacher-dashboard.html';
+      } else if (localRole === 'student') {
+        window.location.href = '/QrCode-Attendance/pages/student-dashboard.html';
+      }
+    }
   }
 }

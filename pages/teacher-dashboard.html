@@ -16,98 +16,88 @@
 
 <body>
   <header>
-    <div class="container">
-      <h1>QR Attendance System</h1>
-      <nav>
-        <ul>
-          <li><a href="../index.html">Home</a></li>
-          <li><a href="#" class="active">Dashboard</a></li>
-          <li><a href="#" id="logout-btn">Logout</a></li>
-        </ul>
-      </nav>
-    </div>
+    <nav>
+      <div class="logo">QR Attendance System</div>
+      <div class="nav-links">
+        <a href="../index.html">Home</a>
+        <a href="#" class="active">Dashboard</a>
+        <a href="#" id="logoutBtn">Logout</a>
+      </div>
+    </nav>
   </header>
 
-  <main class="container">
-    <h2>Teacher Dashboard</h2>
+  <div class="container">
+    <h1>Teacher Dashboard</h1>
+    <div id="teacherInfo"></div>
     
-    <div id="welcome-message"></div>
+    <div class="dashboard-tabs">
+      <button class="tab-btn active" data-tab="qr-tab">Generate QR Code</button>
+      <button class="tab-btn" data-tab="classes-tab">Manage Classes</button>
+      <button class="tab-btn" data-tab="attendance-tab">View Attendance</button>
+    </div>
     
-    <div id="teacher-section" style="display: none;">
-      <div class="dashboard-actions">
-        <button id="generate-qr-btn">Generate QR Code</button>
-        <button id="manage-classes-btn">Manage Classes</button>
-        <button id="view-attendance-btn">View Attendance</button>
+    <div id="qr-tab" class="tab-content active">
+      <h2>Generate QR Code for Attendance</h2>
+      <div class="form-group">
+        <label for="classSelect">Select Class:</label>
+        <select id="classSelect" class="form-control"></select>
       </div>
-
-      <div id="qr-section" class="dashboard-section" style="display: none;">
-        <h3>Generate QR Code for Attendance</h3>
+      <button id="generateQRBtn" class="btn btn-primary">Generate QR Code</button>
+      <div id="status" class="mt-3"></div>
+      <div id="qrcode" class="mt-3"></div>
+      <button id="viewAttendanceBtn" class="btn btn-info mt-3" disabled>View Attendance for Current Session</button>
+      <div id="attendanceList" class="mt-3"></div>
+    </div>
+    
+    <div id="classes-tab" class="tab-content">
+      <h2>Manage Your Classes</h2>
+      <div class="class-list" id="classList"></div>
+      <div class="add-class-form">
+        <h3>Add New Class</h3>
         <div class="form-group">
-          <label for="class-select">Select Class:</label>
-          <select id="class-select">
-            <option value="">-- Select a Class --</option>
-          </select>
+          <label for="className">Class Name:</label>
+          <input type="text" id="className" class="form-control" placeholder="Enter class name">
         </div>
-        <div class="form-actions">
-          <button id="generate-qr-code-btn">Generate QR Code</button>
-          <button id="view-current-attendance-btn">View Attendance for Current Session</button>
-        </div>
-        <div id="qr-code-container"></div>
-      </div>
-
-      <div id="classes-section" class="dashboard-section" style="display: none;">
-        <h3>Manage Your Classes</h3>
         <div class="form-group">
-          <h4>Add New Class</h4>
-          <label for="class-name">Class Name:</label>
-          <input type="text" id="class-name" required>
-          
-          <label for="subject">Subject:</label>
-          <input type="text" id="subject" required>
-          
-          <label for="description">Description (Optional):</label>
-          <textarea id="description"></textarea>
-          
-          <button id="add-class-btn">Add Class</button>
+          <label for="classSubject">Subject:</label>
+          <input type="text" id="classSubject" class="form-control" placeholder="Enter subject">
         </div>
-        
-        <div id="classes-list">
-          <h4>Your Classes</h4>
-          <div id="classes-container"></div>
-        </div>
-      </div>
-
-      <div id="attendance-section" class="dashboard-section" style="display: none;">
-        <h3>View Attendance Records</h3>
         <div class="form-group">
-          <label for="attendance-class-select">Select Class:</label>
-          <select id="attendance-class-select">
-            <option value="">-- Select a Class --</option>
-          </select>
-          
-          <label for="session-select">Select Session:</label>
-          <select id="session-select">
-            <option value="">-- Select a Session --</option>
-          </select>
-          
-          <button id="load-attendance-btn">Load Attendance</button>
+          <label for="classDescription">Description (Optional):</label>
+          <textarea id="classDescription" class="form-control" placeholder="Enter class description"></textarea>
         </div>
-        
-        <div id="attendance-records"></div>
+        <button id="addClass" class="btn btn-success">Add Class</button>
+        <div id="addClassStatus" class="mt-2"></div>
       </div>
     </div>
     
-    <div id="debug-section">
+    <div id="attendance-tab" class="tab-content">
+      <h2>View Attendance Records</h2>
+      <div class="attendance-filters">
+        <div class="form-group">
+          <label for="attendanceClassSelect">Select Class:</label>
+          <select id="attendanceClassSelect" class="form-control"></select>
+        </div>
+        <div class="form-group">
+          <label for="sessionSelect">Select Session:</label>
+          <select id="sessionSelect" class="form-control"></select>
+        </div>
+        <button id="loadAttendance" class="btn btn-primary">Load Attendance</button>
+      </div>
+      <div id="attendanceRecords" class="mt-4"></div>
+    </div>
+
+    <!-- Debug section for troubleshooting -->
+    <div class="debug-section mt-5">
       <h4>Debug Information</h4>
-      <button id="test-cookies-btn">Test Cookies</button>
-      <button id="check-auth-btn">Check Auth</button>
+      <button id="testCookiesBtn" class="btn btn-sm btn-secondary">Test Cookies</button>
+      <button id="checkAuthBtn" class="btn btn-sm btn-secondary">Check Auth</button>
+      <div id="debugOutput" class="mt-2 p-2 bg-light"></div>
     </div>
-  </main>
+  </div>
 
   <footer>
-    <div class="container">
-      <p>&copy; 2025 QR Attendance System</p>
-    </div>
+    <p>&copy; 2023 QR Attendance System</p>
   </footer>
 
   <!-- Configure API URL -->
