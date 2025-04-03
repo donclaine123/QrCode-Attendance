@@ -12,7 +12,7 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Initialize the dashboard
     initDashboard();
-    
+
     // Handle tab switching
     const tabButtons = document.querySelectorAll('.tab-btn');
     const tabContents = document.querySelectorAll('.tab-content');
@@ -397,19 +397,19 @@ async function initDashboard() {
                     
                     if (reAuthData.success) {
                         console.log("Successfully re-established session:", reAuthData.sessionId);
-                        
-                        // Display teacher information from localStorage
-                        const firstName = localStorage.getItem('firstName') || '';
-                        const lastName = localStorage.getItem('lastName') || '';
-                        
-                        teacherInfoDiv.innerHTML = `
-                            <p>Welcome, ${firstName || 'Teacher'} ${lastName || ''}!</p>
-                            <p>User ID: ${localUserId}</p>
-                        `;
-                        
-                        // Load teacher's classes
-                        await loadClasses();
-                        return;
+            
+            // Display teacher information from localStorage
+            const firstName = localStorage.getItem('firstName') || '';
+            const lastName = localStorage.getItem('lastName') || '';
+            
+            teacherInfoDiv.innerHTML = `
+                <p>Welcome, ${firstName || 'Teacher'} ${lastName || ''}!</p>
+                <p>User ID: ${localUserId}</p>
+            `;
+            
+            // Load teacher's classes
+            await loadClasses();
+            return;
                     }
                 }
             } catch (reAuthError) {
@@ -921,4 +921,4 @@ document.addEventListener('DOMContentLoaded', function() {
     attendanceClassSelect.addEventListener('change', function() {
         loadSessions(this.value);
     });
-});
+}); 
