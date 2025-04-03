@@ -67,6 +67,9 @@ document.addEventListener('DOMContentLoaded', function() {
     .catch(error => {
         console.error("Headers debug error:", error);
     });
+
+    // Check if cookies are enabled and warn if not
+    checkCookiesEnabled();
 });
 
 // Function to check authentication status
@@ -455,6 +458,44 @@ async function initDashboard() {
     }
 }
 
+// Function to check if cookies are enabled and warn if not
+function checkCookiesEnabled() {
+    try {
+        // Set a test cookie
+        document.cookie = "testcookie=1; path=/";
+        const cookiesEnabled = document.cookie.indexOf("testcookie") !== -1;
+        
+        if (!cookiesEnabled) {
+            console.error("⚠️ COOKIES ARE DISABLED! Authentication will fail!");
+            // Add visible warning to page
+            const warning = document.createElement('div');
+            warning.style.cssText = 'position:fixed;top:0;left:0;right:0;background-color:#f44336;color:white;padding:10px;text-align:center;z-index:9999;';
+            warning.innerHTML = '<strong>Warning:</strong> Cookies are disabled in your browser. The QR attendance system requires cookies to work properly.';
+            document.body.appendChild(warning);
+        } else {
+            // Clear test cookie
+            document.cookie = "testcookie=1; path=/; expires=Thu, 01 Jan 1970 00:00:01 GMT";
+            console.log("✅ Cookies are enabled");
+        }
+        
+        return cookiesEnabled;
+    } catch (e) {
+        console.error("Error checking cookies:", e);
+        return false;
+    }
+}
+
+// Helper function to log cookie state
+function debugCookies() {
+    console.log("Current cookies:", document.cookie || "NONE");
+    const sessionCookie = document.cookie.split(';').find(c => c.trim().startsWith('qr_attendance_sid='));
+    if (sessionCookie) {
+        console.log("Found session cookie:", sessionCookie.trim());
+    } else {
+        console.log("⚠️ NO SESSION COOKIE FOUND!");
+    }
+}
+
 // Load classes for the teacher
 async function loadClasses() {
     try {
@@ -464,60 +505,62 @@ async function loadClasses() {
         
         const userId = localStorage.getItem('userId');
         console.log(`Fetching classes for user ID: ${userId}`);
-        console.log(`Session cookies: ${document.cookie}`);
         
-        // Prepare headers with auth information
-        const headers = {
-            'Accept': 'application/json',
-            'Cache-Control': 'no-cache'
+        // Debug cookie state before making the request
+        debugCookies();
+        
+        // Prepare fetch options with credentials to ensure cookies are sent
+        const fetchOptions = {
+            method: 'GET',
+            credentials: 'include',
+            headers: {
+                'Accept': 'application/json',
+                'Cache-Control': 'no-cache'
+            }
         };
         
-        // Add auth from localStorage if available
+        // Add fallback headers from localStorage if available
         const userRole = localStorage.getItem('userRole');
         if (userId && userRole) {
-            headers['X-User-ID'] = userId;
-            headers['X-User-Role'] = userRole;
+            fetchOptions.headers['X-User-ID'] = userId;
+            fetchOptions.headers['X-User-Role'] = userRole;
         }
         
-        // Try the authenticated endpoint with headers
-        let response = await fetch(`${API_URL}/auth/teacher-classes/${userId}`, {
-            credentials: 'include',
-            headers: headers
-        });
+        console.log("Fetch options:", JSON.stringify(fetchOptions));
+        
+        // Try the authenticated endpoint
+        let response = await fetch(`${API_URL}/auth/teacher-classes/${userId}`, fetchOptions);
         
         console.log(`Classes response status: ${response.status}`);
         
-        // If unauthorized or error, retry with explicit header-based auth only
-        if (response.status === 401 || response.status >= 500) {
-            console.log('Using fallback method to fetch classes via header auth');
+        // If unauthorized, check cookies again and retry
+        if (response.status === 401) {
+            console.log("Authentication failed, checking cookies again...");
+            debugCookies();
             
-            // Try again with explicit content type
-            response = await fetch(`${API_URL}/auth/teacher-classes/${userId}`, {
-                credentials: 'include',
-                headers: {
-                    'Accept': 'application/json',
-                    'Cache-Control': 'no-cache',
-                    'X-User-ID': userId,
-                    'X-User-Role': userRole
-                }
-            });
-            
-            console.log(`Fallback response status: ${response.status}`);
-            
-            if (response.status === 401 || response.status >= 500) {
-                console.error('Both authenticated and direct methods failed');
-                classListDiv.innerHTML = `
-                    <div class="empty-state error">
-                        <p>Authentication failed. Please try logging in again.</p>
-                        <button class="btn" id="reloginBtn">Login Again</button>
-                    </div>
-                `;
-                
-                document.getElementById('reloginBtn')?.addEventListener('click', () => {
-                    logout();
+            // Try to refresh authentication first
+            try {
+                const authResponse = await fetch(`${API_URL}/auth/check-auth`, {
+                    credentials: 'include',
+                    headers: {
+                        'Accept': 'application/json',
+                        'Cache-Control': 'no-cache',
+                        'X-User-ID': userId,
+                        'X-User-Role': userRole
+                    }
                 });
                 
-                return;
+                if (authResponse.ok) {
+                    const authData = await authResponse.json();
+                    console.log("Authentication refreshed:", authData);
+                    debugCookies();
+                    
+                    // Try the classes endpoint again after refreshing auth
+                    response = await fetch(`${API_URL}/auth/teacher-classes/${userId}`, fetchOptions);
+                    console.log(`Retry classes response status: ${response.status}`);
+                }
+            } catch (authError) {
+                console.error("Error refreshing authentication:", authError);
             }
         }
         
