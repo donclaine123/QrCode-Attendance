@@ -275,15 +275,15 @@ async function initDashboard() {
   try {
     // Remove localStorage header injection
     const response = await fetch(`${API_URL}/auth/check-auth`, {
-      credentials: 'include', // This is crucial for sending cookies
+      credentials: 'include',
       headers: {
         'Accept': 'application/json',
         'Cache-Control': 'no-cache'
       }
     });
 
-    // Remove any localStorage-based fallback logic
-    if (!response.ok || !(await response.json()).authenticated) {
+    // Remove localStorage fallback checks
+    if (!response.ok) {
       window.location.href = '/pages/login.html';
       return;
     }
