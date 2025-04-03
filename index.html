@@ -6,6 +6,16 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>QR Code Attendance System</title>
   <link rel="stylesheet" href="css/styles.css">
+  
+  <!-- Add iframe detection script -->
+  <script>
+    // Detect if we're in an iframe
+    if (window !== window.top) {
+      // We're in an iframe - redirect to full page
+      window.top.location.href = window.location.href;
+    }
+  </script>
+  
   <!-- Add storage utility before other scripts -->
   <script src="js/storage.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.min.js"></script>
