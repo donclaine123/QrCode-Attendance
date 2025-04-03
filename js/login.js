@@ -308,11 +308,10 @@ async function checkAuthentication() {
     if (data.authenticated && data.user) {
       console.log('User is authenticated, checking role:', data.user.role);
       
-      // Store user data in localStorage as fallback
-      localStorage.setItem('userId', data.user.id);
-      localStorage.setItem('userRole', data.user.role);
-      localStorage.setItem('firstName', data.user.firstName || '');
-      localStorage.setItem('lastName', data.user.lastName || '');
+      // Store user data in sessionStorage
+      sessionStorage.setItem('userId', data.user.id);
+      sessionStorage.setItem('userRole', data.user.role);
+      sessionStorage.setItem('userName', `${data.user.firstName} ${data.user.lastName}`);
       
       const basePath = getBasePath();
       
@@ -327,21 +326,21 @@ async function checkAuthentication() {
       return;
     }
     
-    // If server auth fails, check localStorage
-    const localRole = localStorage.getItem('userRole');
-    const localUserId = localStorage.getItem('userId');
+    // If server auth fails, check sessionStorage
+    const localRole = sessionStorage.getItem('userRole');
+    const localUserId = sessionStorage.getItem('userId');
     
     if (localUserId && localRole) {
-      console.log('Using localStorage authentication, role:', localRole);
+      console.log('Using sessionStorage authentication, role:', localRole);
       
       const basePath = getBasePath();
       
-      // Redirect based on localStorage role with correct path
+      // Redirect based on sessionStorage role with correct path
       if (localRole === 'teacher') {
-        console.log('Redirecting to teacher dashboard (localStorage)');
+        console.log('Redirecting to teacher dashboard (sessionStorage)');
         window.location.href = `${basePath}/pages/teacher-dashboard.html`;
       } else if (localRole === 'student') {
-        console.log('Redirecting to student dashboard (localStorage)');
+        console.log('Redirecting to student dashboard (sessionStorage)');
         window.location.href = `${basePath}/pages/student-dashboard.html`;
       }
       return;
@@ -352,12 +351,12 @@ async function checkAuthentication() {
     
   } catch (error) {
     console.error('Authentication check error:', error);
-    // On error, check localStorage as fallback
-    const localRole = localStorage.getItem('userRole');
-    const localUserId = localStorage.getItem('userId');
+    // On error, check sessionStorage as fallback
+    const localRole = sessionStorage.getItem('userRole');
+    const localUserId = sessionStorage.getItem('userId');
     
     if (localUserId && localRole) {
-      console.log('Using localStorage fallback due to server error, role:', localRole);
+      console.log('Using sessionStorage fallback due to server error, role:', localRole);
       if (localRole === 'teacher') {
         window.location.href = '/QrCode-Attendance/pages/teacher-dashboard.html';
       } else if (localRole === 'student') {
