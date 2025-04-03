@@ -53,56 +53,11 @@ document.addEventListener('DOMContentLoaded', function() {
     });
   }
 
-  // Handle login form submission
+  // Handle the login form submission
   if (loginForm) {
     loginForm.addEventListener('submit', async function(e) {
       e.preventDefault();
-      
-      const email = document.getElementById('email').value;
-      const password = document.getElementById('password').value;
-      
-      // Show loading state
-      const submitButton = e.target.querySelector('button[type="submit"]');
-      const originalButtonText = submitButton.textContent;
-      submitButton.textContent = 'Logging in...';
-      submitButton.disabled = true;
-      
-      try {
-        const result = await login(email, password);
-        
-        if (result.success) {
-          console.log('Login successful, redirecting...');
-          
-          // Increase delay to ensure session is properly established
-          // before any other requests are made
-          setTimeout(() => {
-            // Store all user data in URL parameters for dashboard
-            const params = new URLSearchParams();
-            params.append('userId', result.userData.id);
-            params.append('role', result.userData.role);
-            params.append('firstName', result.userData.firstName);
-            params.append('lastName', result.userData.lastName);
-            
-            const basePath = getBasePath();
-            
-            // Redirect based on role with parameters
-            if (result.userData.role === 'teacher') {
-              window.location.href = `${basePath}/pages/teacher-dashboard.html?${params.toString()}`;
-            } else if (result.userData.role === 'student') {
-              window.location.href = `${basePath}/pages/student-dashboard.html?${params.toString()}`;
-            }
-          }, 1000); // Increased from 500ms to 1000ms
-        } else {
-          showError(result.message);
-          submitButton.textContent = originalButtonText;
-          submitButton.disabled = false;
-        }
-      } catch (error) {
-        console.error('Login error:', error);
-        showError('An error occurred during login. Please try again.');
-        submitButton.textContent = originalButtonText;
-        submitButton.disabled = false;
-      }
+      await handleLogin(e);
     });
   }
 
@@ -338,4 +293,120 @@ async function checkAuthentication() {
       }
     }
   }
+}
+
+// Process login form submission
+async function handleLogin(event) {
+    const email = document.getElementById('email').value;
+    const password = document.getElementById('password').value;
+    const userType = document.querySelector('input[name="userType"]:checked').value;
+    
+    try {
+        // Show loading state
+        const loginBtn = document.querySelector('#loginForm button[type="submit"]');
+        const originalBtnText = loginBtn.innerHTML;
+        loginBtn.disabled = true;
+        loginBtn.innerHTML = '<span class="spinner"></span> Logging in...';
+        
+        // Clear previous error messages
+        document.getElementById('loginError').textContent = '';
+        
+        // API URL is defined globally or use a default
+        const apiUrl = window.API_URL || 'https://qrattendance-backend-production.up.railway.app';
+        
+        const response = await fetch(`${apiUrl}/auth/login`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                email,
+                password,
+                userType
+            }),
+            credentials: 'include' // Important for storing cookies!
+        });
+        
+        const data = await response.json();
+        
+        if (data.success) {
+            // Save user data in localStorage for fallback authentication
+            localStorage.setItem('userId', data.user.id);
+            localStorage.setItem('userName', data.user.name);
+            localStorage.setItem('userEmail', data.user.email);
+            localStorage.setItem('userRole', userType);
+            localStorage.setItem('isAuthenticated', 'true');
+            localStorage.setItem('loginTime', new Date().toISOString());
+            
+            // Check if cookies are being set properly
+            setTimeout(() => {
+                // Wait a bit to allow cookies to be set
+                const hasCookies = document.cookie.length > 0;
+                const hasSessionCookie = document.cookie.includes('qr_attendance_sid');
+                
+                if (!hasSessionCookie) {
+                    console.warn("⚠️ WARNING: Session cookie not detected! This may affect your login session.");
+                    console.warn("Your browser may be blocking third-party cookies needed for authentication.");
+                    console.warn("The application will attempt to use localStorage as a fallback for authentication.");
+                    
+                    // Display a warning to the user in a non-intrusive way
+                    const warningDiv = document.createElement('div');
+                    warningDiv.className = 'cookie-warning';
+                    warningDiv.innerHTML = `
+                        <div style="background-color:#fff3cd; border:1px solid #ffeeba; padding:10px; margin:10px 0; border-radius:4px;">
+                            <h4 style="color:#856404; margin-top:0;">Cookie Warning</h4>
+                            <p>Your browser appears to be blocking cookies required for optimal performance.</p>
+                            <p>You can still use the app, but you may need to log in more frequently.</p>
+                            <details>
+                                <summary>How to fix this?</summary>
+                                <p>To fix this issue:</p>
+                                <ol>
+                                    <li>Check your browser settings and enable third-party cookies</li>
+                                    <li>Whitelist this website in your cookie settings</li>
+                                    <li>Try using a different browser if the issue persists</li>
+                                </ol>
+                            </details>
+                        </div>
+                    `;
+                    
+                    // Show warning if we're still on the login page (we might already be redirected)
+                    const loginForm = document.getElementById('loginForm');
+                    if (loginForm) {
+                        loginForm.parentNode.insertBefore(warningDiv, loginForm.nextSibling);
+                    }
+                }
+                
+                // Continue with redirection regardless of cookie status
+                redirectToDashboard(userType);
+            }, 500);
+        } else {
+            // Display error message
+            document.getElementById('loginError').textContent = data.message || 'Login failed. Please check your credentials.';
+            
+            // Reset button
+            loginBtn.disabled = false;
+            loginBtn.innerHTML = originalBtnText;
+        }
+    } catch (error) {
+        console.error('Login error:', error);
+        document.getElementById('loginError').textContent = 'An error occurred during login. Please try again.';
+        
+        // Reset button
+        const loginBtn = document.querySelector('#loginForm button[type="submit"]');
+        loginBtn.disabled = false;
+        loginBtn.innerHTML = 'Log In';
+    }
+}
+
+// Helper function to redirect to the dashboard based on user type
+function redirectToDashboard(userType) {
+    const basePath = window.location.pathname.includes('/pages/') 
+        ? '..' 
+        : '.';
+        
+    if (userType === 'teacher') {
+        window.location.href = `${basePath}/pages/teacher-dashboard.html`;
+    } else {
+        window.location.href = `${basePath}/pages/student-dashboard.html`;
+    }
 }

@@ -99,62 +99,59 @@ async function checkAuthStatus() {
 // Function to test cookies
 async function testCookies() {
     try {
-        console.log("Testing cookie functionality...");
-        const response = await fetch(`${API_URL}/auth/test-cookie`, {
-            method: "GET",
-            credentials: "include",
-            headers: { "Accept": "application/json" }
+        // Set a test cookie with JavaScript
+        document.cookie = "js_test_cookie=test; path=/; SameSite=None; Secure";
+        console.log("Set test cookie via JavaScript:", document.cookie);
+        
+        // Try to get a cookie from the server
+        const response = await fetch(`${API_URL}/debug/cookies`, {
+            method: 'GET',
+            credentials: 'include',
+            headers: {
+                'Cache-Control': 'no-cache'
+            }
         });
         
-        console.log("Cookie test response:", response);
-        if (!response.ok) {
-            throw new Error(`HTTP error! status: ${response.status}`);
-        }
-        
         const data = await response.json();
-        console.log("Cookie test data:", data);
+        console.log("Server cookie test response:", data);
         
-        // Show success in debug message
-        const debugMessage = document.getElementById("debug-message");
-        if (debugMessage) {
-            debugMessage.textContent = `Test cookie set. Session ID: ${data.sessionId}`;
-            debugMessage.style.color = "green";
-        }
-        
-        // Now check if we can get the cookie back
-        setTimeout(async () => {
-            try {
-                const checkResponse = await fetch(`${API_URL}/auth/debug-cookies`, {
-                    method: "GET",
-                    credentials: "include",
-                    headers: { "Accept": "application/json" }
-                });
-                
-                if (!checkResponse.ok) {
-                    throw new Error(`HTTP error! status: ${checkResponse.status}`);
+        // Display cookie info
+        const cookieInfo = document.getElementById('cookieInfo');
+        if (cookieInfo) {
+            let html = '<h4>Cookie Test Results</h4>';
+            html += `<p><strong>JavaScript Cookie Test:</strong> ${document.cookie.includes('js_test_cookie=test') ? '✅ Success' : '❌ Failed'}</p>`;
+            html += `<p><strong>Server Cookie Test:</strong> ${data.success ? '✅ Success' : '❌ Failed'}</p>`;
+            html += `<p><strong>Server Session Cookie:</strong> ${data.sessionId ? data.sessionId : 'None'}</p>`;
+            html += `<p><strong>All Cookies:</strong> ${document.cookie || 'None'}</p>`;
+            
+            if (data.cookiesReceived) {
+                html += '<h5>Cookies Received by Server:</h5>';
+                html += '<ul>';
+                for (const [name, value] of Object.entries(data.cookiesReceived)) {
+                    html += `<li><strong>${name}:</strong> ${value}</li>`;
                 }
-                
-                const checkData = await checkResponse.json();
-                console.log("Cookie check data:", checkData);
-                
-                if (debugMessage) {
-                    debugMessage.textContent += `\nCookies found: ${JSON.stringify(checkData.cookies)}`;
-                }
-            } catch (err) {
-                console.error("Cookie check error:", err);
-                if (debugMessage) {
-                    debugMessage.textContent += `\nCookie check error: ${err.message}`;
-                    debugMessage.style.color = "red";
-                }
+                html += '</ul>';
             }
-        }, 1000);
-        
+            
+            if (data.cookiesSet) {
+                html += '<h5>Cookies Set by Server:</h5>';
+                html += '<ul>';
+                for (const cookie of data.cookiesSet) {
+                    html += `<li>${cookie}</li>`;
+                }
+                html += '</ul>';
+            }
+            
+            cookieInfo.innerHTML = html;
+            
+            // Also show enhanced diagnostics
+            enhancedDebugCookies();
+        }
     } catch (error) {
         console.error("Cookie test error:", error);
-        const debugMessage = document.getElementById("debug-message");
-        if (debugMessage) {
-            debugMessage.textContent = `Cookie test error: ${error.message}`;
-            debugMessage.style.color = "red";
+        const cookieInfo = document.getElementById('cookieInfo');
+        if (cookieInfo) {
+            cookieInfo.innerHTML = `<h4>Cookie Test Error</h4><p>${error.message}</p>`;
         }
     }
 }
@@ -193,20 +190,6 @@ async function checkAuthDebug() {
         
         if (debugMessage) {
             debugMessage.textContent += "\n\nCookie data: " + JSON.stringify(cookieData, null, 2);
-        }
-        
-        // Check headers
-        const headerCheck = await fetch(`${API_URL}/auth/debug-headers`, {
-            method: "GET",
-            credentials: "include",
-            headers: { "Accept": "application/json" }
-        });
-        
-        const headerData = await headerCheck.json();
-        console.log("Header data:", headerData);
-        
-        if (debugMessage) {
-            debugMessage.textContent += "\n\nHeader data: " + JSON.stringify(headerData, null, 2);
         }
         
     } catch (error) {
@@ -318,6 +301,59 @@ function setupDebugListeners() {
 // Initialize dashboard
 async function initDashboard() {
     try {
+        // Debug info - to be expanded with enhancedDebugCookies
+        console.log("📝 Dashboard initialization starting...");
+        console.log("🍪 Current document.cookie:", document.cookie || "NONE");
+        
+        const cookiesWorking = areCookiesWorking();
+        console.log(`🍪 Cookies working? ${cookiesWorking ? 'YES' : 'NO'}`);
+        
+        // Create debug section if it doesn't exist
+        let debugSection = document.getElementById('debugSection');
+        if (!debugSection) {
+            debugSection = document.createElement('div');
+            debugSection.id = 'debugSection';
+            debugSection.className = 'debug-section';
+            debugSection.style.margin = '20px';
+            debugSection.style.padding = '15px';
+            debugSection.style.border = '1px solid #ddd';
+            debugSection.style.borderRadius = '5px';
+            debugSection.style.backgroundColor = '#f9f9f9';
+            document.body.appendChild(debugSection);
+            
+            const debugTitle = document.createElement('h3');
+            debugTitle.textContent = 'Debug Information';
+            debugSection.appendChild(debugTitle);
+            
+            // Add test cookie button
+            const testCookieBtn = document.createElement('button');
+            testCookieBtn.textContent = 'Test Cookies';
+            testCookieBtn.className = 'btn btn-sm';
+            testCookieBtn.style.marginRight = '10px';
+            testCookieBtn.addEventListener('click', testCookies);
+            debugSection.appendChild(testCookieBtn);
+            
+            // Add session info button
+            const sessionInfoBtn = document.createElement('button');
+            sessionInfoBtn.textContent = 'Check Session';
+            sessionInfoBtn.className = 'btn btn-sm';
+            sessionInfoBtn.addEventListener('click', checkSession);
+            debugSection.appendChild(sessionInfoBtn);
+            
+            // Add cookie info div
+            const cookieInfo = document.createElement('div');
+            cookieInfo.id = 'cookieInfo';
+            debugSection.appendChild(cookieInfo);
+            
+            // Add session info div
+            const sessionInfo = document.createElement('div');
+            sessionInfo.id = 'sessionInfo';
+            debugSection.appendChild(sessionInfo);
+        }
+        
+        // Show cookie diagnostics
+        enhancedDebugCookies();
+        
         const teacherInfoDiv = document.getElementById('teacherInfo');
         
         console.log('Checking server authentication');
@@ -540,7 +576,110 @@ function debugCookies() {
     }
 }
 
-// Load classes for the teacher
+// Function to check if cookies are properly working for cross-origin requests
+function areCookiesWorking() {
+    // Try to read the session cookie
+    const hasSessionCookie = document.cookie.split(';').some(c => 
+        c.trim().startsWith('qr_attendance_sid=')
+    );
+    
+    // Check current cookies
+    console.log("Current cookies:", document.cookie || "NONE");
+    
+    if (!hasSessionCookie) {
+        console.warn("⚠️ NO SESSION COOKIE FOUND - cross-origin cookies appear to be blocked by your browser!");
+        console.warn("Using localStorage for authentication instead (fallback mechanism)");
+    }
+    
+    return hasSessionCookie;
+}
+
+// Add this diagnostic information to the debug buttons
+function enhancedDebugCookies() {
+    const cookieInfo = document.getElementById('cookieInfo');
+    if (!cookieInfo) return;
+    
+    // Try to detect why cookies might be blocked
+    const browser = detectBrowser();
+    const isThirdPartyCookiesLikelyBlocked = !areCookiesWorking();
+    
+    let html = '<h5>Cookie Diagnostic Information</h5>';
+    html += `<p><strong>Browser:</strong> ${browser.name} ${browser.version}</p>`;
+    html += `<p><strong>Cookies detected:</strong> ${document.cookie ? 'Yes' : 'No'}</p>`;
+    html += `<p><strong>Session cookie found:</strong> ${document.cookie.includes('qr_attendance_sid') ? 'Yes' : 'No'}</p>`;
+    
+    if (isThirdPartyCookiesLikelyBlocked) {
+        html += '<div style="background-color:#fff3cd;border:1px solid #ffeeba;padding:10px;margin:10px 0;border-radius:4px;">';
+        html += '<h5 style="color:#856404;margin-top:0;">Third-party Cookies Appear to be Blocked</h5>';
+        
+        switch (browser.name.toLowerCase()) {
+            case 'chrome':
+                html += '<p>To fix in Chrome:</p>';
+                html += '<ol>';
+                html += '<li>Go to Settings → Privacy and security → Cookies and other site data</li>';
+                html += '<li>Select "Allow all cookies" or add your sites to the allowlist</li>';
+                html += '</ol>';
+                break;
+            case 'firefox':
+                html += '<p>To fix in Firefox:</p>';
+                html += '<ol>';
+                html += '<li>Go to Settings → Privacy & Security</li>';
+                html += '<li>Under "Enhanced Tracking Protection" select "Custom"</li>';
+                html += '<li>Uncheck "Cookies" or set to "Cross-site tracking cookies"</li>';
+                html += '</ol>';
+                break;
+            case 'safari':
+                html += '<p>To fix in Safari:</p>';
+                html += '<ol>';
+                html += '<li>Go to Safari Preferences → Privacy</li>';
+                html += '<li>Uncheck "Prevent cross-site tracking"</li>';
+                html += '<li>Ensure "Block all cookies" is not selected</li>';
+                html += '</ol>';
+                break;
+            default:
+                html += '<p>To fix this issue:</p>';
+                html += '<ol>';
+                html += '<li>Check your browser settings and enable third-party/cross-site cookies</li>';
+                html += '<li>Or try a different browser</li>';
+                html += '</ol>';
+        }
+        
+        html += '<p>The application will use localStorage as a fallback, but this is less secure.</p>';
+        html += '</div>';
+    }
+    
+    cookieInfo.innerHTML = html;
+}
+
+// Function to detect browser
+function detectBrowser() {
+    const userAgent = navigator.userAgent;
+    let browser = {
+        name: 'Unknown',
+        version: 'Unknown'
+    };
+    
+    if (userAgent.indexOf("Chrome") > -1) {
+        browser.name = "Chrome";
+        browser.version = userAgent.match(/Chrome\/([0-9.]+)/)[1];
+    } else if (userAgent.indexOf("Safari") > -1) {
+        browser.name = "Safari";
+        browser.version = userAgent.match(/Version\/([0-9.]+)/)[1];
+    } else if (userAgent.indexOf("Firefox") > -1) {
+        browser.name = "Firefox";
+        browser.version = userAgent.match(/Firefox\/([0-9.]+)/)[1];
+    } else if (userAgent.indexOf("MSIE") > -1 || userAgent.indexOf("Trident") > -1) {
+        browser.name = "Internet Explorer";
+        browser.version = userAgent.match(/(?:MSIE |rv:)([0-9.]+)/)[1];
+    } else if (userAgent.indexOf("Edge") > -1) {
+        browser.name = "Edge";
+        browser.version = userAgent.match(/Edge\/([0-9.]+)/)[1];
+    }
+    
+    return browser;
+}
+
+// Load classes for the teacher - update this function to be more robust with cookie issues
 async function loadClasses() {
     try {
         const classSelect = document.getElementById('classSelect');
@@ -550,8 +689,8 @@ async function loadClasses() {
         const userId = localStorage.getItem('userId');
         console.log(`Fetching classes for user ID: ${userId}`);
         
-        // Debug cookie state before making the request
-        debugCookies();
+        // Check if cookies are working properly
+        const cookiesWorking = areCookiesWorking();
         
         // Prepare fetch options with credentials to ensure cookies are sent
         const fetchOptions = {
@@ -563,11 +702,15 @@ async function loadClasses() {
             }
         };
         
-        // Add fallback headers from localStorage if available
+        // ALWAYS add headers from localStorage as fallback
+        // This ensures authentication works even if cookies are blocked
         const userRole = localStorage.getItem('userRole');
         if (userId && userRole) {
             fetchOptions.headers['X-User-ID'] = userId;
             fetchOptions.headers['X-User-Role'] = userRole;
+            console.log("Added header authentication as " + (cookiesWorking ? "backup" : "primary method"));
+        } else {
+            console.warn("No localStorage authentication data found! Login may be required");
         }
         
         console.log("Fetch options:", JSON.stringify(fetchOptions));
@@ -577,12 +720,11 @@ async function loadClasses() {
         
         console.log(`Classes response status: ${response.status}`);
         
-        // If unauthorized, check cookies again and retry
+        // If unauthorized, try to refresh authentication
         if (response.status === 401) {
-            console.log("Authentication failed, checking cookies again...");
-            debugCookies();
+            console.log("Authentication failed, attempting refresh...");
             
-            // Try to refresh authentication first
+            // Try to refresh authentication
             try {
                 const authResponse = await fetch(`${API_URL}/auth/check-auth`, {
                     credentials: 'include',
@@ -597,15 +739,55 @@ async function loadClasses() {
                 if (authResponse.ok) {
                     const authData = await authResponse.json();
                     console.log("Authentication refreshed:", authData);
-                    debugCookies();
                     
                     // Try the classes endpoint again after refreshing auth
                     response = await fetch(`${API_URL}/auth/teacher-classes/${userId}`, fetchOptions);
                     console.log(`Retry classes response status: ${response.status}`);
+                } else {
+                    // If refresh fails and we're using header auth, try re-auth endpoint
+                    // This is for cases where cookies are blocked but localStorage is available
+                    console.log("Auth refresh failed, attempting re-auth with localStorage data");
+                    
+                    const reAuthResponse = await fetch(`${API_URL}/auth/reauth`, {
+                        method: 'POST',
+                        credentials: 'include',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({
+                            userId: userId,
+                            role: userRole
+                        })
+                    });
+                    
+                    if (reAuthResponse.ok) {
+                        const reAuthData = await reAuthResponse.json();
+                        console.log("Re-authentication successful:", reAuthData);
+                        
+                        // Try the classes endpoint again after re-auth
+                        response = await fetch(`${API_URL}/auth/teacher-classes/${userId}`, fetchOptions);
+                        console.log(`Final retry response status: ${response.status}`);
+                    }
                 }
             } catch (authError) {
                 console.error("Error refreshing authentication:", authError);
             }
+        }
+        
+        // If still unauthorized, show login button
+        if (response.status === 401) {
+            classListDiv.innerHTML = `
+                <div class="empty-state error">
+                    <p>Authentication failed. Please try logging in again.</p>
+                    <button class="btn" id="reloginBtn">Login Again</button>
+                </div>
+            `;
+            
+            document.getElementById('reloginBtn')?.addEventListener('click', () => {
+                logout();
+            });
+            
+            return;
         }
         
         const data = await response.json();
@@ -1020,4 +1202,52 @@ document.addEventListener('DOMContentLoaded', function() {
     attendanceClassSelect.addEventListener('change', function() {
         loadSessions(this.value);
     });
-}); 
+});
+
+// Add this function to check session status
+async function checkSession() {
+    try {
+        // Try to get session info from the server
+        const response = await fetch(`${API_URL}/auth/check-auth`, {
+            method: 'GET',
+            credentials: 'include',
+            headers: {
+                'Cache-Control': 'no-cache',
+                'X-User-ID': localStorage.getItem('userId'),
+                'X-User-Role': localStorage.getItem('userRole')
+            }
+        });
+        
+        const data = await response.json();
+        console.log("Session check response:", data);
+        
+        // Display session info
+        const sessionInfo = document.getElementById('sessionInfo');
+        if (sessionInfo) {
+            let html = '<h4>Session Status</h4>';
+            html += `<p><strong>Status:</strong> ${data.authenticated ? '✅ Authenticated' : '❌ Not authenticated'}</p>`;
+            html += `<p><strong>Session ID:</strong> ${data.sessionId || 'None'}</p>`;
+            
+            if (data.user) {
+                html += '<h5>User Information:</h5>';
+                html += '<ul>';
+                for (const [key, value] of Object.entries(data.user)) {
+                    html += `<li><strong>${key}:</strong> ${value}</li>`;
+                }
+                html += '</ul>';
+            }
+            
+            html += '<h5>Headers Sent:</h5>';
+            html += `<p>X-User-ID: ${localStorage.getItem('userId') || 'None'}</p>`;
+            html += `<p>X-User-Role: ${localStorage.getItem('userRole') || 'None'}</p>`;
+            
+            sessionInfo.innerHTML = html;
+        }
+    } catch (error) {
+        console.error("Session check error:", error);
+        const sessionInfo = document.getElementById('sessionInfo');
+        if (sessionInfo) {
+            sessionInfo.innerHTML = `<h4>Session Check Error</h4><p>${error.message}</p>`;
+        }
+    }
+} 
