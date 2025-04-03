@@ -379,10 +379,10 @@ async function initDashboard() {
         // If ALL authentication methods failed AND localStorage data exists, try re-auth as last resort
         // This is where the duplicate session was being created, so only do this if we failed all other methods
         if (!authenticated) {
-            const localUserId = localStorage.getItem('userId');
-            const localRole = localStorage.getItem('userRole');
-            
-            if (localUserId && localRole === 'teacher') {
+        const localUserId = localStorage.getItem('userId');
+        const localRole = localStorage.getItem('userRole');
+        
+        if (localUserId && localRole === 'teacher') {
                 console.log('Attempting re-auth with localStorage data as last resort');
                 
                 try {
@@ -405,19 +405,19 @@ async function initDashboard() {
                         
                         if (reAuthData.success) {
                             console.log("Successfully re-established session:", reAuthData.sessionId);
-                
-                            // Display teacher information from localStorage
-                            const firstName = localStorage.getItem('firstName') || '';
-                            const lastName = localStorage.getItem('lastName') || '';
-                            
-                            teacherInfoDiv.innerHTML = `
-                                <p>Welcome, ${firstName || 'Teacher'} ${lastName || ''}!</p>
-                                <p>User ID: ${localUserId}</p>
-                            `;
-                            
-                            // Load teacher's classes
-                            await loadClasses();
-                            return;
+            
+            // Display teacher information from localStorage
+            const firstName = localStorage.getItem('firstName') || '';
+            const lastName = localStorage.getItem('lastName') || '';
+            
+            teacherInfoDiv.innerHTML = `
+                <p>Welcome, ${firstName || 'Teacher'} ${lastName || ''}!</p>
+                <p>User ID: ${localUserId}</p>
+            `;
+            
+            // Load teacher's classes
+            await loadClasses();
+            return;
                         }
                     }
                 } catch (reAuthError) {
@@ -902,7 +902,7 @@ async function logout() {
         });
         
         if (response.ok) {
-            const data = await response.json();
+        const data = await response.json();
             console.log('Server logout response:', data);
         } else {
             console.warn(`Server logout failed with status: ${response.status}`);
@@ -939,7 +939,7 @@ document.addEventListener('DOMContentLoaded', function() {
     attendanceClassSelect.addEventListener('change', function() {
         loadSessions(this.value);
     });
-});
+}); 
 
 // Function to monitor current session ID
 function startSessionMonitor() {
@@ -957,7 +957,80 @@ function startSessionMonitor() {
     });
 }
 
-// Add a session indicator to the page
+// Function to check and fix session ID mismatches
+async function checkSessionConsistency() {
+    try {
+        // Call the test-cookies endpoint to check for session ID mismatches
+        const response = await fetch(`${API_URL}/auth/test-cookies`, {
+            method: 'GET',
+            credentials: 'include',
+            headers: {
+                'Accept': 'application/json',
+                'Cache-Control': 'no-cache'
+            }
+        });
+        
+        if (response.ok) {
+            const data = await response.json();
+            console.log('Session consistency check:', data);
+            
+            // Add details to the session monitor
+            const sessionDetails = document.getElementById('sessionDetails');
+            if (sessionDetails) {
+                let html = '<div style="border-top: 1px solid #444; margin-top: 8px; padding-top: 8px;">';
+                html += `<div style="font-weight: bold;">Session Check:</div>`;
+                html += `<div>Cookie ID: <span style="font-family: monospace;">${data.cookieSessionId || 'none'}</span></div>`;
+                html += `<div>Server ID: <span style="font-family: monospace;">${data.sessionId || 'none'}</span></div>`;
+                
+                // Show match status with color coding
+                const matchColor = data.sessionMatch ? '#4CAF50' : '#f44336';
+                html += `<div>Match: <span style="color: ${matchColor};">${data.sessionMatch ? 'Yes' : 'No'}</span></div>`;
+                
+                // Show if fix was applied
+                if (data.fixApplied) {
+                    html += `<div style="color: #ff9800; margin-top: 5px;">✓ Session ID mismatch fixed</div>`;
+                }
+                
+                // Show active sessions
+                if (data.activeSessions && data.activeSessions.length > 0) {
+                    html += `<div style="margin-top: 5px;">Active sessions: ${data.activeSessions.length}</div>`;
+                    html += `<ul style="margin: 0; padding-left: 15px;">`;
+                    data.activeSessions.forEach(session => {
+                        const style = session.isCurrent ? 'color: #4CAF50; font-weight: bold;' : '';
+                        html += `<li style="${style}">${session.id.substring(0, 8)}... ${session.isCurrent ? '(current)' : ''}</li>`;
+                    });
+                    html += `</ul>`;
+                }
+                
+                html += '</div>';
+                sessionDetails.innerHTML = html;
+            }
+            
+            // Update session monitor with more accurate information
+            const sessionIdElement = document.getElementById('currentSessionId');
+            if (sessionIdElement && data.sessionId) {
+                window.lastKnownSessionId = data.sessionId;
+                sessionIdElement.textContent = data.sessionId;
+            }
+            
+            // If there was a mismatch that was fixed, force reload the page to ensure consistency
+            if (data.fixApplied) {
+                console.log('Session ID mismatch was fixed. Reloading page in 3 seconds for consistency...');
+                setTimeout(() => {
+                    window.location.reload();
+                }, 3000);
+            }
+            
+            return data;
+        }
+    } catch (error) {
+        console.error('Error checking session consistency:', error);
+    }
+    
+    return null;
+}
+
+// Add session indicator to the page
 function addSessionIndicator() {
     const indicator = document.createElement('div');
     indicator.id = 'sessionIndicator';
@@ -982,8 +1055,19 @@ function addSessionIndicator() {
         </div>
         <div>ID: <span id="currentSessionId" style="font-weight: bold;">checking...</span></div>
         <div id="sessionCount" style="margin-top: 3px; font-size: 10px; color: #ccc;">Active sessions: checking...</div>
+        <div id="sessionConsistency" style="margin-top: 3px;">
+            <button id="checkSession" style="background: #2196F3; border: none; color: white; padding: 3px 6px; border-radius: 3px; cursor: pointer; font-size: 10px;">
+                Check Session
+            </button>
+        </div>
     `;
     document.body.appendChild(indicator);
+    
+    // Add click handler for check session button
+    document.getElementById('checkSession').addEventListener('click', (e) => {
+        e.stopPropagation();
+        checkSessionConsistency();
+    });
     
     // Add a click handler to expand/collapse additional details
     indicator.addEventListener('click', () => {
@@ -1034,6 +1118,11 @@ function addSessionIndicator() {
     // Schedule periodic checks for active session count
     checkSessionCount();
     setInterval(checkSessionCount, 30000); // Every 30 seconds
+    
+    // Run an initial session consistency check at startup
+    setTimeout(() => {
+        checkSessionConsistency();
+    }, 1000);
 }
 
 // Function to log the current session ID
