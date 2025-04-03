@@ -273,26 +273,6 @@ function setupDebugListeners() {
 // Initialize dashboard
 async function initDashboard() {
   try {
-    // Remove manual header injection
-    const authHeaders = {
-      'Accept': 'application/json',
-      'Cache-Control': 'no-cache'
-    };
-
-    // Keep only this auth check
-    const response = await fetch(`${API_URL}/auth/check-auth`, {
-      credentials: 'include',
-      headers: authHeaders
-    });
-    
-    // Remove localStorage fallback checks
-    if (!response.ok) throw new Error('Auth failed');
-    const data = await response.json();
-    
-    if (!data.authenticated) {
-      window.location.href = '/pages/login.html';
-      return;
-    }
     const teacherInfoDiv = document.getElementById('teacherInfo');
     
     // Check server authentication first
@@ -389,34 +369,34 @@ async function initDashboard() {
     const basePath = getBasePath();
     window.location.href = `${basePath}/index.html`;
     
-    } catch (error) {
-        console.error('Dashboard initialization error:', error);
-        // Check if we have localStorage fallback before redirecting
-        const localUserId = localStorage.getItem('userId');
-        const localRole = localStorage.getItem('userRole');
-        
-        if (localUserId && localRole === 'teacher') {
-            console.log('Using localStorage fallback due to server error');
-            
-            // Display teacher information from localStorage
-            const firstName = localStorage.getItem('firstName') || '';
-            const lastName = localStorage.getItem('lastName') || '';
-            const teacherInfoDiv = document.getElementById('teacherInfo');
-            
-            teacherInfoDiv.innerHTML = `
-                <p>Welcome, ${firstName || 'Teacher'} ${lastName || ''}!</p>
-                <p>User ID: ${localUserId}</p>
-            `;
-            
-            // Load teacher's classes using header-based auth
-            loadClasses();
-            return;
-        }
-        
-        alert('Error initializing dashboard. Please try logging in again.');
-        const basePath = getBasePath();
-        window.location.href = `${basePath}/index.html`;
-    }
+  } catch (error) {
+      console.error('Dashboard initialization error:', error);
+      // Check if we have localStorage fallback before redirecting
+      const localUserId = localStorage.getItem('userId');
+      const localRole = localStorage.getItem('userRole');
+      
+      if (localUserId && localRole === 'teacher') {
+          console.log('Using localStorage fallback due to server error');
+          
+          // Display teacher information from localStorage
+          const firstName = localStorage.getItem('firstName') || '';
+          const lastName = localStorage.getItem('lastName') || '';
+          const teacherInfoDiv = document.getElementById('teacherInfo');
+          
+          teacherInfoDiv.innerHTML = `
+              <p>Welcome, ${firstName || 'Teacher'} ${lastName || ''}!</p>
+              <p>User ID: ${localUserId}</p>
+          `;
+          
+          // Load teacher's classes using header-based auth
+          loadClasses();
+          return;
+      }
+      
+      alert('Error initializing dashboard. Please try logging in again.');
+      const basePath = getBasePath();
+      window.location.href = `${basePath}/index.html`;
+  }
 }
 
 // Load classes for the teacher
