@@ -637,18 +637,20 @@ async function loadSessions(classId) {
     try {
         console.log(`Loading sessions for class ID: ${classId}`);
         
-        // Include both cookie-based and header-based auth
+        // Prepare headers with existing auth info
         const headers = { 
             'Accept': 'application/json',
             'Cache-Control': 'no-cache'
         };
         
-        // Add fallback header auth
-        const userId = localStorage.getItem('userId');
-        const userRole = localStorage.getItem('userRole');
-        if (userId && userRole) {
-            headers['X-User-ID'] = userId;
-            headers['X-User-Role'] = userRole;
+        // Only add header auth if no valid cookie exists
+        if (!document.cookie.includes('qr_attendance_sid')) {
+            const userId = localStorage.getItem('userId');
+            const userRole = localStorage.getItem('userRole');
+            if (userId && userRole) {
+                headers['X-User-ID'] = userId;
+                headers['X-User-Role'] = userRole;
+            }
         }
         
         const response = await fetch(`${API_URL}/auth/class-sessions/${classId}`, {
@@ -674,17 +676,14 @@ async function loadSessions(classId) {
         if (data.success && data.sessions && data.sessions.length > 0) {
             data.sessions.forEach(session => {
                 const option = document.createElement('option');
-                // Use session_id if available, otherwise use id
-                option.value = session.session_id || session.id; 
+                option.value = session.session_id || session.id;
                 
-                // Format date safely with error handling - assuming UTC+8 time
+                // Format date safely with error handling
                 let formattedDate = 'Unknown Date';
                 try {
                     if (session.created_at) {
-                        // The server is already providing UTC+8 time, so we can parse directly
                         const sessionDate = new Date(session.created_at);
                         if (!isNaN(sessionDate.getTime())) {
-                            // Format date with full details including timezone
                             formattedDate = sessionDate.toLocaleString('en-US', {
                                 year: 'numeric',
                                 month: 'short',
@@ -728,9 +727,32 @@ async function loadAttendanceRecords() {
         recordsDiv.innerHTML = '<p>Loading attendance records...</p>';
         console.log(`Loading attendance for session ID: ${sessionId}`);
         
+        // Include both cookie-based and header-based auth
+        const headers = { 
+            'Accept': 'application/json',
+            'Cache-Control': 'no-cache'
+        };
+        
+        // Add fallback header auth
+        const userId = localStorage.getItem('userId');
+        const userRole = localStorage.getItem('userRole');
+        if (userId && userRole) {
+            headers['X-User-ID'] = userId;
+            headers['X-User-Role'] = userRole;
+        }
+        
         const response = await fetch(`${API_URL}/teacher/attendance/${sessionId}`, {
-            credentials: 'include'
+            method: 'GET',
+            credentials: 'include',
+            headers: headers
         });
+        
+        // Handle Unauthorized error specifically
+        if (response.status === 401) {
+            console.error('Authentication failed when loading attendance records');
+            recordsDiv.innerHTML = '<div class="error-message">Authentication failed. Please try logging in again.</div>';
+            return;
+        }
         
         if (!response.ok) {
             throw new Error(`Server returned ${response.status}: ${response.statusText}`);
