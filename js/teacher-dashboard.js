@@ -1,8 +1,5 @@
 // Teacher Dashboard functionality
 
-// Use global API_URL instead of import
-// import API_URL from "./config.js";
-
 document.addEventListener('DOMContentLoaded', function() {
     // Skip initialization if already done by qrcode.js
     if (window.dashboardInitialized) {
@@ -264,22 +261,10 @@ async function checkAuthDebug() {
             debugMessage.textContent += "\n\nHeader data: " + JSON.stringify(headerData, null, 2);
         }
         
-        // Check localStorage
-        const userId = localStorage.getItem('userId');
-        const userRole = localStorage.getItem('userRole');
-        const userName = localStorage.getItem('userName');
-        
-        if (debugMessage) {
-            debugMessage.textContent += "\n\nlocalStorage data:";
-            debugMessage.textContent += "\nuserId: " + (userId || "Not found");
-            debugMessage.textContent += "\nuserRole: " + (userRole || "Not found");
-            debugMessage.textContent += "\nuserName: " + (userName || "Not found");
-        }
-        
     } catch (error) {
-        console.error("Auth debug error:", error);
+        console.error("Debug check error:", error);
         if (debugMessage) {
-            debugMessage.textContent = "Error: " + error.message;
+            debugMessage.textContent = "Error checking auth: " + error.message;
         }
     }
 }
@@ -311,14 +296,14 @@ function setupDebugListeners() {
         checkAuthBtn.addEventListener('click', async function() {
             try {
                 // Use the same authentication approach as the main dashboard init
-                const userId = localStorage.getItem('userId');
-                const userRole = localStorage.getItem('userRole');
+                const userId = sessionStorage.getItem('userId');
+                const userRole = sessionStorage.getItem('userRole');
                 const headers = {
                     'Accept': 'application/json',
                     'Cache-Control': 'no-cache'
                 };
                 
-                // Add user headers if available in localStorage as fallback
+                // Add user headers if available in sessionStorage as fallback
                 if (userId && userRole) {
                     headers['X-User-ID'] = userId;
                     headers['X-User-Role'] = userRole;
@@ -342,91 +327,63 @@ function setupDebugListeners() {
 
 // Initialize dashboard
 async function initDashboard() {
-    try {
-        console.log("Initializing teacher dashboard...");
-        
-        // Get user info from storage
-        const userData = StorageUtil.getUserData();
-        
-        // If no user info in storage, try to authenticate with the server
-        if (!userData.userId || !userData.userRole) {
-            console.log("No user info in storage, checking authentication...");
-            
-            // Check authentication status
-            const response = await fetch(`${API_URL}/auth/check-auth`, {
-                credentials: 'include',
-                headers: {
-                    'Accept': 'application/json'
-                }
-            });
-            
-            if (response.ok) {
-                const data = await response.json();
-                console.log("Authentication successful:", data);
-                
-                // Store user info using StorageUtil
-                const newUserData = {
-                    userId: data.user.id,
-                    userRole: data.role,
-                    userName: `${data.user.firstName} ${data.user.lastName}`
-                };
-                
-                if (StorageUtil.setUserData(newUserData)) {
-                    // Update welcome message
-                    const welcomeMessage = document.getElementById('welcome-message');
-                    if (welcomeMessage) {
-                        welcomeMessage.textContent = `Welcome, ${data.user.firstName} ${data.user.lastName}!`;
-                    }
-                    
-                    // Show teacher section
-                    const teacherSection = document.getElementById('teacher-section');
-                    if (teacherSection) {
-                        teacherSection.style.display = 'block';
-                    }
-                    
-                    // Load classes
-                    loadClasses();
-                } else {
-                    console.warn("Failed to store user data, but continuing with server session");
-                    // Still proceed with server session
-                    const welcomeMessage = document.getElementById('welcome-message');
-                    if (welcomeMessage) {
-                        welcomeMessage.textContent = `Welcome, ${data.user.firstName} ${data.user.lastName}!`;
-                    }
-                    
-                    const teacherSection = document.getElementById('teacher-section');
-                    if (teacherSection) {
-                        teacherSection.style.display = 'block';
-                    }
-                    
-                    loadClasses();
-                }
-            } else {
-                console.error("Authentication failed, redirecting to login...");
-                window.location.href = getBasePath() + '/index.html';
-            }
-        } else {
-            // User info found in storage
-            console.log("User info found in storage:", userData);
-            
-            // Update welcome message
-            const welcomeMessage = document.getElementById('welcome-message');
-            if (welcomeMessage) {
-                welcomeMessage.textContent = `Welcome, ${userData.userName}!`;
-            }
-            
-            // Show teacher section
-            const teacherSection = document.getElementById('teacher-section');
-            if (teacherSection) {
-                teacherSection.style.display = 'block';
-            }
-            
-            // Load classes
-            loadClasses();
+  try {
+    console.log("Initializing teacher dashboard...");
+    
+    // Get user info from sessionStorage instead of URL parameters
+    const userId = sessionStorage.getItem('userId');
+    const userRole = sessionStorage.getItem('userRole');
+    const userName = sessionStorage.getItem('userName');
+    
+    // If no user info in sessionStorage, try to authenticate with the server
+    if (!userId || !userRole) {
+      console.log("No user info in sessionStorage, checking authentication...");
+      
+      // Check authentication status
+      const response = await fetch(`${API_URL}/auth/check-auth`, {
+        credentials: 'include',
+        headers: {
+          'Accept': 'application/json'
         }
-    } catch (error) {
-        console.error("Error initializing dashboard:", error);
-        showError("Failed to initialize dashboard. Please try again.");
+      });
+      
+      if (response.ok) {
+        const data = await response.json();
+        console.log("Authentication successful:", data);
+        
+        // Store user info in sessionStorage
+        sessionStorage.setItem('userId', data.user.id);
+        sessionStorage.setItem('userRole', data.role);
+        sessionStorage.setItem('userName', `${data.user.firstName} ${data.user.lastName}`);
+        
+        // Update welcome message
+        document.getElementById('welcome-message').textContent = `Welcome, ${data.user.firstName} ${data.user.lastName}!`;
+        
+        // Show teacher section
+        document.getElementById('teacher-section').style.display = 'block';
+        
+        // Load classes
+        loadClasses();
+      } else {
+        console.error("Authentication failed, redirecting to login...");
+        window.location.href = getBasePath() + '/index.html';
+      }
+    } else {
+      // User info found in sessionStorage
+      console.log("User info found in sessionStorage:", { userId, userRole, userName });
+      
+      // Update welcome message
+      document.getElementById('welcome-message').textContent = `Welcome, ${userName}!`;
+      
+      // Show teacher section
+      document.getElementById('teacher-section').style.display = 'block';
+      
+      // Load classes
+      loadClasses();
+    }
+  } catch (error) {
+    console.error("Error initializing dashboard:", error);
+    showError("Failed to initialize dashboard. Please try again.");
     }
 }
 
@@ -442,7 +399,7 @@ async function loadClasses() {
             return;
         }
         
-        const userId = localStorage.getItem('userId');
+        const userId = sessionStorage.getItem('userId');
         console.log(`Fetching classes for user ID: ${userId}`);
         console.log(`Session cookies: ${document.cookie}`);
         
@@ -452,8 +409,8 @@ async function loadClasses() {
             'Cache-Control': 'no-cache'
         };
         
-        // Add auth from localStorage if available
-        const userRole = localStorage.getItem('userRole');
+        // Add auth from sessionStorage if available
+        const userRole = sessionStorage.getItem('userRole');
         if (userId && userRole) {
             headers['X-User-ID'] = userId;
             headers['X-User-Role'] = userRole;
@@ -734,15 +691,9 @@ async function loadSessions(classId) {
 
 // Load attendance records for a session
 async function loadAttendanceRecords() {
-    const sessionSelect = document.getElementById('sessionSelect');
-    const recordsDiv = document.getElementById('attendance-records');
+    const sessionId = document.getElementById('sessionSelect').value;
+    const recordsDiv = document.getElementById('attendanceRecords');
     
-    if (!sessionSelect || !recordsDiv) {
-        console.error("Required elements for attendance records not found");
-        return;
-    }
-    
-    const sessionId = sessionSelect.value;
     if (!sessionId) {
         recordsDiv.innerHTML = '<div class="error-message">Please select a session</div>';
         return;
@@ -882,26 +833,26 @@ async function viewCurrentSessionAttendance() {
 // Logout function
 async function logout() {
     try {
-        // Call the logout endpoint
+    // Call the logout endpoint
         const response = await fetch(`${API_URL}/auth/logout`, {
             method: 'POST',
-            credentials: 'include',
-            headers: {
-                'Accept': 'application/json'
-            }
-        });
-        
-        // Clear storage using StorageUtil
-        StorageUtil.clearUserData();
-        
-        // Redirect to login page
-        window.location.href = getBasePath() + '/index.html';
+      credentials: 'include',
+      headers: {
+        'Accept': 'application/json'
+      }
+    });
+    
+    // Clear sessionStorage
+    sessionStorage.clear();
+    
+    // Redirect to login page
+    window.location.href = getBasePath() + '/index.html';
     } catch (error) {
         console.error('Logout error:', error);
-        // Even if the server request fails, clear storage and redirect
-        StorageUtil.clearUserData();
-        window.location.href = getBasePath() + '/index.html';
-    }
+    // Even if the server request fails, clear local storage and redirect
+    sessionStorage.clear();
+    window.location.href = getBasePath() + '/index.html';
+  }
 }
 
 // Helper function to get base path - same as in login.js

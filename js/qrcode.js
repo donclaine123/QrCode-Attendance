@@ -1,299 +1,322 @@
 // QR Code Generation functionality
 
-// Use global API_URL instead of import
-// import API_URL from "./config.js";
-
-document.addEventListener('DOMContentLoaded', function() {
-    console.log('QR Code dashboard loaded');
-    // Initialize dashboard
-    initDashboard();
-    
-    // Add event listeners
-    const logoutBtn = document.getElementById('logout-btn');
-    if (logoutBtn) {
-        logoutBtn.addEventListener('click', function(e) {
-            e.preventDefault();
-            logout();
-        });
-        console.log('Logout button event listener added');
-    } else {
-        console.error('Logout button not found');
-    }
-    
-    // Add event listeners for dashboard actions
-    const generateQrBtn = document.getElementById('generate-qr-btn');
-    const viewAttendanceBtn = document.getElementById('view-attendance-btn');
-    
-    if (generateQrBtn) {
-        generateQrBtn.addEventListener('click', function() {
-            generateQRCode();
-        });
-    }
-    
-    if (viewAttendanceBtn) {
-        viewAttendanceBtn.addEventListener('click', function() {
-            viewCurrentSessionAttendance();
-        });
-    }
-    
-    // Set up debug listeners
-    setupDebugListeners();
-});
-
-// Initialize dashboard
-async function initDashboard() {
-    try {
-        console.log("Initializing QR Code dashboard...");
-        
-        // Get user info from storage
-        const userData = StorageUtil.getUserData();
-        
-        // If no user info in storage, try to authenticate with the server
-        if (!userData.userId || !userData.userRole) {
-            console.log("No user info in storage, checking authentication...");
-            
-            // Check authentication status
-            const response = await fetch(`${API_URL}/auth/check-auth`, {
-                credentials: 'include',
-                headers: {
-                    'Accept': 'application/json'
-                }
-            });
-            
-            if (response.ok) {
-                const data = await response.json();
-                console.log("Authentication successful:", data);
-                
-                // Store user info using StorageUtil
-                const newUserData = {
-                    userId: data.user.id,
-                    userRole: data.role,
-                    userName: `${data.user.firstName} ${data.user.lastName}`
-                };
-                
-                if (StorageUtil.setUserData(newUserData)) {
-                    // Update welcome message
-                    const welcomeMessage = document.getElementById('welcome-message');
-                    if (welcomeMessage) {
-                        welcomeMessage.textContent = `Welcome, ${data.user.firstName} ${data.user.lastName}!`;
-                    }
-                    
-                    // Show teacher section
-                    const teacherSection = document.getElementById('teacher-section');
-                    if (teacherSection) {
-                        teacherSection.style.display = 'block';
-                    }
-                    
-                    // Load classes
-                    loadClasses();
-                } else {
-                    console.warn("Failed to store user data, but continuing with server session");
-                    // Still proceed with server session
-                    const welcomeMessage = document.getElementById('welcome-message');
-                    if (welcomeMessage) {
-                        welcomeMessage.textContent = `Welcome, ${data.user.firstName} ${data.user.lastName}!`;
-                    }
-                    
-                    const teacherSection = document.getElementById('teacher-section');
-                    if (teacherSection) {
-                        teacherSection.style.display = 'block';
-                    }
-                    
-                    loadClasses();
-                }
-            } else {
-                console.error("Authentication failed, redirecting to login...");
-                window.location.href = getBasePath() + '/index.html';
-            }
-        } else {
-            // User info found in storage
-            console.log("User info found in storage:", userData);
-            
-            // Update welcome message
-            const welcomeMessage = document.getElementById('welcome-message');
-            if (welcomeMessage) {
-                welcomeMessage.textContent = `Welcome, ${userData.userName}!`;
-            }
-            
-            // Show teacher section
-            const teacherSection = document.getElementById('teacher-section');
-            if (teacherSection) {
-                teacherSection.style.display = 'block';
-            }
-            
-            // Load classes
-            loadClasses();
-        }
-    } catch (error) {
-        console.error("Error initializing dashboard:", error);
-        showError("Failed to initialize dashboard. Please try again.");
-    }
-}
-
-// Generate QR Code
+// Function to generate the QR code for a class session
 async function generateQRCode() {
-    try {
-        const classSelect = document.getElementById('class-select');
-        const selectedClassId = classSelect.value;
-        
-        if (!selectedClassId) {
-            showError("Please select a class first");
-            return;
-        }
-        
-        const userData = StorageUtil.getUserData();
-        console.log(`Generating QR code for class ID: ${selectedClassId}, teacher ID: ${userData.userId}`);
-        
-        // Create a session for the selected class
-        const response = await fetch(`${API_URL}/sessions`, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'Accept': 'application/json'
-            },
-            body: JSON.stringify({
-                classId: selectedClassId,
-                teacherId: userData.userId
-            })
-        });
-        
-        if (!response.ok) {
-            throw new Error('Failed to create session');
-        }
-        
-        const sessionData = await response.json();
-        console.log("Session created:", sessionData);
-        
-        // Store session ID in storage
-        StorageUtil.setItem('currentSessionId', sessionData.id);
-        StorageUtil.setItem('currentClassId', selectedClassId);
-        
-        // Generate QR code
-        const qrCodeElement = document.getElementById('qrcode');
-        qrCodeElement.innerHTML = '';
-        
-        new QRCode(qrCodeElement, {
-            text: JSON.stringify({
-                sessionId: sessionData.id,
-                classId: selectedClassId,
-                teacherId: userData.userId
-            }),
-            width: 256,
-            height: 256
-        });
-        
-        // Enable attendance view button
-        const viewAttendanceBtn = document.getElementById('view-attendance-btn');
-        if (viewAttendanceBtn) {
-            viewAttendanceBtn.disabled = false;
-        }
-        
-        // Start countdown
-        startCountdown();
-        
-    } catch (error) {
-        console.error("Error generating QR code:", error);
-        showError("Failed to generate QR code. Please try again.");
-    }
-}
+  console.log("generateQRCode called");
+  
+  const classSelect = document.getElementById('classSelect');
+  const statusDiv = document.getElementById('status');
+  const qrCodeDiv = document.getElementById('qrcode');
+  const selectedClassId = classSelect.value;
+  
+  console.log("Selected class ID:", selectedClassId);
+  
+  // Clear previous QR code and status
+  qrCodeDiv.innerHTML = '';
+  statusDiv.textContent = 'Generating QR code...';
+  
+  if (!selectedClassId) {
+    statusDiv.textContent = 'Please select a class first.';
+    return;
+  }
 
-// Load classes
-async function loadClasses() {
-    try {
-        const classSelect = document.getElementById('class-select');
-        if (!classSelect) {
-            console.error('Class select element not found');
-            return;
+  try {
+    // Get teacher ID from session or localStorage fallback
+    const teacherId = localStorage.getItem('userId');
+    console.log("Teacher ID:", teacherId);
+    
+    // Get the selected class
+    const selectedClass = document.getElementById('classSelect');
+    const selectedClassId = selectedClass.value;
+    
+    if (!selectedClassId) {
+      statusDiv.innerHTML = '<div class="error-message">Please select a class</div>';
+      return;
+    }
+    
+    const selectedOption = selectedClass.options[selectedClass.selectedIndex];
+    
+    // Get subject from the selected option text
+    let subject = "";
+    if (selectedOption && selectedOption.textContent) {
+      subject = selectedOption.textContent;
+    }
+    
+    // Create a session for the selected class
+    console.log("Fetching from:", `${API_URL}/auth/generate-qr`);
+    const response = await fetch(`${API_URL}/auth/generate-qr`, {
+      method: 'POST',
+      credentials: 'include', // Important for cookies
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        subject: subject,
+        class_id: selectedClassId,
+        teacher_id: teacherId
+      })
+    });
+
+    console.log("Response status:", response.status);
+    const data = await response.json();
+    console.log("Response data:", data);
+
+    if (data.success) {
+      // Session created successfully, now generate QR code
+      const sessionId = data.sessionId;
+      
+      // Create the URL for direct login
+      const qrCodeUrl = data.qrCodeUrl;
+      console.log("QR Code URL:", qrCodeUrl);
+      
+      // Generate QR code using the library
+      try {
+        // Check if QRCode is defined
+        if (typeof QRCode === 'undefined') {
+          throw new Error("QRCode library is not loaded");
         }
         
-        classSelect.innerHTML = '<option value="">Select a class</option>';
+        // Clear any previous content
+        qrCodeDiv.innerHTML = '';
         
-        const userData = StorageUtil.getUserData();
-        console.log(`Fetching classes for teacher ID: ${userData.userId}`);
+        // Create new QR code with proper error handling
+        console.log("Creating QR code with options:", {
+          text: qrCodeUrl,
+          width: 256,
+          height: 256,
+          correctLevel: QRCode.CorrectLevel ? QRCode.CorrectLevel.H : 2
+        });
         
-        const response = await fetch(`${API_URL}/teacher/classes`, {
-            credentials: 'include',
-            headers: {
-                'Accept': 'application/json',
-                'X-User-ID': userData.userId,
-                'X-User-Role': userData.userRole
+        new QRCode(qrCodeDiv, {
+          text: qrCodeUrl,
+          width: 256,
+          height: 256,
+          colorDark: '#000000',
+          colorLight: '#ffffff',
+          correctLevel: QRCode.CorrectLevel ? QRCode.CorrectLevel.H : 2
+        });
+        
+        console.log("QR code generated successfully");
+      } catch (qrError) {
+        console.error("QR code library error:", qrError);
+        qrCodeDiv.innerHTML = `
+          <div class="qr-fallback">
+            <p>QR Code could not be generated. Please use this link:</p>
+            <a href="${qrCodeUrl}" target="_blank">${qrCodeUrl}</a>
+          </div>
+        `;
+      }
+      
+      // Display success message and URL with expiration timer
+      statusDiv.innerHTML = `
+        <div class="success-message">
+          QR Code generated successfully for class session!<br>
+          <small>Session ID: ${sessionId}</small>
+        </div>
+        <p>QR Code URL: <a href="${qrCodeUrl}" target="_blank">${qrCodeUrl}</a></p>
+        <div class="expiration-timer">
+          <p>This QR code will expire in <span id="countdown">10:00</span></p>
+        </div>
+      `;
+      
+      // Set up the countdown timer
+      const countdownEl = document.getElementById('countdown');
+      if (countdownEl) {
+        let timeLeft = 10 * 60; // 10 minutes in seconds
+        
+        // Parse the expiration time from the response if available
+        if (data.expiresAt) {
+          const expiresAt = new Date(data.expiresAt);
+          const now = new Date();
+          timeLeft = Math.max(0, Math.floor((expiresAt - now) / 1000));
+          
+          // Cap at reasonable value (10 minutes) to prevent display issues
+          if (timeLeft > 10 * 60) {
+            timeLeft = 10 * 60;
+            console.warn("Expiration time too far in future, capping at 10 minutes");
+          }
+        }
+        
+        // Start the countdown
+        const countdownInterval = setInterval(() => {
+          timeLeft--;
+          
+          if (timeLeft <= 0) {
+            clearInterval(countdownInterval);
+            countdownEl.textContent = "Expired";
+            countdownEl.style.color = "red";
+            
+            // Disable the attendance button
+            const attendanceBtn = document.getElementById('viewAttendanceBtn');
+            if (attendanceBtn) {
+              attendanceBtn.disabled = true;
             }
-        });
-        
-        if (!response.ok) {
-            throw new Error('Failed to fetch classes');
-        }
-        
-        const data = await response.json();
-        console.log('Classes data received:', data);
-        
-        if (data.success && data.classes && data.classes.length > 0) {
-            data.classes.forEach(classItem => {
-                const option = document.createElement('option');
-                option.value = classItem.id;
-                option.textContent = classItem.subject;
-                classSelect.appendChild(option);
-            });
-        } else {
-            classSelect.innerHTML += '<option disabled>No classes found</option>';
-        }
-    } catch (error) {
-        console.error('Error loading classes:', error);
-        showError('Failed to load classes. Please try again.');
-    }
-}
-
-// View current session attendance
-async function viewCurrentSessionAttendance() {
-    try {
-        const currentSessionId = StorageUtil.getItem('currentSessionId');
-        const currentClassId = StorageUtil.getItem('currentClassId');
-        
-        if (!currentSessionId) {
-            alert('No active session found. Generate a QR code first.');
-            return;
-        }
-        
-        // Load sessions for this class
-        await loadSessions(currentClassId);
-        
-        // Select the current session
-        const sessionSelect = document.getElementById('session-select');
-        if (sessionSelect) {
-            sessionSelect.value = currentSessionId;
-        }
-        
-        // Load attendance records
-        await loadAttendanceRecords();
-    } catch (error) {
-        console.error('Error viewing current session attendance:', error);
-        showError('Failed to view current session attendance. Please try again.');
-    }
-}
-
-// Logout function
-async function logout() {
-    try {
-        // Call the logout endpoint
-        const response = await fetch(`${API_URL}/auth/logout`, {
-            method: 'POST',
-            credentials: 'include',
-            headers: {
-                'Accept': 'application/json'
+            
+            // Update status
+            statusDiv.innerHTML += `
+              <div class="error-message">
+                QR code has expired. Please generate a new one.
+              </div>
+            `;
+            
+            // Clear the QR code
+            qrCodeDiv.innerHTML = `
+              <div class="qr-fallback">
+                <p>QR Code has expired. Please generate a new one.</p>
+              </div>
+            `;
+          } else {
+            // Format minutes:seconds
+            const minutes = Math.floor(timeLeft / 60);
+            const seconds = timeLeft % 60;
+            countdownEl.textContent = `${minutes}:${seconds.toString().padStart(2, '0')}`;
+            
+            // Change color when less than 1 minute
+            if (timeLeft < 60) {
+              countdownEl.style.color = "red";
             }
+          }
+        }, 1000);
+      }
+      
+      // Save the current session ID for attendance tracking
+      localStorage.setItem('currentSessionId', sessionId);
+      
+      // Enable the attendance view button
+      const attendanceBtn = document.getElementById('viewAttendanceBtn');
+      if (attendanceBtn) {
+        attendanceBtn.disabled = false;
+      }
+    } else {
+      statusDiv.innerHTML = `<div class="error-message">Error: ${data.message}</div>`;
+    }
+  } catch (error) {
+    console.error('Error generating QR code:', error);
+    statusDiv.innerHTML = `<div class="error-message">Server connection error. Please try again.</div>`;
+  }
+}
+
+// Function to populate class dropdown
+async function populateClassDropdown() {
+  const classSelect = document.getElementById('classSelect');
+  const teacherId = localStorage.getItem('userId');
+  
+  if (!classSelect || !teacherId) return;
+  
+  try {
+    const response = await fetch(`${API_URL}/auth/teacher-classes/${teacherId}`, {
+      method: 'GET',
+      credentials: 'include' // Important for cookies
+    });
+
+    const data = await response.json();
+
+    if (data.success) {
+      // Clear current options
+      classSelect.innerHTML = '<option value="">Select a class</option>';
+      
+      // Add classes to dropdown
+      data.classes.forEach(cls => {
+        const option = document.createElement('option');
+        option.value = cls.id;
+        option.textContent = `${cls.class_name} (${cls.subject})`;
+        classSelect.appendChild(option);
+      });
+    } else {
+      console.error('Failed to fetch classes:', data.message);
+    }
+  } catch (error) {
+    console.error('Error fetching classes:', error);
+  }
+}
+
+// Function to view attendance for the current session
+async function viewAttendance() {
+  try {
+    // Check if the element exists
+    const statusDiv = document.getElementById('status');
+    const attendanceDiv = document.getElementById('attendanceList');
+    
+    // Safe check for elements existing
+    if (!statusDiv || !attendanceDiv) {
+      console.error('Required DOM elements not found for viewAttendance');
+      return;
+    }
+    
+    const sessionId = localStorage.getItem('currentSessionId');
+    
+    if (!sessionId) {
+      statusDiv.textContent = 'No active session found. Please generate a QR code first.';
+      return;
+    }
+
+    statusDiv.textContent = 'Loading attendance data...';
+    attendanceDiv.innerHTML = '';
+    
+    const response = await fetch(`${API_URL}/auth/attendance-reports?session_id=${sessionId}`, {
+      method: 'GET',
+      credentials: 'include' // Important for cookies
+    });
+
+    const data = await response.json();
+
+    if (data.success) {
+      if (data.attendance && data.attendance.length > 0) {
+        // Get subject from response
+        const subject = data.subject || 'Unknown Subject';
+        
+        // Create table with subject header
+        let tableHtml = `
+          <div class="attendance-header">
+            <h3>Subject: ${subject}</h3>
+          </div>
+          <table class="attendance-table">
+            <thead>
+              <tr>
+                <th>Student ID</th>
+                <th>Name</th>
+                <th>Check-in Time</th>
+              </tr>
+            </thead>
+            <tbody>
+        `;
+        
+        // Add rows for each attendee
+        data.attendance.forEach(student => {
+          const checkInTime = new Date(student.timestamp).toLocaleTimeString();
+          tableHtml += `
+            <tr>
+              <td>${student.studentNumber}</td>
+              <td>${student.studentName}</td>
+              <td>${checkInTime}</td>
+            </tr>
+          `;
         });
         
-        // Clear storage using StorageUtil
-        StorageUtil.clearUserData();
-        
-        // Redirect to login page
-        window.location.href = getBasePath() + '/index.html';
-    } catch (error) {
-        console.error('Logout error:', error);
-        // Even if the server request fails, clear storage and redirect
-        StorageUtil.clearUserData();
-        window.location.href = getBasePath() + '/index.html';
+        tableHtml += `</tbody></table>`;
+        attendanceDiv.innerHTML = tableHtml;
+        statusDiv.textContent = `Attendance for ${subject} - ${data.attendance.length} students present`;
+      } else {
+        // Show subject name even when no students have checked in
+        const subject = data.subject || 'Unknown Subject';
+        attendanceDiv.innerHTML = `
+          <div class="attendance-header">
+            <h3>Subject: ${subject}</h3>
+          </div>
+          <p>No students have checked in yet.</p>
+        `;
+        statusDiv.textContent = `Waiting for students to check in to ${subject} class...`;
+      }
+    } else {
+      statusDiv.innerHTML = `<div class="error-message">Error: ${data.message}</div>`;
     }
+  } catch (error) {
+    console.error('Error fetching attendance:', error);
+    // Don't try to update DOM if we can't find the elements
+    if (document.getElementById('status')) {
+      document.getElementById('status').innerHTML = `<div class="error-message">Server connection error. Please try again.</div>`;
+    }
+  }
 }
 
 // Add a window load event listener to log QR library status

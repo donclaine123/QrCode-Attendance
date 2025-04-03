@@ -48,12 +48,14 @@ async function initDashboard() {
     try {
         console.log("Initializing student dashboard...");
         
-        // Get user info from storage
-        const userData = StorageUtil.getUserData();
+        // Get user info from sessionStorage instead of URL parameters
+        const userId = sessionStorage.getItem('userId');
+        const userRole = sessionStorage.getItem('userRole');
+        const userName = sessionStorage.getItem('userName');
         
-        // If no user info in storage, try to authenticate with the server
-        if (!userData.userId || !userData.userRole) {
-            console.log("No user info in storage, checking authentication...");
+        // If no user info in sessionStorage, try to authenticate with the server
+        if (!userId || !userRole) {
+            console.log("No user info in sessionStorage, checking authentication...");
             
             // Check authentication status
             const response = await fetch(`${API_URL}/auth/check-auth`, {
@@ -67,55 +69,37 @@ async function initDashboard() {
                 const data = await response.json();
                 console.log("Authentication successful:", data);
                 
-                // Store user info using StorageUtil
-                const newUserData = {
-                    userId: data.user.id,
-                    userRole: data.role,
-                    userName: `${data.user.firstName} ${data.user.lastName}`
-                };
+                // Store user info in sessionStorage
+                sessionStorage.setItem('userId', data.user.id);
+                sessionStorage.setItem('userRole', data.role);
+                sessionStorage.setItem('userName', `${data.user.firstName} ${data.user.lastName}`);
                 
-                if (StorageUtil.setUserData(newUserData)) {
-                    // Update welcome message
-                    const welcomeMessage = document.getElementById('welcome-message');
-                    if (welcomeMessage) {
-                        welcomeMessage.textContent = `Welcome, ${data.user.firstName} ${data.user.lastName}!`;
-                    }
-                    
-                    // Show student section
-                    const studentSection = document.getElementById('student-section');
-                    if (studentSection) {
-                        studentSection.style.display = 'block';
-                    }
-                    
-                    // Load enrolled classes
-                    loadEnrolledClasses();
-                } else {
-                    console.warn("Failed to store user data, but continuing with server session");
-                    // Still proceed with server session
-                    const welcomeMessage = document.getElementById('welcome-message');
-                    if (welcomeMessage) {
-                        welcomeMessage.textContent = `Welcome, ${data.user.firstName} ${data.user.lastName}!`;
-                    }
-                    
-                    const studentSection = document.getElementById('student-section');
-                    if (studentSection) {
-                        studentSection.style.display = 'block';
-                    }
-                    
-                    loadEnrolledClasses();
+                // Update welcome message
+                const welcomeMessage = document.getElementById('welcome-message');
+                if (welcomeMessage) {
+                    welcomeMessage.textContent = `Welcome, ${data.user.firstName} ${data.user.lastName}!`;
                 }
+                
+                // Show student section
+                const studentSection = document.getElementById('student-section');
+                if (studentSection) {
+                    studentSection.style.display = 'block';
+                }
+                
+                // Load enrolled classes
+                loadEnrolledClasses();
             } else {
                 console.error("Authentication failed, redirecting to login...");
                 window.location.href = getBasePath() + '/index.html';
             }
         } else {
-            // User info found in storage
-            console.log("User info found in storage:", userData);
+            // User info found in sessionStorage
+            console.log("User info found in sessionStorage:", { userId, userRole, userName });
             
             // Update welcome message
             const welcomeMessage = document.getElementById('welcome-message');
             if (welcomeMessage) {
-                welcomeMessage.textContent = `Welcome, ${userData.userName}!`;
+                welcomeMessage.textContent = `Welcome, ${userName}!`;
             }
             
             // Show student section
@@ -214,95 +198,136 @@ async function loadAttendanceHistory() {
     }
 }
 
-// Load enrolled classes
+// Load enrolled classes for the student
 async function loadEnrolledClasses() {
     try {
-        const classSelect = document.getElementById('attendance-class-select');
+        const classSelect = document.getElementById('class-select');
         if (!classSelect) {
-            console.error('Class select element not found');
+            console.error("Class select element not found");
             return;
         }
         
         classSelect.innerHTML = '<option value="">Select a class</option>';
         
-        const userData = StorageUtil.getUserData();
-        console.log(`Fetching enrolled classes for student ID: ${userData.userId}`);
+        const userId = sessionStorage.getItem('userId');
+        console.log(`Fetching enrolled classes for student ID: ${userId}`);
         
-        const response = await fetch(`${API_URL}/student/enrolled-classes`, {
+        const response = await fetch(`${API_URL}/auth/student-classes/${userId}`, {
             credentials: 'include',
             headers: {
                 'Accept': 'application/json',
-                'X-User-ID': userData.userId,
-                'X-User-Role': userData.userRole
+                'Cache-Control': 'no-cache'
             }
         });
         
         if (!response.ok) {
-            throw new Error('Failed to fetch enrolled classes');
+            throw new Error(`Server returned ${response.status}: ${response.statusText}`);
         }
         
         const data = await response.json();
-        console.log('Enrolled classes data received:', data);
+        console.log('Enrolled classes data:', data);
         
         if (data.success && data.classes && data.classes.length > 0) {
-            data.classes.forEach(classItem => {
+            data.classes.forEach(cls => {
                 const option = document.createElement('option');
-                option.value = classItem.id;
-                option.textContent = classItem.subject;
+                option.value = cls.id;
+                option.textContent = cls.class_name || cls.name;
                 classSelect.appendChild(option);
             });
         } else {
-            classSelect.innerHTML += '<option disabled>No enrolled classes found</option>';
+            classSelect.innerHTML += '<option disabled>No classes found</option>';
         }
     } catch (error) {
         console.error('Error loading enrolled classes:', error);
-        showError('Failed to load enrolled classes. Please try again.');
+        const classSelect = document.getElementById('class-select');
+        if (classSelect) {
+            classSelect.innerHTML = '<option value="">Select a class</option>';
+            classSelect.innerHTML += `<option disabled>Error loading classes: ${error.message}</option>`;
+        }
     }
 }
 
-// Record attendance
+// Record attendance from QR code
 async function recordAttendance() {
     try {
-        const sessionId = StorageUtil.getItem('currentSessionId');
+        const sessionId = sessionStorage.getItem('currentSessionId');
         
         if (!sessionId) {
             alert('No QR session found. Please scan a valid QR code.');
             return;
         }
         
-        const userData = StorageUtil.getUserData();
-        console.log(`Recording attendance for student ID: ${userData.userId}, session ID: ${sessionId}`);
+        const btnElement = document.getElementById('record-attendance-btn');
+        const statusElement = document.getElementById('attendance-status');
         
-        const response = await fetch(`${API_URL}/attendance/record`, {
+        if (!btnElement || !statusElement) {
+            console.error("Required elements for attendance recording not found");
+            return;
+        }
+        
+        // Disable button and show processing
+        btnElement.disabled = true;
+        btnElement.textContent = 'Processing...';
+        statusElement.innerHTML = '<p class="processing">Recording your attendance...</p>';
+        
+        const response = await fetch(`${API_URL}/record-attendance`, {
             method: 'POST',
             headers: {
-                'Content-Type': 'application/json',
-                'Accept': 'application/json'
+                'Content-Type': 'application/json'
             },
+            credentials: 'include',
             body: JSON.stringify({
-                student_id: userData.userId,
                 session_id: sessionId
             })
         });
         
-        if (!response.ok) {
-            throw new Error('Failed to record attendance');
+        const data = await response.json();
+        console.log('Attendance recording response:', data);
+        
+        if (data.success) {
+            statusElement.innerHTML = `
+                <div class="success-message">
+                    <p>Attendance recorded successfully!</p>
+                    <p>Subject: ${data.subject || 'N/A'}</p>
+                    <p>Time: ${formatDateToUTC8(new Date())}</p>
+                </div>
+            `;
+            
+            // Clear session data after successful recording
+            sessionStorage.removeItem('currentSessionId');
+            sessionStorage.removeItem('currentTeacherId');
+            
+            // Reload attendance history
+            loadAttendanceHistory();
+            
+            // Hide the QR attendance section after a delay
+            setTimeout(() => {
+                const qrAttendance = document.getElementById('qr-scanner-section');
+                if (qrAttendance) {
+                    qrAttendance.style.display = 'none';
+                }
+            }, 5000);
+        } else {
+            statusElement.innerHTML = `<div class="error-message">${data.message || 'Error recording attendance'}</div>`;
         }
         
-        const data = await response.json();
-        console.log('Attendance recorded:', data);
+        // Re-enable button
+        btnElement.disabled = false;
+        btnElement.textContent = 'Record Attendance';
         
-        // Clear session data after successful recording
-        StorageUtil.removeItem('currentSessionId');
-        StorageUtil.removeItem('currentTeacherId');
-        
-        // Reload attendance history
-        loadAttendanceHistory();
-        
-        alert('Attendance recorded successfully!');
     } catch (error) {
-        console.error('Error recording attendance:', error);
-        showError('Failed to record attendance. Please try again.');
+        console.error('Attendance recording error:', error);
+        const statusElement = document.getElementById('attendance-status');
+        if (statusElement) {
+            statusElement.innerHTML = `<div class="error-message">Server error: ${error.message}. Please try again.</div>`;
+        }
+        
+        // Re-enable button
+        const btnElement = document.getElementById('record-attendance-btn');
+        if (btnElement) {
+            btnElement.disabled = false;
+            btnElement.textContent = 'Record Attendance';
+        }
     }
 }
 
@@ -353,15 +378,15 @@ async function logout() {
             }
         });
         
-        // Clear storage using StorageUtil
-        StorageUtil.clearUserData();
+        // Clear sessionStorage
+        sessionStorage.clear();
         
         // Redirect to login page
         window.location.href = getBasePath() + '/index.html';
     } catch (error) {
         console.error('Logout error:', error);
-        // Even if the server request fails, clear storage and redirect
-        StorageUtil.clearUserData();
+        // Even if the server request fails, clear local storage and redirect
+        sessionStorage.clear();
         window.location.href = getBasePath() + '/index.html';
     }
 }
@@ -407,14 +432,14 @@ function setupDebugListeners() {
         checkAuthBtn.addEventListener('click', async function() {
             try {
                 // Use the same authentication approach as the main dashboard init
-                const userId = localStorage.getItem('userId');
-                const userRole = localStorage.getItem('userRole');
+                const userId = sessionStorage.getItem('userId');
+                const userRole = sessionStorage.getItem('userRole');
                 const headers = {
                     'Accept': 'application/json',
                     'Cache-Control': 'no-cache'
                 };
                 
-                // Add user headers if available in localStorage as fallback
+                // Add user headers if available in sessionStorage as fallback
                 if (userId && userRole) {
                     headers['X-User-ID'] = userId;
                     headers['X-User-Role'] = userRole;
