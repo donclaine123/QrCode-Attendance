@@ -10,8 +10,14 @@ document.addEventListener('DOMContentLoaded', function() {
     window.dashboardInitialized = true;
     console.log('Teacher dashboard loaded');
     
+    // Add session ID indicator to the page
+    addSessionIndicator();
+    
     // Initialize the dashboard
     initDashboard();
+    
+    // Start the session monitor
+    startSessionMonitor();
 
     // Handle tab switching
     const tabButtons = document.querySelectorAll('.tab-btn');
@@ -933,4 +939,102 @@ document.addEventListener('DOMContentLoaded', function() {
     attendanceClassSelect.addEventListener('change', function() {
         loadSessions(this.value);
     });
-}); 
+});
+
+// Function to monitor current session ID
+function startSessionMonitor() {
+    // Initial check
+    logCurrentSessionId();
+    
+    // Set up interval to check every second
+    window.sessionMonitorInterval = setInterval(logCurrentSessionId, 1000);
+    
+    // Clean up interval when page unloads
+    window.addEventListener('beforeunload', () => {
+        if (window.sessionMonitorInterval) {
+            clearInterval(window.sessionMonitorInterval);
+        }
+    });
+}
+
+// Add a session indicator to the page
+function addSessionIndicator() {
+    const indicator = document.createElement('div');
+    indicator.id = 'sessionIndicator';
+    indicator.style.cssText = `
+        position: fixed;
+        bottom: 10px;
+        right: 10px;
+        background: rgba(0, 0, 0, 0.7);
+        color: #fff;
+        padding: 5px 10px;
+        border-radius: 4px;
+        font-size: 12px;
+        z-index: 1000;
+        font-family: monospace;
+    `;
+    indicator.innerHTML = `
+        <div>Session ID: <span id="currentSessionId">checking...</span></div>
+    `;
+    document.body.appendChild(indicator);
+}
+
+// Function to log the current session ID
+async function logCurrentSessionId() {
+    try {
+        // Method 1: Check cookie directly
+        const sessionCookie = document.cookie
+            .split(';')
+            .map(c => c.trim())
+            .find(c => c.startsWith('qr_attendance_sid='));
+            
+        const cookieSessionId = sessionCookie ? sessionCookie.split('=')[1] : 'none';
+        
+        // Method 2: Check via API (this is more reliable but makes extra requests)
+        let serverSessionId = 'unknown';
+        
+        // Only make this request every 5 seconds to reduce server load
+        const now = new Date().getTime();
+        if (!window.lastSessionCheck || now - window.lastSessionCheck > 5000) {
+            try {
+                const response = await fetch(`${API_URL}/auth/check-auth`, {
+                    method: 'GET',
+                    credentials: 'include',
+                    headers: {
+                        'Accept': 'application/json',
+                        'Cache-Control': 'no-cache'
+                    }
+                });
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    if (data.authenticated && data.sessionID) {
+                        serverSessionId = data.sessionID;
+                        
+                        // Update the session indicator
+                        const sessionIdElement = document.getElementById('currentSessionId');
+                        if (sessionIdElement) {
+                            sessionIdElement.textContent = serverSessionId;
+                        }
+                    }
+                }
+                window.lastSessionCheck = now;
+            } catch (error) {
+                console.error('Error checking session:', error);
+            }
+        }
+        
+        // Update with cookie data if server data not yet available
+        if (serverSessionId === 'unknown') {
+            const sessionIdElement = document.getElementById('currentSessionId');
+            if (sessionIdElement && sessionIdElement.textContent === 'checking...') {
+                sessionIdElement.textContent = cookieSessionId;
+            }
+        }
+        
+        // Log the session ID
+        console.log(`🔑 Current Session ID: ${serverSessionId !== 'unknown' ? serverSessionId : cookieSessionId}`);
+    } catch (error) {
+        console.error('Error in session monitor:', error);
+    }
+} 
