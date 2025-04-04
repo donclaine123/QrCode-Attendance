@@ -251,7 +251,7 @@ body {
   text-align: center;
   margin-bottom: calc(var(--spacing-xl) + var(--spacing-md));
   padding-bottom: var(--spacing-md);
-  border: 1px solid var(--color-secondary-dark);
+  border-left:1px solid var(--color-secondary-dark);
 }
 
 /* Attendance Section with top padding */
