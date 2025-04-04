@@ -254,27 +254,27 @@ async function generateQRCode() {
       } catch (qrError) {
         console.error("QR code generation error:", qrError);
         if (qrCodeDiv) {
-          qrCodeDiv.innerHTML = `
+        qrCodeDiv.innerHTML = `
             <div style="text-align: center; padding: 20px; border: 1px solid #ff6b6b; border-radius: 8px; margin: 20px 0; background-color: #fff9f9;">
               <p style="margin-bottom: 10px; color: #d63031; font-weight: bold;">QR Code could not be generated. Please use this link:</p>
               <a href="${qrCodeUrl}" target="_blank" style="color: #0984e3; font-weight: bold;">${qrCodeUrl}</a>
-            </div>
-          `;
+          </div>
+        `;
         }
       }
       
       // Display success message and URL with expiration timer
       if (statusDiv) {
-        statusDiv.innerHTML = `
-          <div class="success-message">
-            QR Code generated successfully for class session!<br>
-            <small>Session ID: ${sessionId}</small>
-          </div>
-          <p>QR Code URL: <a href="${qrCodeUrl}" target="_blank">${qrCodeUrl}</a></p>
-          <div class="expiration-timer">
-            <p>This QR code will expire in <span id="countdown">10:00</span></p>
-          </div>
-        `;
+      statusDiv.innerHTML = `
+        <div class="success-message">
+          QR Code generated successfully for class session!<br>
+          <small>Session ID: ${sessionId}</small>
+        </div>
+        <p>QR Code URL: <a href="${qrCodeUrl}" target="_blank">${qrCodeUrl}</a></p>
+        <div class="expiration-timer">
+          <p>This QR code will expire in <span id="countdown">10:00</span></p>
+        </div>
+      `;
       }
       
       // Set up the countdown timer
@@ -312,21 +312,21 @@ async function generateQRCode() {
             
             // Update status
             if (statusDiv) {
-              statusDiv.innerHTML += `
-                <div class="error-message">
-                  QR code has expired. Please generate a new one.
-                </div>
-              `;
+            statusDiv.innerHTML += `
+              <div class="error-message">
+                QR code has expired. Please generate a new one.
+              </div>
+            `;
             }
             
             // Clear the QR code
             if (qrCodeDiv) {
-              qrCodeDiv.innerHTML = `
-                <div class="qr-fallback">
-                  <p>QR Code has expired. Please generate a new one.</p>
+            qrCodeDiv.innerHTML = `
+              <div class="qr-fallback">
+                <p>QR Code has expired. Please generate a new one.</p>
                   <p><a href="${qrCodeUrl}" target="_blank">Last QR code link</a></p>
-                </div>
-              `;
+              </div>
+            `;
             }
           } else {
             // Format minutes:seconds
@@ -352,13 +352,13 @@ async function generateQRCode() {
       }
     } else {
       if (statusDiv) {
-        statusDiv.innerHTML = `<div class="error-message">Error: ${data.message}</div>`;
+      statusDiv.innerHTML = `<div class="error-message">Error: ${data.message}</div>`;
       }
     }
   } catch (error) {
     console.error('Error generating QR code:', error);
     if (statusDiv) {
-      statusDiv.innerHTML = `<div class="error-message">Server connection error. Please try again.</div>`;
+    statusDiv.innerHTML = `<div class="error-message">Server connection error. Please try again.</div>`;
     }
   }
 }
@@ -429,24 +429,24 @@ async function populateClassDropdown() {
     
     // Process the response
     if (response.ok) {
-      const data = await response.json();
+    const data = await response.json();
       console.log("Classes data:", data);
 
-      if (data.success) {
-        // Clear current options
-        classSelect.innerHTML = '<option value="">Select a class</option>';
-        
-        // Add classes to dropdown
+    if (data.success) {
+      // Clear current options
+      classSelect.innerHTML = '<option value="">Select a class</option>';
+      
+      // Add classes to dropdown
         if (data.classes && data.classes.length > 0) {
-          data.classes.forEach(cls => {
-            const option = document.createElement('option');
-            option.value = cls.id;
+      data.classes.forEach(cls => {
+        const option = document.createElement('option');
+        option.value = cls.id;
             option.textContent = cls.class_name || cls.name;
             if (cls.subject) {
               option.textContent += ` (${cls.subject})`;
             }
-            classSelect.appendChild(option);
-          });
+        classSelect.appendChild(option);
+      });
           console.log(`Added ${data.classes.length} classes to dropdown`);
         } else {
           classSelect.innerHTML += '<option disabled value="">No classes found</option>';
@@ -525,7 +525,7 @@ async function viewAttendance() {
       if (statusDiv) statusDiv.innerHTML = '<div class="error-message">Error: No user data found. Please log in again.</div>';
       return;
     }
-    
+
     // Build auth headers
     const headers = {
       'Accept': 'application/json',
@@ -667,6 +667,6 @@ window.addEventListener('load', function() {
   // Check if we're on a page with class selection (teacher dashboard)
   if (document.getElementById('class-select')) {
     console.log("Initializing class dropdown");
-    populateClassDropdown();
-  }
+      populateClassDropdown();
+    }
 });
