@@ -5,6 +5,53 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>AttendEase - Effortless Attendance Tracking</title>
     <link rel="stylesheet" href="css/landpage.css">
+    <style>
+        /* Mobile menu styles */
+        .menu-toggle {
+            display: none;
+            flex-direction: column;
+            justify-content: space-between;
+            width: 30px;
+            height: 21px;
+            cursor: pointer;
+        }
+        
+        .menu-toggle span {
+            display: block;
+            height: 3px;
+            width: 100%;
+            background-color: var(--color-text);
+            border-radius: 3px;
+            transition: all 0.3s ease;
+        }
+        
+        .mobile-nav-container {
+            display: none;
+            width: 100%;
+        }
+        
+        .mobile-nav-container.active {
+            display: block;
+        }
+        
+        @media (max-width: 768px) {
+            .menu-toggle {
+                display: flex;
+                position: absolute;
+                top: 20px;
+                right: 20px;
+            }
+            
+            .nav-links, .auth-buttons {
+                display: none;
+            }
+            
+            .mobile-nav-container.active .nav-links, 
+            .mobile-nav-container.active .auth-buttons {
+                display: flex;
+            }
+        }
+    </style>
 </head>
 <body>
     <header>
@@ -14,14 +61,25 @@
                     <span class="logo-icon">📊</span>
                     AttendEase
                 </a>
-                <ul class="nav-links">
-                    <li><a href="#">Features</a></li>
-                    <li><a href="#">Pricing</a></li>
-                    <li><a href="#">Support</a></li>
-                </ul>
-                <div class="auth-buttons">
-                    <a href="pages/login.html" class="btn btn-secondary btn-login">Login</a>
-                    <a href="pages/login.html" class="btn btn-primary">Get Started</a>
+                
+                <!-- Hamburger menu for mobile -->
+                <div class="menu-toggle" id="mobile-menu">
+                    <span></span>
+                    <span></span>
+                    <span></span>
+                </div>
+                
+                <!-- Container for mobile navigation -->
+                <div class="mobile-nav-container" id="mobile-nav">
+                    <ul class="nav-links">
+                        <li><a href="#">Features</a></li>
+                        <li><a href="#">Pricing</a></li>
+                        <li><a href="#">Support</a></li>
+                    </ul>
+                    <div class="auth-buttons">
+                        <a href="pages/login.html" class="btn btn-secondary btn-login">Login</a>
+                        <a href="pages/login.html" class="btn btn-primary">Get Started</a>
+                    </div>
                 </div>
             </nav>
         </div>
@@ -112,6 +170,22 @@
     <script>
         // Vanilla JS for any interactive elements
         document.addEventListener('DOMContentLoaded', () => {
+            // Mobile menu toggle
+            const mobileMenuButton = document.getElementById('mobile-menu');
+            const mobileNavContainer = document.getElementById('mobile-nav');
+            
+            if (mobileMenuButton && mobileNavContainer) {
+                mobileMenuButton.addEventListener('click', () => {
+                    mobileNavContainer.classList.toggle('active');
+                    
+                    // Toggle hamburger to X animation if needed
+                    const spans = mobileMenuButton.querySelectorAll('span');
+                    spans.forEach(span => {
+                        span.classList.toggle('active');
+                    });
+                });
+            }
+            
             // Add smooth scrolling for navigation links
             document.querySelectorAll('a[href^="#"]').forEach(anchor => {
                 anchor.addEventListener('click', function (e) {
@@ -123,12 +197,14 @@
                             top: target.offsetTop,
                             behavior: 'smooth'
                         });
+                        
+                        // Close mobile menu if it's open
+                        if (mobileNavContainer.classList.contains('active')) {
+                            mobileNavContainer.classList.remove('active');
+                        }
                     }
                 });
             });
-            
-            // Responsive navigation toggle (placeholder for mobile menu)
-            // This would be expanded in a real implementation
         });
     </script>
 </body>
