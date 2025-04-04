@@ -138,62 +138,58 @@ async function generateQRCode() {
           throw new Error("QR code container element not found");
         }
         
-        // Create iframe for isolated rendering context
-        const iframe = document.createElement('iframe');
-        iframe.style.width = '300px';
-        iframe.style.height = '300px';
-        iframe.style.border = 'none';
-        iframe.style.overflow = 'hidden';
-        iframe.title = "QR Code";
-        qrCodeDiv.appendChild(iframe);
+        // Create a completely isolated container with inline styles
+        const qrContainer = document.createElement('div');
+        qrContainer.id = 'qr-container-' + new Date().getTime(); // Unique ID
+        qrContainer.style.cssText = `
+          width: 280px; 
+          height: 280px; 
+          margin: 20px auto;
+          padding: 10px;
+          background-color: white;
+          border: 1px solid #ddd;
+          border-radius: 8px;
+          box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+          position: relative;
+          z-index: 9999;
+        `;
+        qrCodeDiv.appendChild(qrContainer);
         
-        // Wait for iframe to load
-        iframe.onload = function() {
-          // Get iframe document
-          const iframeDoc = iframe.contentDocument || iframe.contentWindow.document;
-          
-          // Create container for QR code
-          const container = iframeDoc.createElement('div');
-          container.id = 'qr-container';
-          iframeDoc.body.appendChild(container);
-          
-          // Add QRCode library to iframe
-          const script = iframeDoc.createElement('script');
-          script.src = 'https://cdn.rawgit.com/davidshimjs/qrcodejs/gh-pages/qrcode.min.js';
-          script.onload = function() {
-            // Generate QR code inside iframe
-            new iframe.contentWindow.QRCode(container, {
-              text: qrCodeUrl,
-              width: 256,
-              height: 256,
-              colorDark: '#000000',
-              colorLight: '#ffffff',
-              correctLevel: 2
-            });
-          };
-          iframeDoc.head.appendChild(script);
-          
-          // Reset any margin/padding that might affect display
-          iframeDoc.body.style.margin = '0';
-          iframeDoc.body.style.padding = '0';
-          iframeDoc.body.style.textAlign = 'center';
-        };
+        // Fallback: Direct rendering of QR code as an image using a 3rd party API
+        qrContainer.innerHTML = `
+          <div style="text-align: center; padding: 5px;">
+            <img 
+              src="https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=${encodeURIComponent(qrCodeUrl)}" 
+              alt="QR Code" 
+              style="max-width: 100%; height: auto; display: block; margin: 0 auto;"
+            />
+            <p style="margin-top: 10px; font-family: Arial, sans-serif; font-size: 12px; color: #333;">
+              Scan with your phone
+            </p>
+          </div>
+        `;
         
-        console.log("QR code iframe created");
+        console.log("QR code image created via external API");
         
-        // Also create direct link fallback below iframe for accessibility
+        // Also create direct link fallback below QR code for accessibility
         const linkContainer = document.createElement('div');
         linkContainer.className = 'qr-link-fallback';
-        linkContainer.innerHTML = `<p><a href="${qrCodeUrl}" target="_blank">Direct QR Code Link</a></p>`;
+        linkContainer.style.cssText = `
+          margin-top: 10px;
+          text-align: center;
+          font-family: Arial, sans-serif;
+          font-size: 14px;
+        `;
+        linkContainer.innerHTML = `<p><a href="${qrCodeUrl}" target="_blank" style="color: #0066cc; text-decoration: underline;">Direct QR Code Link</a></p>`;
         qrCodeDiv.appendChild(linkContainer);
         
       } catch (qrError) {
         console.error("QR code library error:", qrError);
         if (qrCodeDiv) {
           qrCodeDiv.innerHTML = `
-            <div class="qr-fallback">
-              <p>QR Code could not be generated. Please use this link:</p>
-              <a href="${qrCodeUrl}" target="_blank">${qrCodeUrl}</a>
+            <div class="qr-fallback" style="text-align: center; padding: 20px; border: 1px solid #ff6b6b; border-radius: 8px; margin: 20px 0; background-color: #fff9f9;">
+              <p style="margin-bottom: 10px; color: #d63031; font-weight: bold;">QR Code could not be generated. Please use this link:</p>
+              <a href="${qrCodeUrl}" target="_blank" style="color: #0984e3; font-weight: bold;">${qrCodeUrl}</a>
             </div>
           `;
         }
