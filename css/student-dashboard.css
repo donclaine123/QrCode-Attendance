@@ -73,11 +73,19 @@ body {
   background-color: var(--color-white);
 }
 
-/* Add horizontal separator line */
+/* Add horizontal divider with full borders */
 .content-header {
   margin-bottom: var(--spacing-lg);
   border-bottom: 1px solid var(--color-secondary-dark);
   padding-bottom: var(--spacing-lg);
+}
+
+/* Student section with borders on all sides */
+#student-section {
+  border-left: 1px solid var(--color-secondary-dark);
+  border-right: 1px solid var(--color-secondary-dark);
+  padding: 0 var(--spacing-lg);
+  margin: 0 -var(--spacing-lg);
 }
 
 /* Sidebar */
