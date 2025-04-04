@@ -1,0 +1,497 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Student Dashboard - EduConnect</title>
+    <style>
+        :root {
+            /* Color scheme */
+            --color-primary: #4F46E5;
+            --color-primary-dark: #4338ca;
+            --color-primary-light: #6366f1;
+            --color-secondary: #f3f4f6;
+            --color-secondary-dark: #e5e7eb;
+            --color-text: #1f2937;
+            --color-text-light: #6b7280;
+            --color-success: #10B981;
+            --color-danger: #ef4444;
+            --color-warning: #f59e0b;
+            --color-white: #ffffff;
+            --color-background: #f9fafb;
+            
+            /* Typography */
+            --font-family-heading: 'Poppins', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            --font-family-body: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            
+            /* Spacing */
+            --spacing-xs: 0.25rem;
+            --spacing-sm: 0.5rem;
+            --spacing-md: 1rem;
+            --spacing-lg: 1.5rem;
+            --spacing-xl: 2rem;
+            
+            /* Borders & Shadows */
+            --border-radius-sm: 6px;
+            --border-radius-md: 8px;
+            --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+            --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: var(--font-family-body);
+            color: var(--color-text);
+            line-height: 1.5;
+            background-color: var(--color-background);
+            min-height: 100vh;
+        }
+        
+        /* Layout */
+        .dashboard {
+            display: flex;
+            min-height: 100vh;
+        }
+        
+        .sidebar {
+            width: 240px;
+            background-color: var(--color-white);
+            border-right: 1px solid var(--color-secondary-dark);
+            padding: var(--spacing-md);
+            display: flex;
+            flex-direction: column;
+            position: fixed;
+            top: 0;
+            bottom: 0;
+            left: 0;
+            z-index: 10;
+        }
+        
+        .main-content {
+            flex: 1;
+            margin-left: 240px;
+            padding: var(--spacing-xl);
+        }
+        
+        /* Sidebar */
+        .school-info {
+            display: flex;
+            align-items: center;
+            padding: var(--spacing-md) 0;
+            margin-bottom: var(--spacing-lg);
+            border-bottom: 1px solid var(--color-secondary-dark);
+        }
+        
+        .school-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background-color: var(--color-secondary);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-right: var(--spacing-md);
+            overflow: hidden;
+        }
+        
+        .school-name {
+            font-weight: 600;
+            font-size: 1rem;
+        }
+        
+        .nav-menu {
+            list-style: none;
+            margin-top: var(--spacing-md);
+        }
+        
+        .nav-item {
+            margin-bottom: var(--spacing-sm);
+        }
+        
+        .nav-link {
+            display: flex;
+            align-items: center;
+            padding: var(--spacing-md);
+            border-radius: var(--border-radius-sm);
+            text-decoration: none;
+            color: var(--color-text);
+            transition: background-color 0.2s ease;
+        }
+        
+        .nav-link:hover {
+            background-color: var(--color-secondary);
+        }
+        
+        .nav-link.active {
+            background-color: var(--color-primary-light);
+            color: var(--color-white);
+        }
+        
+        .nav-icon {
+            margin-right: var(--spacing-md);
+            width: 20px;
+            height: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        /* Content Header */
+        .content-header {
+            margin-bottom: var(--spacing-lg);
+        }
+        
+        .page-title {
+            font-size: 1.5rem;
+            font-weight: 600;
+            margin-bottom: var(--spacing-sm);
+        }
+        
+        /* Scanner Section */
+        .scanner-section {
+            background-color: var(--color-white);
+            border-radius: var(--border-radius-md);
+            padding: var(--spacing-lg);
+            margin-bottom: var(--spacing-lg);
+            box-shadow: var(--shadow-md);
+            text-align: center;
+        }
+        
+        .scanner-container {
+            position: relative;
+            width: 100%;
+            max-width: 500px;
+            margin: 0 auto;
+            overflow: hidden;
+            border-radius: var(--border-radius-md);
+        }
+        
+        .scanner-placeholder {
+            width: 100%;
+            aspect-ratio: 1 / 1;
+            background-color: var(--color-secondary);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+        }
+        
+        .scanner-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.2);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            color: var(--color-white);
+        }
+        
+        .scan-target {
+            width: 200px;
+            height: 200px;
+            border: 2px solid var(--color-white);
+            border-radius: var(--border-radius-sm);
+        }
+        
+        .play-button {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 60px;
+            height: 60px;
+            background-color: rgba(0, 0, 0, 0.5);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--color-white);
+            cursor: pointer;
+            transition: background-color 0.2s ease;
+        }
+        
+        .play-button:hover {
+            background-color: rgba(0, 0, 0, 0.7);
+        }
+        
+        .scan-controls {
+            margin-top: var(--spacing-md);
+            display: flex;
+            justify-content: center;
+            gap: var(--spacing-md);
+        }
+        
+        .btn {
+            padding: var(--spacing-md) var(--spacing-lg);
+            border: none;
+            border-radius: var(--border-radius-sm);
+            font-weight: 600;
+            cursor: pointer;
+            transition: background-color 0.2s ease;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .btn-primary {
+            background-color: var(--color-primary);
+            color: var(--color-white);
+        }
+        
+        .btn-primary:hover {
+            background-color: var(--color-primary-dark);
+        }
+        
+        .btn-outline {
+            background-color: transparent;
+            color: var(--color-text);
+            border: 1px solid var(--color-secondary-dark);
+        }
+        
+        .btn-outline:hover {
+            background-color: var(--color-secondary);
+        }
+        
+        .btn-icon {
+            margin-right: var(--spacing-sm);
+        }
+        
+        /* Recent Scans */
+        .recent-scans {
+            background-color: var(--color-white);
+            border-radius: var(--border-radius-md);
+            padding: var(--spacing-lg);
+            box-shadow: var(--shadow-md);
+        }
+        
+        .section-header {
+            margin-bottom: var(--spacing-lg);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .section-title {
+            font-size: 1.25rem;
+            font-weight: 600;
+        }
+        
+        .scan-item {
+            display: flex;
+            align-items: center;
+            padding: var(--spacing-md) 0;
+            border-bottom: 1px solid var(--color-secondary-dark);
+        }
+        
+        .scan-item:last-child {
+            border-bottom: none;
+        }
+        
+        .scan-icon {
+            width: 40px;
+            height: 40px;
+            background-color: var(--color-secondary);
+            border-radius: var(--border-radius-sm);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-right: var(--spacing-md);
+        }
+        
+        .scan-details {
+            flex: 1;
+        }
+        
+        .scan-title {
+            font-weight: 600;
+            margin-bottom: var(--spacing-xs);
+        }
+        
+        .scan-meta {
+            color: var(--color-text-light);
+            font-size: 0.9rem;
+        }
+        
+        /* Responsive */
+        @media (max-width: 768px) {
+            .dashboard {
+                flex-direction: column;
+            }
+            
+            .sidebar {
+                width: 100%;
+                position: static;
+                height: auto;
+                padding-bottom: 0;
+            }
+            
+            .main-content {
+                margin-left: 0;
+                padding: var(--spacing-md);
+            }
+            
+            .nav-menu {
+                display: flex;
+                flex-wrap: wrap;
+                gap: var(--spacing-xs);
+            }
+            
+            .nav-item {
+                margin-bottom: 0;
+            }
+            
+            .nav-link {
+                padding: var(--spacing-sm);
+            }
+            
+            .scanner-placeholder {
+                aspect-ratio: 16 / 9;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="dashboard">
+        <aside class="sidebar">
+            <div class="school-info">
+                <div class="school-avatar">🎓</div>
+                <div class="school-name">EduConnect</div>
+            </div>
+            
+            <nav>
+                <ul class="nav-menu">
+                    <li class="nav-item">
+                        <a href="#" class="nav-link active">
+                            <span class="nav-icon">📷</span>
+                            Scan
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="#" class="nav-link">
+                            <span class="nav-icon">📚</span>
+                            Sessions
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="#" class="nav-link">
+                            <span class="nav-icon">👤</span>
+                            Profile
+                        </a>
+                    </li>
+                </ul>
+            </nav>
+        </aside>
+        
+        <main class="main-content">
+            <div class="content-header">
+                <h1 class="page-title">Scan QR</h1>
+            </div>
+            
+            <section class="scanner-section">
+                <div class="scanner-container">
+                    <div class="scanner-placeholder">
+                        <img src="https://via.placeholder.com/500x500" alt="QR Scanner" style="width: 100%; height: 100%; object-fit: cover; opacity: 0.7;">
+                        <div class="play-button" id="activate-camera">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <polygon points="5 3 19 12 5 21 5 3"></polygon>
+                            </svg>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="scan-controls">
+                    <button class="btn btn-primary" id="scan-btn">
+                        <span class="btn-icon">📷</span>
+                        Scan QR Code
+                    </button>
+                    <button class="btn btn-outline" id="upload-btn">
+                        <span class="btn-icon">📁</span>
+                        Upload QR Image
+                    </button>
+                </div>
+            </section>
+            
+            <section class="recent-scans">
+                <div class="section-header">
+                    <h2 class="section-title">Recent Scans</h2>
+                </div>
+                
+                <div class="scan-list">
+                    <div class="scan-item">
+                        <div class="scan-icon">🔍</div>
+                        <div class="scan-details">
+                            <div class="scan-title">Attendance Session 1</div>
+                            <div class="scan-meta">Course: Computer Science 101</div>
+                        </div>
+                    </div>
+                    
+                    <div class="scan-item">
+                        <div class="scan-icon">🔍</div>
+                        <div class="scan-details">
+                            <div class="scan-title">Attendance Session 2</div>
+                            <div class="scan-meta">Course: Mathematics 203</div>
+                        </div>
+                    </div>
+                    
+                    <div class="scan-item">
+                        <div class="scan-icon">🔍</div>
+                        <div class="scan-details">
+                            <div class="scan-title">Attendance Session 3</div>
+                            <div class="scan-meta">Course: Physics 305</div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </main>
+    </div>
+    
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            // Navigation
+            const navLinks = document.querySelectorAll('.nav-link');
+            
+            navLinks.forEach(link => {
+                link.addEventListener('click', (e) => {
+                    navLinks.forEach(l => l.classList.remove('active'));
+                    e.currentTarget.classList.add('active');
+                });
+            });
+            
+            // QR Scanner simulation
+            const activateCamera = document.getElementById('activate-camera');
+            const scanBtn = document.getElementById('scan-btn');
+            const uploadBtn = document.getElementById('upload-btn');
+            
+            activateCamera.addEventListener('click', () => {
+                // In a real app, this would request camera permissions and activate the camera
+                alert('Camera activation would be requested here. In a real implementation, this would access your device camera to scan QR codes.');
+            });
+            
+            scanBtn.addEventListener('click', () => {
+                // In a real app, this would trigger QR scanning
+                alert('QR scanning would be activated here. In a real implementation, this would initiate QR code detection.');
+                
+                // Simulate a successful scan after a delay
+                setTimeout(() => {
+                    alert('Attendance marked successfully for Mathematics 101!');
+                }, 1000);
+            });
+            
+            uploadBtn.addEventListener('click', () => {
+                // In a real app, this would open a file picker for QR images
+                alert('File upload would be triggered here. In a real implementation, this would allow you to select a QR code image from your device.');
+            });
+        });
+    </script>
+</body>
+</html> 

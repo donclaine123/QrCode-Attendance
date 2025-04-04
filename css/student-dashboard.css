@@ -1,11 +1,329 @@
-/* Scan overlays */
+/* Dashboard Layout */
+:root {
+  /* Color scheme */
+  --color-primary: #4F46E5;
+  --color-primary-dark: #4338ca;
+  --color-primary-light: #6366f1;
+  --color-secondary: #f3f4f6;
+  --color-secondary-dark: #e5e7eb;
+  --color-text: #1f2937;
+  --color-text-light: #6b7280;
+  --color-success: #10B981;
+  --color-danger: #ef4444;
+  --color-warning: #f59e0b;
+  --color-white: #ffffff;
+  --color-background: #f9fafb;
+  
+  /* Typography */
+  --font-family-heading: 'Poppins', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  --font-family-body: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  
+  /* Spacing */
+  --spacing-xs: 0.25rem;
+  --spacing-sm: 0.5rem;
+  --spacing-md: 1rem;
+  --spacing-lg: 1.5rem;
+  --spacing-xl: 2rem;
+  
+  /* Borders & Shadows */
+  --border-radius-sm: 6px;
+  --border-radius-md: 8px;
+  --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+}
+
+body {
+  font-family: var(--font-family-body);
+  color: var(--color-text);
+  line-height: 1.5;
+  background-color: var(--color-background);
+  min-height: 100vh;
+  margin: 0;
+  padding: 0;
+}
+
+/* Dashboard Layout */
+.dashboard {
+  display: flex;
+  min-height: 100vh;
+}
+
+.sidebar {
+  width: 240px;
+  background-color: var(--color-white);
+  border-right: 1px solid var(--color-secondary-dark);
+  padding: var(--spacing-md);
+  display: flex;
+  flex-direction: column;
+  position: fixed;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  z-index: 10;
+}
+
+.main-content {
+  flex: 1;
+  margin-left: 240px;
+  padding: var(--spacing-xl);
+}
+
+/* Sidebar */
+.school-info {
+  display: flex;
+  align-items: center;
+  padding: var(--spacing-md) 0;
+  margin-bottom: var(--spacing-lg);
+  border-bottom: 1px solid var(--color-secondary-dark);
+}
+
+.school-avatar {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background-color: var(--color-secondary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-right: var(--spacing-md);
+  overflow: hidden;
+}
+
+.school-name {
+  font-weight: 600;
+  font-size: 1rem;
+}
+
+.nav-menu {
+  list-style: none;
+  margin-top: var(--spacing-md);
+}
+
+.nav-item {
+  margin-bottom: var(--spacing-sm);
+}
+
+.nav-link {
+  display: flex;
+  align-items: center;
+  padding: var(--spacing-md);
+  border-radius: var(--border-radius-sm);
+  text-decoration: none;
+  color: var(--color-text);
+  transition: background-color 0.2s ease;
+}
+
+.nav-link:hover {
+  background-color: var(--color-secondary);
+}
+
+.nav-link.active {
+  background-color: var(--color-primary-light);
+  color: var(--color-white);
+}
+
+.nav-icon {
+  margin-right: var(--spacing-md);
+  width: 20px;
+  height: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Content Header */
+.content-header {
+  margin-bottom: var(--spacing-lg);
+}
+
+.page-title {
+  font-size: 1.5rem;
+  font-weight: 600;
+  margin-bottom: var(--spacing-sm);
+}
+
+/* Welcome Message */
+#welcome-message {
+  font-size: 1.2rem;
+  margin-bottom: var(--spacing-md);
+  color: var(--color-primary-dark);
+}
+
+/* Scanner Section */
+#qr-scanner-section {
+  background-color: var(--color-white);
+  border-radius: var(--border-radius-md);
+  padding: var(--spacing-lg);
+  margin-bottom: var(--spacing-lg);
+  box-shadow: var(--shadow-md);
+  text-align: center;
+}
+
+.video-container {
+  position: relative;
+  width: 100%;
+  max-width: 500px;
+  height: 300px;
+  margin: 0 auto;
+  overflow: hidden;
+  background-color: #000;
+  border-radius: 8px;
+}
+
+#video {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+#scannerBox {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 200px;
+  height: 200px;
+  border: 2px solid rgba(255, 255, 255, 0.8);
+  border-radius: var(--border-radius-sm);
+  box-shadow: 0 0 0 9999px rgba(0, 0, 0, 0.5);
+  z-index: 2;
+}
+
+#scanStatus {
+  margin-top: var(--spacing-md);
+  padding: var(--spacing-md);
+  text-align: center;
+}
+
+.scan-controls {
+  margin-top: var(--spacing-md);
+  display: flex;
+  justify-content: center;
+  gap: var(--spacing-md);
+}
+
+.action-button, .btn {
+  padding: var(--spacing-md) var(--spacing-lg);
+  border: none;
+  border-radius: var(--border-radius-sm);
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.btn-primary, #scan-qr-btn, #startScanBtn {
+  background-color: var(--color-primary);
+  color: var(--color-white);
+}
+
+.btn-primary:hover, #scan-qr-btn:hover, #startScanBtn:hover {
+  background-color: var(--color-primary-dark);
+}
+
+.btn-outline {
+  background-color: transparent;
+  color: var(--color-text);
+  border: 1px solid var(--color-secondary-dark);
+}
+
+.btn-outline:hover {
+  background-color: var(--color-secondary);
+}
+
+.btn-icon {
+  margin-right: var(--spacing-sm);
+}
+
+/* Attendance Section */
+#attendance-section {
+  background-color: var(--color-white);
+  border-radius: var(--border-radius-md);
+  padding: var(--spacing-lg);
+  box-shadow: var(--shadow-md);
+}
+
+.section-header {
+  margin-bottom: var(--spacing-lg);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.section-title {
+  font-size: 1.25rem;
+  font-weight: 600;
+}
+
+/* Attendance Records Styling */
+.history-item {
+  display: flex;
+  flex-direction: column;
+  padding: var(--spacing-md);
+  margin-bottom: var(--spacing-md);
+  border-radius: var(--border-radius-sm);
+  background-color: var(--color-secondary);
+  border-left: 4px solid var(--color-primary);
+}
+
+.history-subject {
+  font-weight: 600;
+  margin-bottom: var(--spacing-xs);
+}
+
+.history-teacher, .history-time {
+  color: var(--color-text-light);
+  font-size: 0.9rem;
+}
+
+/* Empty & Error States */
+.empty-state, .error-state {
+  text-align: center;
+  padding: var(--spacing-xl);
+  background-color: var(--color-secondary);
+  border-radius: var(--border-radius-md);
+}
+
+.empty-state h3, .error-state h3 {
+  margin-bottom: var(--spacing-md);
+  color: var(--color-text);
+}
+
+.error-state {
+  background-color: #FFEBEE;
+  border-left: 4px solid var(--color-danger);
+}
+
+/* Debug Section - Styled but hidden by default */
+#debug-section {
+  margin-top: var(--spacing-xl);
+  padding: var(--spacing-md);
+  background-color: #f8f9fa;
+  border-radius: var(--border-radius-sm);
+  border: 1px dashed #ccc;
+  display: none;
+}
+
+#debug-section button {
+  background-color: #e9ecef;
+  border: 1px solid #ced4da;
+  color: #495057;
+  padding: 0.375rem 0.75rem;
+  margin-right: 0.5rem;
+  border-radius: 0.25rem;
+  cursor: pointer;
+}
+
+/* Scan overlays - Keep existing styles */
 .scan-overlay, .success-overlay, .error-overlay {
   position: fixed;
   top: 0;
   left: 0;
   right: 0;
   bottom: 0;
-  /* Update overlay styles */
   background-color: rgba(0, 0, 0, 0.8);
   backdrop-filter: blur(5px);
   display: flex;
@@ -63,128 +381,40 @@
   100% { transform: rotate(360deg); }
 }
 
-.scan-details {
-  font-size: 14px;
-  color: #666;
-  margin: 5px 0;
-}
-
-#dismiss-error {
-  background-color: #ff5722;
-  color: white;
-  border: none;
-  padding: 10px 20px;
-  border-radius: 5px;
-  margin-top: 15px;
-  cursor: pointer;
-}
-
-#dismiss-error:hover {
-  background-color: #e64a19;
-}
-
-/* Status message styles */
-.processing-status {
-  color: #2196F3;
-  background-color: #E3F2FD;
-  padding: 10px;
-  border-radius: 4px;
-  border-left: 4px solid #2196F3;
-}
-
-.success-message {
-  color: #4CAF50;
-  background-color: #E8F5E9;
-  padding: 10px;
-  border-radius: 4px;
-  border-left: 4px solid #4CAF50;
-}
-
-.error-message {
-  color: #F44336;
-  background-color: #FFEBEE;
-  padding: 10px;
-  border-radius: 4px;
-  border-left: 4px solid #F44336;
-}
-
-/* QR Code viewfinder */
-.viewfinder-container {
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  box-sizing: border-box;
-  pointer-events: none;
-}
-
-.corner {
-  position: absolute;
-  width: 20px;
-  height: 20px;
-  border-color: #00ff00;
-  border-style: solid;
-  border-width: 3px;
-}
-
-.top-left {
-  top: 10%;
-  left: 10%;
-  border-right: none;
-  border-bottom: none;
-}
-
-.top-right {
-  top: 10%;
-  right: 10%;
-  border-left: none;
-  border-bottom: none;
-}
-
-.bottom-left {
-  bottom: 10%;
-  left: 10%;
-  border-right: none;
-  border-top: none;
-}
-
-.bottom-right {
-  bottom: 10%;
-  right: 10%;
-  border-left: none;
-  border-top: none;
-}
-
-.scanner-line {
-  position: absolute;
-  left: 10%;
-  width: 80%;
-  height: 2px;
-  background-color: #00ff00;
-  animation: scan 2s linear infinite;
-}
-
-@keyframes scan {
-  0% {
-    top: 10%;
+/* Responsive */
+@media (max-width: 768px) {
+  .dashboard {
+    flex-direction: column;
   }
-  50% {
-    top: 90%;
+  
+  .sidebar {
+    width: 100%;
+    position: static;
+    height: auto;
+    padding-bottom: 0;
   }
-  100% {
-    top: 10%;
+  
+  .main-content {
+    margin-left: 0;
+    padding: var(--spacing-md);
   }
-}
-
-/* Make sure the video container has position relative for absolute positioning */
-.video-container {
-  position: relative;
-  width: 100%;
-  max-width: 500px;
-  height: 300px;
-  margin: 0 auto;
-  overflow: hidden;
-  background-color: #000;
-  border-radius: 8px;
+  
+  .nav-menu {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--spacing-xs);
+  }
+  
+  .nav-item {
+    margin-bottom: 0;
+  }
+  
+  .nav-link {
+    padding: var(--spacing-sm);
+  }
+  
+  .video-container {
+    height: auto;
+    aspect-ratio: 16 / 9;
+  }
 }

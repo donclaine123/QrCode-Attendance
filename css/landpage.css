@@ -354,6 +354,31 @@ header {
   margin-top: var(--spacing-xl);
 }
 
+/* Mobile menu styles */
+.menu-toggle {
+  display: none;
+  flex-direction: column;
+  justify-content: space-between;
+  width: 30px;
+  height: 21px;
+  cursor: pointer;
+}
+
+.menu-toggle span {
+  display: block;
+  height: 3px;
+  width: 100%;
+  background-color: var(--color-text);
+  border-radius: 3px;
+  transition: all 0.3s ease;
+}
+
+.mobile-nav-container {
+  display: flex;
+  width: 100%;
+  justify-content: space-between;
+}
+
 /* Responsive Styles */
 @media (max-width: 768px) {
   /* Base and typography */
@@ -375,18 +400,33 @@ header {
     margin-bottom: var(--spacing-sm);
   }
   
-  .nav-links {
-    margin-top: var(--spacing-md);
+  .menu-toggle {
+    display: flex;
+    position: absolute;
+    top: 20px;
+    right: 20px;
+  }
+  
+  .mobile-nav-container {
+    display: none;
+    flex-direction: column;
+  }
+  
+  .mobile-nav-container.active {
+    display: flex;
+  }
+  
+  .nav-links, .auth-buttons {
     width: 100%;
-    justify-content: space-between;
-    overflow-x: auto;
-    padding-bottom: var(--spacing-sm);
+    flex-direction: column;
+    margin-top: var(--spacing-md);
   }
   
   .nav-links li {
     margin-left: 0;
     margin-right: var(--spacing-md);
     white-space: nowrap;
+    margin-bottom: var(--spacing-md);
   }
   
   .nav-links li:last-child {

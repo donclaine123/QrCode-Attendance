@@ -5,60 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>AttendEase - Effortless Attendance Tracking</title>
     <link rel="stylesheet" href="css/landpage.css">
-    <style>
-        /* Mobile menu styles */
-        .menu-toggle {
-            display: none;
-            flex-direction: column;
-            justify-content: space-between;
-            width: 30px;
-            height: 21px;
-            cursor: pointer;
-        }
-        
-        .menu-toggle span {
-            display: block;
-            height: 3px;
-            width: 100%;
-            background-color: var(--color-text);
-            border-radius: 3px;
-            transition: all 0.3s ease;
-        }
-        
-        .mobile-nav-container {
-            display: flex;
-            width: 100%;
-            justify-content: space-between;
-        }
-        
-        @media (max-width: 768px) {
-            .menu-toggle {
-                display: flex;
-                position: absolute;
-                top: 20px;
-                right: 20px;
-            }
-            
-            .mobile-nav-container {
-                display: none;
-                flex-direction: column;
-            }
-            
-            .mobile-nav-container.active {
-                display: flex;
-            }
-            
-            .nav-links, .auth-buttons {
-                width: 100%;
-                flex-direction: column;
-                margin-top: var(--spacing-md);
-            }
-            
-            .nav-links li {
-                margin-bottom: var(--spacing-md);
-            }
-        }
-    </style>
 </head>
 <body>
     <header>

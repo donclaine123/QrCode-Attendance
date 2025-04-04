@@ -27,6 +27,8 @@ document.addEventListener('DOMContentLoaded', function() {
     if (scanQrBtn) {
         scanQrBtn.addEventListener('click', function() {
             document.getElementById('qr-scanner-section').style.display = 'block';
+            // Update active navigation
+            setActiveNav('nav-scan');
         });
     }
     
@@ -37,9 +39,52 @@ document.addEventListener('DOMContentLoaded', function() {
         loadAttendanceHistory();
     });
     
+    // Setup navigation event listeners
+    setupNavigation();
+    
     // Set up debug listeners
     setupDebugListeners();
 });
+
+// Set up navigation menu
+function setupNavigation() {
+    const navScan = document.getElementById('nav-scan');
+    const navAttendance = document.getElementById('nav-attendance');
+    
+    if (navScan) {
+        navScan.addEventListener('click', function(e) {
+            e.preventDefault();
+            // Show scanner section, hide attendance
+            document.getElementById('qr-scanner-section').style.display = 'block';
+            document.getElementById('attendance-section').style.display = 'none';
+            setActiveNav('nav-scan');
+        });
+    }
+    
+    if (navAttendance) {
+        navAttendance.addEventListener('click', function(e) {
+            e.preventDefault();
+            // Hide scanner section, show attendance
+            document.getElementById('qr-scanner-section').style.display = 'none';
+            document.getElementById('attendance-section').style.display = 'block';
+            setActiveNav('nav-attendance');
+        });
+    }
+}
+
+// Set active navigation item
+function setActiveNav(navId) {
+    // Remove active class from all nav links
+    document.querySelectorAll('.nav-link').forEach(link => {
+        link.classList.remove('active');
+    });
+    
+    // Add active class to selected nav link
+    const activeNav = document.getElementById(navId);
+    if (activeNav) {
+        activeNav.classList.add('active');
+    }
+}
 
 // Initialize dashboard
 async function initDashboard() {
