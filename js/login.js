@@ -15,6 +15,76 @@ document.addEventListener('DOMContentLoaded', function() {
   // Check if user is already logged in
   checkAuthentication();
 
+  // Add password strength indicator
+  const passwordInput = document.getElementById('reg-password');
+  const strengthMeterFill = document.getElementById('strength-meter-fill');
+  const strengthText = document.getElementById('strength-text');
+  
+  if (passwordInput && strengthMeterFill && strengthText) {
+    passwordInput.addEventListener('input', () => {
+      const password = passwordInput.value;
+      let strength = 0;
+      let feedback = '';
+      
+      if (password.length >= 8) strength += 25;
+      if (/[A-Z]/.test(password)) strength += 25;
+      if (/[0-9]/.test(password)) strength += 25;
+      if (/[^A-Za-z0-9]/.test(password)) strength += 25;
+      
+      strengthMeterFill.style.width = `${strength}%`;
+      
+      if (strength <= 25) {
+        strengthMeterFill.style.backgroundColor = '#ef4444'; // Red
+        feedback = 'Weak';
+      } else if (strength <= 50) {
+        strengthMeterFill.style.backgroundColor = '#f59e0b'; // Orange
+        feedback = 'Fair';
+      } else if (strength <= 75) {
+        strengthMeterFill.style.backgroundColor = '#3b82f6'; // Blue
+        feedback = 'Good';
+      } else {
+        strengthMeterFill.style.backgroundColor = '#10b981'; // Green
+        feedback = 'Strong';
+      }
+      
+      strengthText.textContent = feedback;
+    });
+  }
+  
+  // Role selection toggle functionality
+  const roleToggleOptions = document.querySelectorAll('.role-toggle-option');
+  
+  if (roleToggleOptions.length && roleSelect) {
+    // Set initial value based on active toggle
+    const activeOption = document.querySelector('.role-toggle-option.active');
+    if (activeOption) {
+      roleSelect.value = activeOption.dataset.value;
+    }
+    
+    // Add click handlers to toggle options
+    roleToggleOptions.forEach(option => {
+      option.addEventListener('click', function() {
+        // Remove active class from all options
+        roleToggleOptions.forEach(opt => opt.classList.remove('active'));
+        
+        // Add active class to clicked option
+        this.classList.add('active');
+        
+        // Update the hidden select value
+        roleSelect.value = this.dataset.value;
+        
+        // Trigger change event on select for any listeners
+        const event = new Event('change');
+        roleSelect.dispatchEvent(event);
+        
+        // Show/hide student ID field if needed
+        if (studentIdField) {
+          studentIdField.style.display = this.dataset.value === 'student' ? 'block' : 'none';
+        }
+      });
+    });
+  }
+
   // Show/hide student ID field based on role selection
   if (roleSelect && studentIdField) {
     roleSelect.addEventListener('change', function() {
@@ -34,20 +104,10 @@ document.addEventListener('DOMContentLoaded', function() {
     });
   }
 
-  // Back to login button
-  const backToLoginBtn = document.getElementById('back-to-login');
-  if (backToLoginBtn) {
-    backToLoginBtn.addEventListener('click', function() {
-      registerSection.style.display = 'none';
-      loginSection.style.display = 'block';
-    });
-  } else if (registerForm) {
-    // Add back to login button if it doesn't exist
-    registerForm.insertAdjacentHTML(
-      'beforeend',
-      '<button type="button" id="back-to-login">Back to Login</button>'
-    );
-    document.getElementById('back-to-login').addEventListener('click', function() {
+  // Show login form (using the "Log in" link in the register form)
+  const showLoginBtn = document.getElementById('show-login');
+  if (showLoginBtn) {
+    showLoginBtn.addEventListener('click', function() {
       registerSection.style.display = 'none';
       loginSection.style.display = 'block';
     });
