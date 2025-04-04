@@ -157,6 +157,17 @@ body {
   color: var(--color-primary-dark);
 }
 
+/* Wrap student section content in borders */
+#student-section {
+  border-top: 1px solid var(--color-secondary-dark);
+  border-left: 1px solid var(--color-secondary-dark);
+  border-right: 1px solid var(--color-secondary-dark);
+  border-radius: var(--border-radius-md) var(--border-radius-md) 0 0;
+  background-color: var(--color-white);
+  padding: var(--spacing-lg);
+  margin: 0 -var(--spacing-lg);
+}
+
 /* Scanner Section with more margin */
 #qr-scanner-section {
   background-color: var(--color-white);
@@ -251,10 +262,29 @@ body {
   text-align: center;
   margin-bottom: calc(var(--spacing-xl) + var(--spacing-md));
   padding-bottom: var(--spacing-md);
-  border-bottom:1px solid var(--color-secondary-dark);
+  border-bottom: 1px solid var(--color-secondary-dark);
+  position: relative;
 }
 
-/* Attendance Section with top padding */
+.dashboard-actions::before,
+.dashboard-actions::after {
+  content: '';
+  position: absolute;
+  width: 1px;
+  background-color: var(--color-secondary-dark);
+  top: -var(--spacing-lg);
+  bottom: 0;
+}
+
+.dashboard-actions::before {
+  left: -var(--spacing-lg);
+}
+
+.dashboard-actions::after {
+  right: -var(--spacing-lg);
+}
+
+/* Attendance Section with full borders */
 #attendance-section { 
   background-color: var(--color-white);
   border-radius: var(--border-radius-md);
@@ -262,6 +292,7 @@ body {
   box-shadow: var(--shadow-sm);
   border: 1px solid var(--color-secondary-dark);
   margin-top: var(--spacing-lg);
+  position: relative;
 }
 
 .section-header {
