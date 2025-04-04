@@ -26,27 +26,12 @@ async function generateQRCode() {
     return;
   }
   
-  // Force the QR code container to be visible
-  qrCodeDiv.style.display = 'block';
-  
-  // Set a temporary loading message
-  qrCodeDiv.innerHTML = `
-    <div style="text-align: center; padding: 20px;">
-      <h3>Generating QR Code...</h3>
-      <p>Please wait</p>
-    </div>
-  `;
-  
+  // Clear previous QR code and status (with null checks)
+  if (qrCodeDiv) qrCodeDiv.innerHTML = '';
   if (statusDiv) statusDiv.textContent = 'Generating QR code...';
   
   if (!selectedClassId) {
     if (statusDiv) statusDiv.textContent = 'Please select a class first.';
-    qrCodeDiv.innerHTML = `
-      <div style="text-align: center; padding: 20px; color: red;">
-        <h3>Error</h3>
-        <p>Please select a class first.</p>
-      </div>
-    `;
     return;
   }
 
@@ -60,6 +45,9 @@ async function generateQRCode() {
       if (statusDiv) statusDiv.innerHTML = '<div class="error-message">Error: No teacher ID found. Please log in again.</div>';
       return;
     }
+    
+    // No need to get selected class again, we already have it from 'classSelect' above
+    // Use the existing classSelect and selectedClassId instead of trying to find it again
     
     const selectedOption = classSelect.options[classSelect.selectedIndex];
     
@@ -87,6 +75,7 @@ async function generateQRCode() {
     }
     
     console.log("Request headers:", headers);
+    console.log("Cookies:", document.cookie);
     
     // First try with credentials and headers
     let response = await fetch(`${API_URL}/auth/generate-qr`, {
@@ -136,25 +125,82 @@ async function generateQRCode() {
       const qrCodeUrl = data.qrCodeUrl;
       console.log("QR Code URL:", qrCodeUrl);
       
-      // SUPER SIMPLE APPROACH - USE IFRAME WITH THE QR SERVER
-      qrCodeDiv.innerHTML = `
-        <div style="background: white; padding: 20px; text-align: center;">
-          <h3 style="margin-bottom: 15px;">Scan this QR code to mark attendance</h3>
-          <iframe 
-            src="https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=${encodeURIComponent(qrCodeUrl)}" 
-            style="width: 250px; height: 250px; border: none; display: block; margin: 0 auto;"
-            title="QR Code for Attendance"
-          ></iframe>
-          <div style="margin-top: 15px;">
-            <a href="${qrCodeUrl}" target="_blank" style="color: blue; text-decoration: underline;">
-              Open direct link
-            </a>
-          </div>
-        </div>
-      `;
+      // Generate QR code using the library
+      try {
+        // Check if QRCode is defined
+        if (typeof QRCode === 'undefined') {
+          throw new Error("QRCode library is not loaded");
+        }
+        
+        // Clear any previous content (with null check)
+        if (qrCodeDiv) qrCodeDiv.innerHTML = '';
+        else {
+          throw new Error("QR code container element not found");
+        }
+        
+        // Create iframe for isolated rendering context
+        const iframe = document.createElement('iframe');
+        iframe.style.width = '300px';
+        iframe.style.height = '300px';
+        iframe.style.border = 'none';
+        iframe.style.overflow = 'hidden';
+        iframe.title = "QR Code";
+        qrCodeDiv.appendChild(iframe);
+        
+        // Wait for iframe to load
+        iframe.onload = function() {
+          // Get iframe document
+          const iframeDoc = iframe.contentDocument || iframe.contentWindow.document;
+          
+          // Create container for QR code
+          const container = iframeDoc.createElement('div');
+          container.id = 'qr-container';
+          iframeDoc.body.appendChild(container);
+          
+          // Add QRCode library to iframe
+          const script = iframeDoc.createElement('script');
+          script.src = 'https://cdn.rawgit.com/davidshimjs/qrcodejs/gh-pages/qrcode.min.js';
+          script.onload = function() {
+            // Generate QR code inside iframe
+            new iframe.contentWindow.QRCode(container, {
+              text: qrCodeUrl,
+              width: 256,
+              height: 256,
+              colorDark: '#000000',
+              colorLight: '#ffffff',
+              correctLevel: 2
+            });
+          };
+          iframeDoc.head.appendChild(script);
+          
+          // Reset any margin/padding that might affect display
+          iframeDoc.body.style.margin = '0';
+          iframeDoc.body.style.padding = '0';
+          iframeDoc.body.style.textAlign = 'center';
+        };
+        
+        console.log("QR code iframe created");
+        
+        // Also create direct link fallback below iframe for accessibility
+        const linkContainer = document.createElement('div');
+        linkContainer.className = 'qr-link-fallback';
+        linkContainer.innerHTML = `<p><a href="${qrCodeUrl}" target="_blank">Direct QR Code Link</a></p>`;
+        qrCodeDiv.appendChild(linkContainer);
+        
+      } catch (qrError) {
+        console.error("QR code library error:", qrError);
+        if (qrCodeDiv) {
+          qrCodeDiv.innerHTML = `
+            <div class="qr-fallback">
+              <p>QR Code could not be generated. Please use this link:</p>
+              <a href="${qrCodeUrl}" target="_blank">${qrCodeUrl}</a>
+            </div>
+          `;
+        }
+      }
       
       // Display success message and URL with expiration timer
-      if (statusDiv && statusDiv !== qrCodeDiv) {
+      if (statusDiv) {
         statusDiv.innerHTML = `
           <div class="success-message">
             QR Code generated successfully for class session!<br>
@@ -177,20 +223,44 @@ async function generateQRCode() {
           const expiresAt = new Date(data.expiresAt);
           const now = new Date();
           timeLeft = Math.max(0, Math.floor((expiresAt - now) / 1000));
+          
+          // Cap at reasonable value (10 minutes) to prevent display issues
+          if (timeLeft > 10 * 60) {
+            timeLeft = 10 * 60;
+            console.warn("Expiration time too far in future, capping at 10 minutes");
+          }
         }
         
+        // Start the countdown
         const countdownInterval = setInterval(() => {
           timeLeft--;
           
           if (timeLeft <= 0) {
             clearInterval(countdownInterval);
             countdownEl.textContent = "Expired";
+            countdownEl.style.color = "red";
+            
+            // Disable the attendance button
+            const attendanceBtn = document.getElementById('viewAttendanceBtn') || document.getElementById('view-current-attendance-btn');
+            if (attendanceBtn) {
+              attendanceBtn.disabled = true;
+            }
             
             // Update status
-            if (statusDiv && statusDiv !== qrCodeDiv) {
+            if (statusDiv) {
               statusDiv.innerHTML += `
                 <div class="error-message">
                   QR code has expired. Please generate a new one.
+                </div>
+              `;
+            }
+            
+            // Clear the QR code
+            if (qrCodeDiv) {
+              qrCodeDiv.innerHTML = `
+                <div class="qr-fallback">
+                  <p>QR Code has expired. Please generate a new one.</p>
+                  <p><a href="${qrCodeUrl}" target="_blank">Last QR code link</a></p>
                 </div>
               `;
             }
@@ -199,6 +269,11 @@ async function generateQRCode() {
             const minutes = Math.floor(timeLeft / 60);
             const seconds = timeLeft % 60;
             countdownEl.textContent = `${minutes}:${seconds.toString().padStart(2, '0')}`;
+            
+            // Change color when less than 1 minute
+            if (timeLeft < 60) {
+              countdownEl.style.color = "red";
+            }
           }
         }, 1000);
       }
@@ -215,30 +290,12 @@ async function generateQRCode() {
       if (statusDiv) {
         statusDiv.innerHTML = `<div class="error-message">Error: ${data.message}</div>`;
       }
-      
-      qrCodeDiv.innerHTML = `
-        <div style="text-align: center; padding: 20px; color: red; border: 1px solid red;">
-          <h3>Error</h3>
-          <p>${data.message || 'Failed to generate QR code'}</p>
-        </div>
-      `;
     }
   } catch (error) {
     console.error('Error generating QR code:', error);
     if (statusDiv) {
       statusDiv.innerHTML = `<div class="error-message">Server connection error. Please try again.</div>`;
     }
-    
-    // Display error in QR code container
-    qrCodeDiv.innerHTML = `
-      <div style="text-align: center; padding: 20px; color: red; border: 1px solid red;">
-        <h3>Error</h3>
-        <p>Server connection error: ${error.message}</p>
-        <button onclick="generateQRCode()" style="background: #007bff; color: white; border: none; padding: 8px 15px; border-radius: 4px; margin-top: 10px; cursor: pointer;">
-          Try Again
-        </button>
-      </div>
-    `;
   }
 }
 
@@ -525,77 +582,17 @@ window.addEventListener('load', function() {
       if (!element) return;
       
       console.warn("Using fallback QRCode implementation");
-      
-      // Create a visible container with consistent styling
-      const container = document.createElement('div');
-      container.style.width = '256px';
-      container.style.height = '256px';
-      container.style.margin = '0 auto';
-      container.style.border = '1px solid #ccc';
-      container.style.padding = '10px';
-      container.style.textAlign = 'center';
-      container.style.boxSizing = 'border-box';
-      container.style.display = 'flex';
-      container.style.flexDirection = 'column';
-      container.style.alignItems = 'center';
-      container.style.justifyContent = 'center';
-      
-      // Create a simple QR code visual representation
-      const qrVisual = document.createElement('div');
-      qrVisual.style.width = '200px';
-      qrVisual.style.height = '200px';
-      qrVisual.style.backgroundColor = '#f0f0f0';
-      qrVisual.style.margin = '10px auto';
-      qrVisual.style.position = 'relative';
-      qrVisual.style.display = 'flex';
-      qrVisual.style.justifyContent = 'center';
-      qrVisual.style.alignItems = 'center';
-      
-      // Add a QR code placeholder pattern
-      for (let i = 0; i < 3; i++) {
-        const cornerBox = document.createElement('div');
-        cornerBox.style.width = '40px';
-        cornerBox.style.height = '40px';
-        cornerBox.style.border = '4px solid #333';
-        cornerBox.style.position = 'absolute';
-        
-        if (i === 0) {
-          cornerBox.style.top = '10px';
-          cornerBox.style.left = '10px';
-        } else if (i === 1) {
-          cornerBox.style.top = '10px';
-          cornerBox.style.right = '10px';
-        } else {
-          cornerBox.style.bottom = '10px';
-          cornerBox.style.left = '10px';
-        }
-        
-        qrVisual.appendChild(cornerBox);
-      }
-      
-      const noQRText = document.createElement('p');
-      noQRText.textContent = "QR Library Failed";
-      noQRText.style.fontSize = '10px';
-      noQRText.style.color = '#666';
-      noQRText.style.position = 'absolute';
-      qrVisual.appendChild(noQRText);
-      
-      // Add the link
-      const link = document.createElement('a');
-      link.href = options.text;
-      link.textContent = "URL Link";
-      link.target = "_blank";
-      link.style.display = 'block';
-      link.style.marginTop = '5px';
-      link.style.color = '#3a86ff';
-      link.style.textDecoration = 'none';
-      link.style.fontWeight = 'bold';
-      
-      container.appendChild(qrVisual);
-      container.appendChild(link);
+      const div = document.createElement('div');
+      div.style.border = '1px solid #ccc';
+      div.style.padding = '10px';
+      div.style.textAlign = 'center';
+      div.innerHTML = `
+        <p>QR Code could not be generated</p>
+        <a href="${options.text}" target="_blank">${options.text}</a>
+      `;
       
       element.innerHTML = '';
-      element.appendChild(container);
+      element.appendChild(div);
     };
     
     window.QRCode.CorrectLevel = { L: 1, M: 0, Q: 3, H: 2 };
