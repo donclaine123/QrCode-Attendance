@@ -5,36 +5,51 @@ async function generateQRCode() {
   console.log("generateQRCode called");
   
   const classSelect = document.getElementById('class-select');
-  const statusDiv = document.getElementById('status');
-  const qrCodeDiv = document.getElementById('qrcode');
-  const selectedClassId = classSelect.value;
+  if (!classSelect) {
+    console.error("Element with ID 'class-select' not found");
+    alert("Error: Could not find class selection element");
+    return;
+  }
   
+  // Find the container for QR code - use qr-code-container as primary, fall back to qrcode
+  const qrCodeDiv = document.getElementById('qr-code-container') || document.getElementById('qrcode');
+  // Find status div - use qr-code-container as fallback if status doesn't exist
+  const statusDiv = document.getElementById('status') || document.getElementById('qr-code-container');
+  
+  const selectedClassId = classSelect.value;
   console.log("Selected class ID:", selectedClassId);
   
-  // Clear previous QR code and status
-  qrCodeDiv.innerHTML = '';
-  statusDiv.textContent = 'Generating QR code...';
+  // Check if we have a place to show the QR code
+  if (!qrCodeDiv) {
+    console.error("QR code container element not found");
+    alert("Error: Could not find QR code container");
+    return;
+  }
+  
+  // Clear previous QR code and status (with null checks)
+  if (qrCodeDiv) qrCodeDiv.innerHTML = '';
+  if (statusDiv) statusDiv.textContent = 'Generating QR code...';
   
   if (!selectedClassId) {
-    statusDiv.textContent = 'Please select a class first.';
+    if (statusDiv) statusDiv.textContent = 'Please select a class first.';
     return;
   }
 
   try {
     // Get teacher ID from session or localStorage fallback
-    const teacherId = localStorage.getItem('userId');
+    const teacherId = sessionStorage.getItem('userId') || localStorage.getItem('userId');
     console.log("Teacher ID:", teacherId);
     
-    // Get the selected class
-    const selectedClass = document.getElementById('classSelect');
-    const selectedClassId = selectedClass.value;
-    
-    if (!selectedClassId) {
-      statusDiv.innerHTML = '<div class="error-message">Please select a class</div>';
+    if (!teacherId) {
+      console.error("No teacher ID found in storage");
+      if (statusDiv) statusDiv.innerHTML = '<div class="error-message">Error: No teacher ID found. Please log in again.</div>';
       return;
     }
     
-    const selectedOption = selectedClass.options[selectedClass.selectedIndex];
+    // No need to get selected class again, we already have it from 'classSelect' above
+    // Use the existing classSelect and selectedClassId instead of trying to find it again
+    
+    const selectedOption = classSelect.options[classSelect.selectedIndex];
     
     // Get subject from the selected option text
     let subject = "";
@@ -76,8 +91,11 @@ async function generateQRCode() {
           throw new Error("QRCode library is not loaded");
         }
         
-        // Clear any previous content
-        qrCodeDiv.innerHTML = '';
+        // Clear any previous content (with null check)
+        if (qrCodeDiv) qrCodeDiv.innerHTML = '';
+        else {
+          throw new Error("QR code container element not found");
+        }
         
         // Create new QR code with proper error handling
         console.log("Creating QR code with options:", {
@@ -99,25 +117,29 @@ async function generateQRCode() {
         console.log("QR code generated successfully");
       } catch (qrError) {
         console.error("QR code library error:", qrError);
-        qrCodeDiv.innerHTML = `
-          <div class="qr-fallback">
-            <p>QR Code could not be generated. Please use this link:</p>
-            <a href="${qrCodeUrl}" target="_blank">${qrCodeUrl}</a>
-          </div>
-        `;
+        if (qrCodeDiv) {
+          qrCodeDiv.innerHTML = `
+            <div class="qr-fallback">
+              <p>QR Code could not be generated. Please use this link:</p>
+              <a href="${qrCodeUrl}" target="_blank">${qrCodeUrl}</a>
+            </div>
+          `;
+        }
       }
       
       // Display success message and URL with expiration timer
-      statusDiv.innerHTML = `
-        <div class="success-message">
-          QR Code generated successfully for class session!<br>
-          <small>Session ID: ${sessionId}</small>
-        </div>
-        <p>QR Code URL: <a href="${qrCodeUrl}" target="_blank">${qrCodeUrl}</a></p>
-        <div class="expiration-timer">
-          <p>This QR code will expire in <span id="countdown">10:00</span></p>
-        </div>
-      `;
+      if (statusDiv) {
+        statusDiv.innerHTML = `
+          <div class="success-message">
+            QR Code generated successfully for class session!<br>
+            <small>Session ID: ${sessionId}</small>
+          </div>
+          <p>QR Code URL: <a href="${qrCodeUrl}" target="_blank">${qrCodeUrl}</a></p>
+          <div class="expiration-timer">
+            <p>This QR code will expire in <span id="countdown">10:00</span></p>
+          </div>
+        `;
+      }
       
       // Set up the countdown timer
       const countdownEl = document.getElementById('countdown');
@@ -147,24 +169,28 @@ async function generateQRCode() {
             countdownEl.style.color = "red";
             
             // Disable the attendance button
-            const attendanceBtn = document.getElementById('viewAttendanceBtn');
+            const attendanceBtn = document.getElementById('viewAttendanceBtn') || document.getElementById('view-current-attendance-btn');
             if (attendanceBtn) {
               attendanceBtn.disabled = true;
             }
             
             // Update status
-            statusDiv.innerHTML += `
-              <div class="error-message">
-                QR code has expired. Please generate a new one.
-              </div>
-            `;
+            if (statusDiv) {
+              statusDiv.innerHTML += `
+                <div class="error-message">
+                  QR code has expired. Please generate a new one.
+                </div>
+              `;
+            }
             
             // Clear the QR code
-            qrCodeDiv.innerHTML = `
-              <div class="qr-fallback">
-                <p>QR Code has expired. Please generate a new one.</p>
-              </div>
-            `;
+            if (qrCodeDiv) {
+              qrCodeDiv.innerHTML = `
+                <div class="qr-fallback">
+                  <p>QR Code has expired. Please generate a new one.</p>
+                </div>
+              `;
+            }
           } else {
             // Format minutes:seconds
             const minutes = Math.floor(timeLeft / 60);
@@ -180,30 +206,45 @@ async function generateQRCode() {
       }
       
       // Save the current session ID for attendance tracking
-      localStorage.setItem('currentSessionId', sessionId);
+      sessionStorage.setItem('currentQrSessionId', sessionId);
       
       // Enable the attendance view button
-      const attendanceBtn = document.getElementById('viewAttendanceBtn');
+      const attendanceBtn = document.getElementById('viewAttendanceBtn') || document.getElementById('view-current-attendance-btn');
       if (attendanceBtn) {
         attendanceBtn.disabled = false;
       }
     } else {
-      statusDiv.innerHTML = `<div class="error-message">Error: ${data.message}</div>`;
+      if (statusDiv) {
+        statusDiv.innerHTML = `<div class="error-message">Error: ${data.message}</div>`;
+      }
     }
   } catch (error) {
     console.error('Error generating QR code:', error);
-    statusDiv.innerHTML = `<div class="error-message">Server connection error. Please try again.</div>`;
+    if (statusDiv) {
+      statusDiv.innerHTML = `<div class="error-message">Server connection error. Please try again.</div>`;
+    }
   }
 }
 
 // Function to populate class dropdown
 async function populateClassDropdown() {
-  const classSelect = document.getElementById('classSelect');
-  const teacherId = localStorage.getItem('userId');
+  const classSelect = document.getElementById('class-select');
+  const teacherId = sessionStorage.getItem('userId') || localStorage.getItem('userId');
   
-  if (!classSelect || !teacherId) return;
+  if (!classSelect) {
+    console.error("Class select element not found");
+    return;
+  }
+  
+  if (!teacherId) {
+    console.error("Teacher ID not found in storage");
+    classSelect.innerHTML = '<option value="">Error: Please log in again</option>';
+    return;
+  }
   
   try {
+    classSelect.innerHTML = '<option value="">Loading classes...</option>';
+    
     const response = await fetch(`${API_URL}/auth/teacher-classes/${teacherId}`, {
       method: 'GET',
       credentials: 'include' // Important for cookies
@@ -216,17 +257,26 @@ async function populateClassDropdown() {
       classSelect.innerHTML = '<option value="">Select a class</option>';
       
       // Add classes to dropdown
-      data.classes.forEach(cls => {
-        const option = document.createElement('option');
-        option.value = cls.id;
-        option.textContent = `${cls.class_name} (${cls.subject})`;
-        classSelect.appendChild(option);
-      });
+      if (data.classes && data.classes.length > 0) {
+        data.classes.forEach(cls => {
+          const option = document.createElement('option');
+          option.value = cls.id;
+          option.textContent = cls.class_name || cls.name;
+          if (cls.subject) {
+            option.textContent += ` (${cls.subject})`;
+          }
+          classSelect.appendChild(option);
+        });
+      } else {
+        classSelect.innerHTML += '<option disabled value="">No classes found</option>';
+      }
     } else {
       console.error('Failed to fetch classes:', data.message);
+      classSelect.innerHTML = '<option value="">Error loading classes</option>';
     }
   } catch (error) {
     console.error('Error fetching classes:', error);
+    classSelect.innerHTML = '<option value="">Server error</option>';
   }
 }
 
@@ -319,7 +369,7 @@ async function viewAttendance() {
   }
 }
 
-// Add a window load event listener to log QR library status
+// Add a window load event listener to log QR library status and initialize the class dropdown
 window.addEventListener('load', function() {
   console.log("QR code library status:", typeof QRCode !== 'undefined' ? 'Loaded ✅' : 'Not loaded ❌');
   if (typeof QRCode === 'undefined') {
@@ -349,5 +399,11 @@ window.addEventListener('load', function() {
     window.QRCode.CorrectLevel = { L: 1, M: 0, Q: 3, H: 2 };
   } else {
     console.log("QRCode.CorrectLevel:", QRCode.CorrectLevel ? "Available ✅" : "Missing ❌");
+  }
+  
+  // Check if we're on a page with class selection (teacher dashboard)
+  if (document.getElementById('class-select')) {
+    console.log("Initializing class dropdown");
+    populateClassDropdown();
   }
 });
