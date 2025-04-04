@@ -67,11 +67,18 @@
       <form id="register-form">
         <div class="form-group">
           <label for="role">Select role</label>
-          <select id="role" name="role" class="input-field" required>
+          <!-- Hide the original select but keep it for form submission -->
+          <select id="role" name="role" class="role-toggle-hidden" required>
             <option value="" disabled selected>Select role</option>
-            <option value="teacher">Teacher</option>
             <option value="student">Student</option>
+            <option value="teacher">Teacher</option>
           </select>
+          
+          <!-- New toggle UI for role selection -->
+          <div class="role-toggle-container">
+            <div class="role-toggle-option active" data-value="student">Student</div>
+            <div class="role-toggle-option" data-value="teacher">Teacher</div>
+          </div>
         </div>
         
         <div class="form-group">
@@ -162,6 +169,42 @@
           });
         }
         
+        // Role selection toggle functionality
+        const roleToggleOptions = document.querySelectorAll('.role-toggle-option');
+        const roleSelect = document.getElementById('role');
+        
+        if (roleToggleOptions.length && roleSelect) {
+          // Set initial value based on active toggle
+          const activeOption = document.querySelector('.role-toggle-option.active');
+          if (activeOption) {
+            roleSelect.value = activeOption.dataset.value;
+          }
+          
+          // Add click handlers to toggle options
+          roleToggleOptions.forEach(option => {
+            option.addEventListener('click', function() {
+              // Remove active class from all options
+              roleToggleOptions.forEach(opt => opt.classList.remove('active'));
+              
+              // Add active class to clicked option
+              this.classList.add('active');
+              
+              // Update the hidden select value
+              roleSelect.value = this.dataset.value;
+              
+              // Trigger change event on select for any listeners
+              const event = new Event('change');
+              roleSelect.dispatchEvent(event);
+              
+              // Show/hide student ID field if needed
+              const studentIdField = document.getElementById('student-id-field');
+              if (studentIdField) {
+                studentIdField.style.display = this.dataset.value === 'student' ? 'block' : 'none';
+              }
+            });
+          });
+        }
+        
         // These are fallback event listeners if the ones in login.js don't work
         const showRegister = document.getElementById('show-register');
         const showLogin = document.getElementById('show-login');
@@ -179,20 +222,6 @@
           showLogin.addEventListener('click', function() {
             if (registerSection) registerSection.style.display = 'none';
             if (loginSection) loginSection.style.display = 'block';
-          });
-        }
-        
-        // Role selection for student ID field
-        const roleSelect = document.getElementById('role');
-        const studentIdField = document.getElementById('student-id-field');
-        
-        if (roleSelect && studentIdField) {
-          roleSelect.addEventListener('change', function() {
-            if (this.value === 'student') {
-              studentIdField.style.display = 'block';
-            } else {
-              studentIdField.style.display = 'none';
-            }
           });
         }
       });

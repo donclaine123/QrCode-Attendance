@@ -230,3 +230,43 @@ label {
       padding: var(--spacing-lg);
   }
 }
+
+/* Role selection toggle */
+.role-toggle-container {
+  display: flex;
+  background-color: var(--color-secondary);
+  border-radius: var(--border-radius-md);
+  margin-bottom: var(--spacing-lg);
+  overflow: hidden;
+}
+
+.role-toggle-option {
+  flex: 1;
+  text-align: center;
+  padding: var(--spacing-md);
+  cursor: pointer;
+  transition: all 0.3s ease;
+  font-weight: 500;
+}
+
+.role-toggle-option.active {
+  background-color: var(--color-white);
+  box-shadow: var(--shadow-sm);
+}
+
+.role-toggle-option:not(.active) {
+  color: var(--color-text-light);
+}
+
+/* Hide the original select element */
+.role-toggle-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border-width: 0;
+}
