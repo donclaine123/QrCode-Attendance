@@ -5,110 +5,145 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Teacher Dashboard - QR Attendance System</title>
-  <link rel="stylesheet" href="../css/style.css">
   <link rel="stylesheet" href="../css/teacher-dashboard.css">
-  <!-- Bootstrap CSS -->
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
   <!-- Include the QR code library from a reliable CDN -->
   <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Poppins:wght@500;600;700&display=swap" rel="stylesheet">
   <link rel="icon" href="data:," />
 </head>
 
 <body>
-  <header>
-    <div class="container">
-      <h1>QR Attendance System</h1>
+  <div class="dashboard">
+    <!-- Sidebar Navigation -->
+    <aside class="sidebar">
+      <div class="school-info">
+        <div class="school-avatar">
+          <span>QR</span>
+        </div>
+        <div class="school-name">QR Attendance</div>
+      </div>
+      
       <nav>
-        <ul>
-          <li><a href="../index.html">Home</a></li>
-          <li><a href="#" class="active">Dashboard</a></li>
-          <li><a href="#" id="logout-btn">Logout</a></li>
+        <ul class="nav-menu">
+          <li class="nav-item">
+            <a href="#" class="nav-link active" id="dashboard-nav">
+              <span class="nav-icon">🏠</span>
+              Dashboard
+            </a>
+          </li>
+          <li class="nav-item">
+            <a href="#" class="nav-link" id="generate-qr-btn">
+              <span class="nav-icon">🔄</span>
+              Generate QR
+            </a>
+          </li>
+          <li class="nav-item">
+            <a href="#" class="nav-link" id="manage-classes-btn">
+              <span class="nav-icon">📚</span>
+              Manage Classes
+            </a>
+          </li>
+          <li class="nav-item">
+            <a href="#" class="nav-link" id="view-attendance-btn">
+              <span class="nav-icon">📊</span>
+              View Attendance
+            </a>
+          </li>
+          <li class="nav-item">
+            <a href="../index.html" class="nav-link">
+              <span class="nav-icon">🏡</span>
+              Home
+            </a>
+          </li>
+          <li class="nav-item">
+            <a href="#" class="nav-link" id="logout-btn">
+              <span class="nav-icon">🚪</span>
+              Logout
+            </a>
+          </li>
         </ul>
       </nav>
-    </div>
-  </header>
+    </aside>
 
-  <main class="container">
-    <h2>Teacher Dashboard</h2>
-    
-    <div id="welcome-message"></div>
-    
-    <div id="teacher-section" style="display: none;">
-      <div class="dashboard-actions">
-        <button id="generate-qr-btn">Generate QR Code</button>
-        <button id="manage-classes-btn">Manage Classes</button>
-        <button id="view-attendance-btn">View Attendance</button>
+    <!-- Main Content -->
+    <main class="main-content">
+      <div class="content-header">
+        <h1 class="page-title">Teacher Dashboard</h1>
+        <div id="welcome-message"></div>
       </div>
+      
+      <div id="teacher-section" style="display: none;">
+        <!-- QR Code Section -->
+        <div id="qr-section" class="dashboard-section" style="display: none;">
+          <h3>Generate QR Code for Attendance</h3>
+          <div class="form-group">
+            <label for="class-select">Select Class:</label>
+            <select id="class-select" class="form-control">
+              <option value="">-- Select a Class --</option>
+            </select>
+          </div>
+          <div class="form-actions">
+            <button id="generate-qr-code-btn">Generate QR Code</button>
+            <button id="view-current-attendance-btn">View Attendance for Current Session</button>
+          </div>
+          <div id="qr-code-container"></div>
+        </div>
 
-      <div id="qr-section" class="dashboard-section" style="display: none;">
-        <h3>Generate QR Code for Attendance</h3>
-        <div class="form-group">
-          <label for="class-select">Select Class:</label>
-          <select id="class-select">
-            <option value="">-- Select a Class --</option>
-          </select>
+        <!-- Classes Management Section -->
+        <div id="classes-section" class="dashboard-section" style="display: none;">
+          <h3>Manage Your Classes</h3>
+          <div class="form-group">
+            <h4>Add New Class</h4>
+            <label for="class-name">Class Name:</label>
+            <input type="text" id="class-name" required>
+            
+            <label for="subject">Subject:</label>
+            <input type="text" id="subject" required>
+            
+            <label for="description">Description (Optional):</label>
+            <textarea id="description"></textarea>
+            
+            <button id="add-class-btn">Add Class</button>
+          </div>
+          
+          <div id="classes-list">
+            <h4>Your Classes</h4>
+            <div id="classes-container"></div>
+          </div>
         </div>
-        <div class="form-actions">
-          <button id="generate-qr-code-btn">Generate QR Code</button>
-          <button id="view-current-attendance-btn">View Attendance for Current Session</button>
+
+        <!-- Attendance Records Section -->
+        <div id="attendance-section" class="dashboard-section" style="display: none;">
+          <h3>View Attendance Records</h3>
+          <div class="form-group">
+            <label for="attendance-class-select">Select Class:</label>
+            <select id="attendance-class-select">
+              <option value="">-- Select a Class --</option>
+            </select>
+            
+            <label for="session-select">Select Session:</label>
+            <select id="session-select">
+              <option value="">-- Select a Session --</option>
+            </select>
+            
+            <button id="load-attendance-btn">Load Attendance</button>
+          </div>
+          
+          <div id="attendance-records"></div>
         </div>
-        <div id="qr-code-container"></div>
       </div>
-
-      <div id="classes-section" class="dashboard-section" style="display: none;">
-        <h3>Manage Your Classes</h3>
-        <div class="form-group">
-          <h4>Add New Class</h4>
-          <label for="class-name">Class Name:</label>
-          <input type="text" id="class-name" required>
-          
-          <label for="subject">Subject:</label>
-          <input type="text" id="subject" required>
-          
-          <label for="description">Description (Optional):</label>
-          <textarea id="description"></textarea>
-          
-          <button id="add-class-btn">Add Class</button>
-        </div>
-        
-        <div id="classes-list">
-          <h4>Your Classes</h4>
-          <div id="classes-container"></div>
-        </div>
+      
+      <!-- Debug Section -->
+      <div id="debug-section">
+        <h4>Debug Information</h4>
+        <button id="test-cookies-btn">Test Cookies</button>
+        <button id="check-auth-btn">Check Auth</button>
+        <div id="debug-message" style="margin-top: 10px; padding: 10px; background: #f8f9fa; border: 1px solid #ddd; border-radius: 4px; white-space: pre-wrap; font-family: monospace; max-height: 200px; overflow-y: auto;"></div>
       </div>
-
-      <div id="attendance-section" class="dashboard-section" style="display: none;">
-        <h3>View Attendance Records</h3>
-        <div class="form-group">
-          <label for="attendance-class-select">Select Class:</label>
-          <select id="attendance-class-select">
-            <option value="">-- Select a Class --</option>
-          </select>
-          
-          <label for="session-select">Select Session:</label>
-          <select id="session-select">
-            <option value="">-- Select a Session --</option>
-          </select>
-          
-          <button id="load-attendance-btn">Load Attendance</button>
-        </div>
-        
-        <div id="attendance-records"></div>
-      </div>
-    </div>
-    
-    <div id="debug-section">
-      <h4>Debug Information</h4>
-      <button id="test-cookies-btn">Test Cookies</button>
-      <button id="check-auth-btn">Check Auth</button>
-    </div>
-  </main>
-
-  <footer>
-    <div class="container">
-      <p>&copy; 2025 QR Attendance System</p>
-    </div>
-  </footer>
+    </main>
+  </div>
 
   <!-- Configure API URL -->
   <script src="../js/config.js"></script>
@@ -120,8 +155,6 @@
     window.dashboardInitialized = window.dashboardInitialized || false;
   </script>
   <script src="../js/teacher-dashboard.js"></script>
-  <!-- Bootstrap JS Bundle with Popper -->
-  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 
 </html>

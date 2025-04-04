@@ -21,25 +21,18 @@ document.addEventListener('DOMContentLoaded', function() {
     // Initialize the dashboard
     initDashboard();
 
-    // Handle tab switching
-    const tabButtons = document.querySelectorAll('.tab-btn');
-    const tabContents = document.querySelectorAll('.tab-content');
-
-    tabButtons.forEach(button => {
-        button.addEventListener('click', function() {
-            const tabId = this.getAttribute('data-tab');
+    // Set up event listeners for navigation in the sidebar
+    const navLinks = document.querySelectorAll('.nav-link');
+    navLinks.forEach(link => {
+        link.addEventListener('click', function(e) {
+            // Prevent default only for dashboard functionality links
+            if (this.getAttribute('href') === '#' || this.id === 'logout-btn') {
+                e.preventDefault();
+            }
             
-            // Update active tab button
-            tabButtons.forEach(btn => btn.classList.remove('active'));
+            // Update active state
+            navLinks.forEach(navLink => navLink.classList.remove('active'));
             this.classList.add('active');
-            
-            // Show selected tab content
-            tabContents.forEach(tab => {
-                tab.classList.remove('active');
-                if (tab.id === tabId) {
-                    tab.classList.add('active');
-                }
-            });
         });
     });
     
@@ -47,6 +40,16 @@ document.addEventListener('DOMContentLoaded', function() {
     const generateQrBtn = document.getElementById('generate-qr-btn');
     const manageClassesBtn = document.getElementById('manage-classes-btn');
     const viewAttendanceBtn = document.getElementById('view-attendance-btn');
+    const dashboardNav = document.getElementById('dashboard-nav');
+    
+    if (dashboardNav) {
+        dashboardNav.addEventListener('click', function() {
+            // Show a welcome screen or hide all sections
+            document.getElementById('qr-section').style.display = 'none';
+            document.getElementById('classes-section').style.display = 'none';
+            document.getElementById('attendance-section').style.display = 'none';
+        });
+    }
     
     if (generateQrBtn) {
         generateQrBtn.addEventListener('click', function() {
@@ -72,9 +75,6 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
     
-
-
-
     // Set up event listeners for QR code generation
     const generateQrCodeBtn = document.getElementById('generate-qr-code-btn');
     const viewCurrentAttendanceBtn = document.getElementById('view-current-attendance-btn');
