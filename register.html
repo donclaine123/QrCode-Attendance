@@ -1,0 +1,392 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Register - AttendWise</title>
+    <style>
+        :root {
+            /* Color scheme */
+            --color-primary: #4F46E5;
+            --color-primary-dark: #4338ca;
+            --color-primary-light: #6366f1;
+            --color-secondary: #f3f4f6;
+            --color-secondary-dark: #e5e7eb;
+            --color-text: #1f2937;
+            --color-text-light: #6b7280;
+            --color-success: #10B981;
+            --color-white: #ffffff;
+            --color-background: #f9fafb;
+            
+            /* Typography */
+            --font-family-heading: 'Poppins', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            --font-family-body: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            
+            /* Spacing */
+            --spacing-xs: 0.25rem;
+            --spacing-sm: 0.5rem;
+            --spacing-md: 1rem;
+            --spacing-lg: 1.5rem;
+            --spacing-xl: 2rem;
+            
+            /* Borders & Shadows */
+            --border-radius-sm: 6px;
+            --border-radius-md: 8px;
+            --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+            --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: var(--font-family-body);
+            color: var(--color-text);
+            line-height: 1.5;
+            background-color: var(--color-background);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        
+        .register-container {
+            background-color: var(--color-white);
+            border-radius: var(--border-radius-md);
+            box-shadow: var(--shadow-lg);
+            width: 100%;
+            max-width: 420px;
+            padding: var(--spacing-xl);
+        }
+        
+        .register-header {
+            display: flex;
+            align-items: center;
+            margin-bottom: var(--spacing-lg);
+        }
+        
+        .logo-icon {
+            width: 32px;
+            height: 32px;
+            background-color: var(--color-primary);
+            border-radius: var(--border-radius-sm);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--color-white);
+            margin-right: var(--spacing-sm);
+        }
+        
+        .app-name {
+            font-family: var(--font-family-heading);
+            font-weight: 700;
+            font-size: 1.2rem;
+        }
+        
+        h1 {
+            font-size: 1.5rem;
+            margin-bottom: var(--spacing-lg);
+        }
+        
+        .form-group {
+            margin-bottom: var(--spacing-lg);
+        }
+        
+        label {
+            display: block;
+            margin-bottom: var(--spacing-sm);
+            font-weight: 500;
+        }
+        
+        .input-field {
+            width: 100%;
+            padding: var(--spacing-md);
+            border: 1px solid var(--color-secondary-dark);
+            border-radius: var(--border-radius-sm);
+            font-family: var(--font-family-body);
+            font-size: 1rem;
+            transition: border-color 0.3s ease;
+            background-color: var(--color-secondary);
+        }
+        
+        .input-field:focus {
+            outline: none;
+            border-color: var(--color-primary);
+            box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1);
+        }
+        
+        .btn {
+            display: block;
+            width: 100%;
+            padding: var(--spacing-md);
+            background-color: var(--color-primary);
+            color: var(--color-white);
+            border: none;
+            border-radius: var(--border-radius-sm);
+            font-family: var(--font-family-body);
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+        }
+        
+        .btn:hover {
+            background-color: var(--color-primary-dark);
+        }
+        
+        select.input-field {
+            appearance: none;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%236b7280' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+            background-repeat: no-repeat;
+            background-position: right var(--spacing-md) center;
+            padding-right: var(--spacing-xl);
+        }
+        
+        .password-strength {
+            margin-top: var(--spacing-xs);
+            font-size: 0.85rem;
+        }
+        
+        .strength-meter {
+            height: 4px;
+            border-radius: 2px;
+            background-color: var(--color-secondary-dark);
+            margin-top: var(--spacing-xs);
+            overflow: hidden;
+        }
+        
+        .strength-meter-fill {
+            height: 100%;
+            width: 0;
+            border-radius: 2px;
+            transition: width 0.3s ease, background-color 0.3s ease;
+        }
+        
+        .social-auth {
+            margin-top: var(--spacing-lg);
+        }
+        
+        .social-auth-label {
+            text-align: center;
+            margin-bottom: var(--spacing-md);
+            color: var(--color-text-light);
+            font-size: 0.9rem;
+        }
+        
+        .social-buttons {
+            display: flex;
+            justify-content: center;
+            gap: var(--spacing-md);
+        }
+        
+        .social-button {
+            width: 100%;
+            padding: var(--spacing-md);
+            background-color: var(--color-white);
+            border: 1px solid var(--color-secondary-dark);
+            border-radius: var(--border-radius-sm);
+            font-family: var(--font-family-body);
+            font-size: 0.9rem;
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+        }
+        
+        .social-button:hover {
+            background-color: var(--color-secondary);
+        }
+        
+        .terms {
+            margin-top: var(--spacing-lg);
+            font-size: 0.85rem;
+            color: var(--color-text-light);
+            text-align: center;
+        }
+        
+        .terms a {
+            color: var(--color-primary);
+            text-decoration: none;
+        }
+        
+        .terms a:hover {
+            text-decoration: underline;
+        }
+        
+        .login-link {
+            margin-top: var(--spacing-lg);
+            text-align: center;
+            font-size: 0.9rem;
+        }
+        
+        .login-link a {
+            color: var(--color-primary);
+            text-decoration: none;
+        }
+        
+        .login-link a:hover {
+            text-decoration: underline;
+        }
+        
+        @media (max-width: 480px) {
+            .register-container {
+                max-width: 100%;
+                margin: 0 var(--spacing-md);
+                border-radius: var(--border-radius-sm);
+                padding: var(--spacing-lg);
+            }
+            
+            .social-buttons {
+                flex-direction: column;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="register-container">
+        <div class="register-header">
+            <div class="logo-icon">📊</div>
+            <div class="app-name">AttendWise</div>
+        </div>
+        
+        <h1>Join AttendWise</h1>
+        
+        <form id="register-form">
+            <div class="form-group">
+                <label for="role">Select role</label>
+                <select id="role" class="input-field" required>
+                    <option value="" disabled selected>Select role</option>
+                    <option value="student">Student</option>
+                    <option value="teacher">Teacher</option>
+                </select>
+            </div>
+            
+            <div class="form-group">
+                <label for="email">Email</label>
+                <input type="email" id="email" class="input-field" placeholder="Enter your email" required>
+            </div>
+            
+            <div class="form-group">
+                <label for="password">Password</label>
+                <input type="password" id="password" class="input-field" placeholder="Create a password" required>
+                <div class="password-strength">
+                    <div class="strength-meter">
+                        <div class="strength-meter-fill" id="strength-meter-fill"></div>
+                    </div>
+                    <span id="strength-text">Password strength</span>
+                </div>
+            </div>
+            
+            <button type="submit" class="btn" id="register-button">Register</button>
+            
+            <div class="social-auth">
+                <p class="social-auth-label">Or, sign up using:</p>
+                <div class="social-buttons">
+                    <button type="button" class="social-button" id="google-signup">Google</button>
+                    <button type="button" class="social-button" id="apple-signup">Apple</button>
+                </div>
+            </div>
+            
+            <div class="terms">
+                <p>By signing up, you agree to our <a href="#">Terms of Service</a> and <a href="#">Privacy Policy</a>.</p>
+            </div>
+        </form>
+        
+        <div class="login-link">
+            <p>Already have an account? <a href="login.html">Log in</a></p>
+        </div>
+    </div>
+    
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const passwordInput = document.getElementById('password');
+            const strengthMeterFill = document.getElementById('strength-meter-fill');
+            const strengthText = document.getElementById('strength-text');
+            const registerForm = document.getElementById('register-form');
+            const registerButton = document.getElementById('register-button');
+            
+            // Password strength checker
+            passwordInput.addEventListener('input', () => {
+                const password = passwordInput.value;
+                let strength = 0;
+                let feedback = '';
+                
+                if (password.length >= 8) strength += 25;
+                if (/[A-Z]/.test(password)) strength += 25;
+                if (/[0-9]/.test(password)) strength += 25;
+                if (/[^A-Za-z0-9]/.test(password)) strength += 25;
+                
+                strengthMeterFill.style.width = `${strength}%`;
+                
+                if (strength <= 25) {
+                    strengthMeterFill.style.backgroundColor = '#ef4444'; // Red
+                    feedback = 'Weak';
+                } else if (strength <= 50) {
+                    strengthMeterFill.style.backgroundColor = '#f59e0b'; // Orange
+                    feedback = 'Fair';
+                } else if (strength <= 75) {
+                    strengthMeterFill.style.backgroundColor = '#3b82f6'; // Blue
+                    feedback = 'Good';
+                } else {
+                    strengthMeterFill.style.backgroundColor = '#10b981'; // Green
+                    feedback = 'Strong';
+                }
+                
+                strengthText.textContent = feedback;
+            });
+            
+            // Form submission
+            registerForm.addEventListener('submit', (e) => {
+                e.preventDefault();
+                
+                // Show loading state
+                registerButton.textContent = 'Creating Account...';
+                registerButton.disabled = true;
+                
+                // Simulate API call
+                setTimeout(() => {
+                    const role = document.getElementById('role').value;
+                    const email = document.getElementById('email').value;
+                    const password = document.getElementById('password').value;
+                    
+                    // Simple validation
+                    if (role && email && password) {
+                        // In a real app, this would make an API call to register
+                        console.log('Registration attempt:', { role, email });
+                        
+                        // Success message
+                        alert('Account created successfully! Redirecting to login...');
+                        
+                        // Redirect to dashboard (in a real app, this might go to login or onboarding)
+                        window.location.href = 'login.html';
+                    } else {
+                        // Reset button state
+                        registerButton.textContent = 'Register';
+                        registerButton.disabled = false;
+                        
+                        // Show error (in a real app, this would be more sophisticated)
+                        alert('Please fill in all required fields');
+                    }
+                }, 1500);
+            });
+            
+            // Social signup buttons
+            document.getElementById('google-signup').addEventListener('click', () => {
+                console.log('Google signup clicked');
+                alert('Google authentication would be initiated here');
+            });
+            
+            document.getElementById('apple-signup').addEventListener('click', () => {
+                console.log('Apple signup clicked');
+                alert('Apple authentication would be initiated here');
+            });
+        });
+    </script>
+</body>
+</html> 

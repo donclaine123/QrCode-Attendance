@@ -1,0 +1,437 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AttendEase - Login</title>
+  <link rel="stylesheet" href="../css/style.css">
+  <script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.min.js"></script>
+  <link rel="icon" href="data:," />
+  <style>
+    :root {
+        /* Color scheme */
+        --color-primary: #4F46E5;
+        --color-primary-dark: #4338ca;
+        --color-primary-light: #6366f1;
+        --color-secondary: #f3f4f6;
+        --color-secondary-dark: #e5e7eb;
+        --color-text: #1f2937;
+        --color-text-light: #6b7280;
+        --color-success: #10B981;
+        --color-white: #ffffff;
+        --color-background: #f9fafb;
+        
+        /* Typography */
+        --font-family-heading: 'Poppins', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        --font-family-body: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        
+        /* Spacing */
+        --spacing-xs: 0.25rem;
+        --spacing-sm: 0.5rem;
+        --spacing-md: 1rem;
+        --spacing-lg: 1.5rem;
+        --spacing-xl: 2rem;
+        
+        /* Borders & Shadows */
+        --border-radius-sm: 6px;
+        --border-radius-md: 8px;
+        --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+        --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+        --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+    }
+    
+    * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+    }
+    
+    body {
+        font-family: var(--font-family-body);
+        color: var(--color-text);
+        line-height: 1.5;
+        background-color: var(--color-background);
+        min-height: 100vh;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+    }
+    
+    .auth-container {
+        background-color: var(--color-white);
+        border-radius: var(--border-radius-md);
+        box-shadow: var(--shadow-lg);
+        width: 100%;
+        max-width: 420px;
+        padding: var(--spacing-xl);
+    }
+    
+    .auth-header {
+        display: flex;
+        align-items: center;
+        margin-bottom: var(--spacing-lg);
+    }
+    
+    .logo-icon {
+        width: 32px;
+        height: 32px;
+        background-color: var(--color-primary);
+        border-radius: var(--border-radius-sm);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: var(--color-white);
+        margin-right: var(--spacing-sm);
+    }
+    
+    .app-name {
+        font-family: var(--font-family-heading);
+        font-weight: 700;
+        font-size: 1.2rem;
+    }
+    
+    h1, h2 {
+        font-size: 1.5rem;
+        margin-bottom: var(--spacing-lg);
+        text-align: center;
+        font-family: var(--font-family-heading);
+    }
+    
+    .form-group {
+        margin-bottom: var(--spacing-lg);
+    }
+    
+    label {
+        display: block;
+        margin-bottom: var(--spacing-sm);
+        font-weight: 500;
+    }
+    
+    .input-field {
+        width: 100%;
+        padding: var(--spacing-md);
+        border: 1px solid var(--color-secondary-dark);
+        border-radius: var(--border-radius-sm);
+        font-family: var(--font-family-body);
+        font-size: 1rem;
+        transition: border-color 0.3s ease;
+        background-color: var(--color-secondary);
+    }
+    
+    .input-field:focus {
+        outline: none;
+        border-color: var(--color-primary);
+        box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1);
+    }
+    
+    .btn {
+        display: block;
+        width: 100%;
+        padding: var(--spacing-md);
+        background-color: var(--color-primary);
+        color: var(--color-white);
+        border: none;
+        border-radius: var(--border-radius-sm);
+        font-family: var(--font-family-body);
+        font-size: 1rem;
+        font-weight: 600;
+        cursor: pointer;
+        transition: background-color 0.3s ease;
+    }
+    
+    .btn:hover {
+        background-color: var(--color-primary-dark);
+    }
+    
+    .auth-divider {
+        display: flex;
+        align-items: center;
+        margin: var(--spacing-lg) 0;
+        color: var(--color-text-light);
+    }
+    
+    .auth-divider::before,
+    .auth-divider::after {
+        content: '';
+        flex: 1;
+        height: 1px;
+        background-color: var(--color-secondary-dark);
+    }
+    
+    .auth-divider span {
+        padding: 0 var(--spacing-md);
+    }
+    
+    .google-login {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 100%;
+        padding: var(--spacing-md);
+        background-color: var(--color-white);
+        border: 1px solid var(--color-secondary-dark);
+        border-radius: var(--border-radius-sm);
+        font-family: var(--font-family-body);
+        font-size: 1rem;
+        font-weight: 500;
+        cursor: pointer;
+        transition: background-color 0.3s ease;
+        margin-bottom: var(--spacing-lg);
+    }
+    
+    .google-login:hover {
+        background-color: var(--color-secondary);
+    }
+    
+    .google-icon {
+        margin-right: var(--spacing-sm);
+    }
+    
+    .auth-footer {
+        text-align: center;
+        margin-top: var(--spacing-lg);
+        font-size: 0.9rem;
+    }
+    
+    .auth-footer a {
+        color: var(--color-primary);
+        text-decoration: none;
+        cursor: pointer;
+    }
+    
+    .auth-footer a:hover {
+        text-decoration: underline;
+    }
+    
+    .error-message {
+        background-color: #FEE2E2;
+        color: #B91C1C;
+        padding: var(--spacing-md);
+        border-radius: var(--border-radius-sm);
+        margin-bottom: var(--spacing-md);
+        font-size: 0.9rem;
+    }
+    
+    .password-strength {
+        margin-top: var(--spacing-xs);
+        font-size: 0.85rem;
+    }
+    
+    .strength-meter {
+        height: 4px;
+        border-radius: 2px;
+        background-color: var(--color-secondary-dark);
+        margin-top: var(--spacing-xs);
+        overflow: hidden;
+    }
+    
+    .strength-meter-fill {
+        height: 100%;
+        width: 0;
+        border-radius: 2px;
+        transition: width 0.3s ease, background-color 0.3s ease;
+    }
+    
+    @media (max-width: 480px) {
+        .auth-container {
+            max-width: 100%;
+            margin: 0 var(--spacing-md);
+            border-radius: var(--border-radius-sm);
+            padding: var(--spacing-lg);
+        }
+    }
+  </style>
+</head>
+
+<body>
+  <div class="auth-container">
+    <!-- Login Section -->
+    <div id="login-section">
+      <div class="auth-header">
+        <div class="logo-icon">📊</div>
+        <div class="app-name">AttendEase</div>
+      </div>
+      
+      <h1>Welcome Back!</h1>
+      
+      <form id="login-form">
+        <div id="errorMsg" style="display: none;" class="error-message"></div>
+        
+        <div class="form-group">
+          <label for="email">Email Address</label>
+          <input type="email" id="email" name="email" class="input-field" placeholder="alex.rivera@example.edu" required>
+        </div>
+        
+        <div class="form-group">
+          <label for="password">Password</label>
+          <input type="password" id="password" name="password" class="input-field" placeholder="Password" required>
+        </div>
+        
+        <button type="submit" id="loginBtn" class="btn">Login</button>
+      </form>
+      
+      <div class="auth-divider">
+        <span>or</span>
+      </div>
+      
+      <button class="google-login">
+        <span class="google-icon">
+          <svg width="20" height="20" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+            <path d="M12.24 10.285V14.4h6.806c-.275 1.765-2.056 5.174-6.806 5.174-4.095 0-7.439-3.389-7.439-7.574s3.345-7.574 7.439-7.574c2.33 0 3.891.989 4.785 1.849l3.254-3.138C18.189 1.186 15.479 0 12.24 0c-6.635 0-12 5.365-12 12s5.365 12 12 12c6.926 0 11.52-4.869 11.52-11.726 0-.788-.085-1.39-.189-1.989H12.24z" fill="#4285F4"/>
+          </svg>
+        </span>
+        Continue with Google
+      </button>
+      
+      <div class="auth-footer">
+        <p>Don't have an account? <a id="show-register">Sign up</a></p>
+      </div>
+    </div>
+
+    <!-- Register Section -->
+    <div id="register-section" style="display: none;">
+      <div class="auth-header">
+        <div class="logo-icon">📊</div>
+        <div class="app-name">AttendEase</div>
+      </div>
+      
+      <h2>Join AttendEase</h2>
+      
+      <form id="register-form">
+        <div class="form-group">
+          <label for="role">Select role</label>
+          <select id="role" name="role" class="input-field" required>
+            <option value="" disabled selected>Select role</option>
+            <option value="teacher">Teacher</option>
+            <option value="student">Student</option>
+          </select>
+        </div>
+        
+        <div class="form-group">
+          <label for="reg-email">Email</label>
+          <input type="email" id="reg-email" name="email" class="input-field" placeholder="Enter your email" required>
+        </div>
+        
+        <div class="form-group">
+          <label for="first-name">First Name</label>
+          <input type="text" id="first-name" name="first-name" class="input-field" placeholder="Enter your first name" required>
+        </div>
+        
+        <div class="form-group">
+          <label for="last-name">Last Name</label>
+          <input type="text" id="last-name" name="last-name" class="input-field" placeholder="Enter your last name" required>
+        </div>
+        
+        <div class="form-group">
+          <label for="reg-password">Password</label>
+          <input type="password" id="reg-password" name="password" class="input-field" placeholder="Create a password" required>
+          <div class="password-strength">
+            <div class="strength-meter">
+              <div class="strength-meter-fill" id="strength-meter-fill"></div>
+            </div>
+            <span id="strength-text">Password strength</span>
+          </div>
+        </div>
+        
+        <div class="form-group">
+          <label for="confirm-password">Confirm Password</label>
+          <input type="password" id="confirm-password" name="confirm-password" class="input-field" placeholder="Confirm your password" required>
+        </div>
+        
+        <!-- Student ID (Visible only for students) -->
+        <div id="student-id-field" class="form-group" style="display: none;">
+          <label for="student-id">Student ID Number</label>
+          <input type="text" id="student-id" name="student-id" class="input-field" placeholder="Enter your student ID">
+        </div>
+        
+        <button type="submit" class="btn">Register</button>
+      </form>
+      
+      <div class="auth-footer">
+        <p>Already have an account? <a id="show-login">Log in</a></p>
+      </div>
+    </div>
+
+    <!-- Load config.js first to define API_URL -->
+    <script src="../js/config.js"></script>
+    <!-- Then load login.js which uses API_URL -->
+    <script src="../js/login.js"></script>
+    
+    <script>
+      document.addEventListener('DOMContentLoaded', function() {
+        // Add password strength indicator
+        const passwordInput = document.getElementById('reg-password');
+        const strengthMeterFill = document.getElementById('strength-meter-fill');
+        const strengthText = document.getElementById('strength-text');
+        
+        if (passwordInput && strengthMeterFill && strengthText) {
+          passwordInput.addEventListener('input', () => {
+            const password = passwordInput.value;
+            let strength = 0;
+            let feedback = '';
+            
+            if (password.length >= 8) strength += 25;
+            if (/[A-Z]/.test(password)) strength += 25;
+            if (/[0-9]/.test(password)) strength += 25;
+            if (/[^A-Za-z0-9]/.test(password)) strength += 25;
+            
+            strengthMeterFill.style.width = `${strength}%`;
+            
+            if (strength <= 25) {
+              strengthMeterFill.style.backgroundColor = '#ef4444'; // Red
+              feedback = 'Weak';
+            } else if (strength <= 50) {
+              strengthMeterFill.style.backgroundColor = '#f59e0b'; // Orange
+              feedback = 'Fair';
+            } else if (strength <= 75) {
+              strengthMeterFill.style.backgroundColor = '#3b82f6'; // Blue
+              feedback = 'Good';
+            } else {
+              strengthMeterFill.style.backgroundColor = '#10b981'; // Green
+              feedback = 'Strong';
+            }
+            
+            strengthText.textContent = feedback;
+          });
+        }
+        
+        // These are fallback event listeners if the ones in login.js don't work
+        const showRegister = document.getElementById('show-register');
+        const showLogin = document.getElementById('show-login');
+        const loginSection = document.getElementById('login-section');
+        const registerSection = document.getElementById('register-section');
+        
+        if (showRegister) {
+          showRegister.addEventListener('click', function() {
+            if (loginSection) loginSection.style.display = 'none';
+            if (registerSection) registerSection.style.display = 'block';
+          });
+        }
+        
+        if (showLogin) {
+          showLogin.addEventListener('click', function() {
+            if (registerSection) registerSection.style.display = 'none';
+            if (loginSection) loginSection.style.display = 'block';
+          });
+        }
+        
+        // Role selection for student ID field
+        const roleSelect = document.getElementById('role');
+        const studentIdField = document.getElementById('student-id-field');
+        
+        if (roleSelect && studentIdField) {
+          roleSelect.addEventListener('change', function() {
+            if (this.value === 'student') {
+              studentIdField.style.display = 'block';
+            } else {
+              studentIdField.style.display = 'none';
+            }
+          });
+        }
+      });
+    </script>
+  </div>
+</body>
+
+</html>

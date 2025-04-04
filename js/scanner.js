@@ -146,7 +146,7 @@ document.addEventListener("DOMContentLoaded", async () => {
       });
       
       // Redirect to login page
-      window.location.replace("../../index.html");
+      window.location.replace("login.html");
     }
   } catch (error) {
     console.error("Authentication error:", error);
@@ -162,7 +162,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     });
     
     // Redirect to login page
-    window.location.replace("../../index.html");
+    window.location.replace("login.html");
   }
 
   function setupEventListeners() {
