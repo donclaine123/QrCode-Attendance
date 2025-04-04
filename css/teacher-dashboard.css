@@ -706,28 +706,32 @@ select:disabled {
   border: 1px solid var(--gray-200);
   text-align: center;
   min-height: 300px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
 }
 
 /* Style for the actual QR code image */
 #qr-code-container img {
-  display: inline-block !important;
+  display: block !important;
   margin: 0 auto;
-  max-width: 100%;
+  max-width: 250px;
   height: auto;
+  border: 1px solid var(--gray-200);
+  padding: 10px;
+  background-color: white;
+  box-shadow: var(--shadow-sm);
+  border-radius: 4px;
 }
 
-/* Style for the QR code canvas that the library generates */
-#qr-code-container canvas {
-  display: inline-block !important;
-  margin: 0 auto;
-  max-width: 100%;
-  height: auto;
-}
-
-/* Fix for QRCode.js library that sometimes adds hidden styles */
+/* Override any hidden styles that might interfere */
+#qr-code-container div, 
+#qr-code-container canvas,
 #qr-code-container * {
-  display: block;
-  margin: 0 auto;
+  visibility: visible !important;
+  opacity: 1 !important;
+  display: block !important;
 }
 
 .success-message {

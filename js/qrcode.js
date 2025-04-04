@@ -127,44 +127,140 @@ async function generateQRCode() {
       
       // Generate QR code using the library
       try {
-        // Check if QRCode is defined
-        if (typeof QRCode === 'undefined') {
-          throw new Error("QRCode library is not loaded");
-        }
-        
         // Clear any previous content (with null check)
         if (qrCodeDiv) qrCodeDiv.innerHTML = '';
         else {
           throw new Error("QR code container element not found");
         }
         
-        // Create a specific element for the QR code 
-        const qrElement = document.createElement('div');
-        qrElement.id = 'qrcode-display';
-        qrElement.style.margin = '0 auto';
-        qrElement.style.width = '256px';
-        qrElement.style.height = '256px';
-        qrCodeDiv.appendChild(qrElement);
+        // First try using a direct image approach (more reliable)
+        const qrImg = document.createElement('img');
+        qrImg.src = `https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=${encodeURIComponent(qrCodeUrl)}`;
+        qrImg.alt = "QR Code for Attendance";
+        qrImg.style.display = "block";
+        qrImg.style.margin = "20px auto";
+        qrImg.style.maxWidth = "250px";
+        qrImg.style.height = "auto";
+        qrImg.style.border = "1px solid #ddd";
+        qrImg.style.borderRadius = "4px";
+        qrImg.style.padding = "10px";
+        qrImg.style.backgroundColor = "white";
         
-        // Create new QR code with proper error handling
-        console.log("Creating QR code with options:", {
-          text: qrCodeUrl,
-          width: 256,
-          height: 256,
-          correctLevel: QRCode.CorrectLevel ? QRCode.CorrectLevel.H : 2
-        });
+        // Add the image to the container
+        qrCodeDiv.appendChild(qrImg);
         
-        // Use the specific element we created
-        new QRCode(qrElement, {
-          text: qrCodeUrl,
-          width: 256,
-          height: 256,
-          colorDark: '#000000',
-          colorLight: '#ffffff',
-          correctLevel: QRCode.CorrectLevel ? QRCode.CorrectLevel.H : 2
-        });
+        console.log("QR code generated using direct image approach");
         
-        console.log("QR code generated successfully");
+        // Only attempt the library-based approach as fallback
+        try {
+          // Create a separate div for library-based QR code
+          if (typeof QRCode !== 'undefined') {
+            const fallbackDiv = document.createElement('div');
+            fallbackDiv.id = 'qrcode-display-fallback';
+            fallbackDiv.style.display = 'none'; // Hide by default
+            qrCodeDiv.appendChild(fallbackDiv);
+            
+            // Attempt library-based QR code as fallback
+            new QRCode(fallbackDiv, {
+              text: qrCodeUrl,
+              width: 250,
+              height: 250,
+              colorDark: '#000000',
+              colorLight: '#ffffff',
+              correctLevel: QRCode.CorrectLevel ? QRCode.CorrectLevel.H : 2
+            });
+          }
+        } catch (libraryError) {
+          console.error("Library-based QR code generation failed:", libraryError);
+          // Already using direct image approach, so no additional fallback needed
+        }
+        
+        // Display success message and URL with expiration timer
+        if (statusDiv) {
+          statusDiv.innerHTML = `
+            <div class="success-message">
+              QR Code generated successfully for class session!<br>
+              <small>Session ID: ${sessionId}</small>
+            </div>
+            <p>QR Code URL: <a href="${qrCodeUrl}" target="_blank">${qrCodeUrl}</a></p>
+            <div class="expiration-timer">
+              <p>This QR code will expire in <span id="countdown">10:00</span></p>
+            </div>
+          `;
+        }
+        
+        // Set up the countdown timer
+        const countdownEl = document.getElementById('countdown');
+        if (countdownEl) {
+          let timeLeft = 10 * 60; // 10 minutes in seconds
+          
+          // Parse the expiration time from the response if available
+          if (data.expiresAt) {
+            const expiresAt = new Date(data.expiresAt);
+            const now = new Date();
+            timeLeft = Math.max(0, Math.floor((expiresAt - now) / 1000));
+            
+            // Cap at reasonable value (10 minutes) to prevent display issues
+            if (timeLeft > 10 * 60) {
+              timeLeft = 10 * 60;
+              console.warn("Expiration time too far in future, capping at 10 minutes");
+            }
+          }
+          
+          // Start the countdown
+          const countdownInterval = setInterval(() => {
+            timeLeft--;
+            
+            if (timeLeft <= 0) {
+              clearInterval(countdownInterval);
+              countdownEl.textContent = "Expired";
+              countdownEl.style.color = "red";
+              
+              // Disable the attendance button
+              const attendanceBtn = document.getElementById('viewAttendanceBtn') || document.getElementById('view-current-attendance-btn');
+              if (attendanceBtn) {
+                attendanceBtn.disabled = true;
+              }
+              
+              // Update status
+              if (statusDiv) {
+                statusDiv.innerHTML += `
+                  <div class="error-message">
+                    QR code has expired. Please generate a new one.
+                  </div>
+                `;
+              }
+              
+              // Clear the QR code
+              if (qrCodeDiv) {
+                qrCodeDiv.innerHTML = `
+                  <div class="qr-fallback">
+                    <p>QR Code has expired. Please generate a new one.</p>
+                  </div>
+                `;
+              }
+            } else {
+              // Format minutes:seconds
+              const minutes = Math.floor(timeLeft / 60);
+              const seconds = timeLeft % 60;
+              countdownEl.textContent = `${minutes}:${seconds.toString().padStart(2, '0')}`;
+              
+              // Change color when less than 1 minute
+              if (timeLeft < 60) {
+                countdownEl.style.color = "red";
+              }
+            }
+          }, 1000);
+        }
+        
+        // Save the current session ID for attendance tracking
+        sessionStorage.setItem('currentQrSessionId', sessionId);
+        
+        // Enable the attendance view button
+        const attendanceBtn = document.getElementById('viewAttendanceBtn') || document.getElementById('view-current-attendance-btn');
+        if (attendanceBtn) {
+          attendanceBtn.disabled = false;
+        }
       } catch (qrError) {
         console.error("QR code library error:", qrError);
         if (qrCodeDiv) {
@@ -175,93 +271,6 @@ async function generateQRCode() {
             </div>
           `;
         }
-      }
-      
-      // Display success message and URL with expiration timer
-      if (statusDiv) {
-        statusDiv.innerHTML = `
-          <div class="success-message">
-            QR Code generated successfully for class session!<br>
-            <small>Session ID: ${sessionId}</small>
-          </div>
-          <p>QR Code URL: <a href="${qrCodeUrl}" target="_blank">${qrCodeUrl}</a></p>
-          <div class="expiration-timer">
-            <p>This QR code will expire in <span id="countdown">10:00</span></p>
-          </div>
-        `;
-      }
-      
-      // Set up the countdown timer
-      const countdownEl = document.getElementById('countdown');
-      if (countdownEl) {
-        let timeLeft = 10 * 60; // 10 minutes in seconds
-        
-        // Parse the expiration time from the response if available
-        if (data.expiresAt) {
-          const expiresAt = new Date(data.expiresAt);
-          const now = new Date();
-          timeLeft = Math.max(0, Math.floor((expiresAt - now) / 1000));
-          
-          // Cap at reasonable value (10 minutes) to prevent display issues
-          if (timeLeft > 10 * 60) {
-            timeLeft = 10 * 60;
-            console.warn("Expiration time too far in future, capping at 10 minutes");
-          }
-        }
-        
-        // Start the countdown
-        const countdownInterval = setInterval(() => {
-          timeLeft--;
-          
-          if (timeLeft <= 0) {
-            clearInterval(countdownInterval);
-            countdownEl.textContent = "Expired";
-            countdownEl.style.color = "red";
-            
-            // Disable the attendance button
-            const attendanceBtn = document.getElementById('viewAttendanceBtn') || document.getElementById('view-current-attendance-btn');
-            if (attendanceBtn) {
-              attendanceBtn.disabled = true;
-            }
-            
-            // Update status
-            if (statusDiv) {
-              statusDiv.innerHTML += `
-                <div class="error-message">
-                  QR code has expired. Please generate a new one.
-                </div>
-              `;
-            }
-            
-            // Clear the QR code
-            if (qrCodeDiv) {
-              qrCodeDiv.innerHTML = `
-                <div class="qr-fallback">
-                  <p>QR Code has expired. Please generate a new one.</p>
-                </div>
-              `;
-            }
-          } else {
-            // Format minutes:seconds
-            const minutes = Math.floor(timeLeft / 60);
-            const seconds = timeLeft % 60;
-            countdownEl.textContent = `${minutes}:${seconds.toString().padStart(2, '0')}`;
-            
-            // Change color when less than 1 minute
-            if (timeLeft < 60) {
-              countdownEl.style.color = "red";
-            }
-          }
-        }, 1000);
-      }
-      
-      // Save the current session ID for attendance tracking
-      sessionStorage.setItem('currentQrSessionId', sessionId);
-      
-      // Enable the attendance view button
-      const attendanceBtn = document.getElementById('viewAttendanceBtn') || document.getElementById('view-current-attendance-btn');
-      if (attendanceBtn) {
-        attendanceBtn.disabled = false;
       }
     } else {
       if (statusDiv) {
