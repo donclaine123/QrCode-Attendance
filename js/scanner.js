@@ -8,7 +8,6 @@ document.addEventListener("DOMContentLoaded", async () => {
   const scannerBox = document.getElementById("scannerBox");
   const startScanBtn = document.getElementById("startScanBtn");
   const scanStatus = document.getElementById("scanStatus");
-  const attendanceHistory = document.getElementById("attendance-records");
   const loadingSection = document.getElementById("loading-section");
   const studentSection = document.getElementById("student-section");
   const authDebug = document.getElementById("auth-debug");
@@ -124,9 +123,6 @@ document.addEventListener("DOMContentLoaded", async () => {
       
       // Set up event listeners
       setupEventListeners();
-      
-      // Load attendance history
-      loadAttendanceHistory();
       
       // Auto-record attendance if session parameters are in URL
       if (sessionId && teacherId) {
@@ -425,80 +421,6 @@ document.addEventListener("DOMContentLoaded", async () => {
     }
   }
 
-  // Load attendance history
-  async function loadAttendanceHistory() {
-    try {
-      // Add null check for attendanceHistory
-      if (!attendanceHistory) {
-        console.warn("attendanceHistory element not found in the DOM");
-        return; // Exit function early if element doesn't exist
-      }
-      
-      attendanceHistory.innerHTML = "<p>Loading attendance history...</p>";
-      
-      const response = await fetch(`${API_URL}/auth/student-attendance-history`, {
-        method: "GET",
-        credentials: "include"
-      });
-      
-      console.log("Attendance history response status:", response.status);
-      
-      try {
-        const data = await response.json();
-        console.log("Attendance history data:", data);
-        
-        if (data.success && data.history.length > 0) {
-          // Create table
-          let tableHtml = `
-            <table class="attendance-table">
-              <thead>
-                <tr>
-                  <th>Date</th>
-                  <th>Subject</th>
-                  <th>Teacher</th>
-                  <th>Time</th>
-                </tr>
-              </thead>
-              <tbody>
-          `;
-          
-          // Add rows for each attendance record
-          data.history.forEach(record => {
-            // Ensure we're using the timestamp from the server, not creating a new date
-            const recordDate = new Date(record.timestamp);
-            const date = recordDate.toLocaleDateString();
-            const time = recordDate.toLocaleTimeString();
-            
-            console.log("Processing record timestamp:", record.timestamp, "->", date, time);
-            
-            tableHtml += `
-              <tr>
-                <td>${date}</td>
-                <td>${record.subject || 'Unknown Subject'}</td>
-                <td>${record.teacherName || 'Unknown Teacher'}</td>
-                <td>${time}</td>
-              </tr>
-            `;
-          });
-          
-          tableHtml += `</tbody></table>`;
-          attendanceHistory.innerHTML = tableHtml;
-        } else {
-          attendanceHistory.innerHTML = "<p>No attendance records found.</p>";
-        }
-      } catch (parseError) {
-        console.error("Error parsing JSON response:", parseError);
-        console.log("Raw response text:", await response.text());
-        attendanceHistory.innerHTML = "<p>Error processing attendance data. Please try again later.</p>";
-      }
-    } catch (error) {
-      console.error("Error loading attendance history:", error);
-      if (attendanceHistory) {
-        attendanceHistory.innerHTML = "<p>Error loading attendance history. Please try again later.</p>";
-      }
-    }
-  }
-
   // Function to test cookies
   async function testCookies() {
     try {
@@ -603,8 +525,15 @@ document.addEventListener("DOMContentLoaded", async () => {
         localStorage.removeItem('currentSessionId');
         localStorage.removeItem('currentTeacherId');
         
-        // Reload attendance history
-        loadAttendanceHistory();
+        // Dispatch an event so student-dashboard.js can refresh attendance history
+        document.dispatchEvent(new CustomEvent('attendance-recorded', { 
+          detail: { 
+            success: true,
+            subject: data.subject,
+            timestamp: new Date().toISOString()
+          }
+        }));
+        console.log("Dispatched attendance-recorded event for student-dashboard.js to handle");
         
         // Remove the status element after success with a delay
         setTimeout(() => {

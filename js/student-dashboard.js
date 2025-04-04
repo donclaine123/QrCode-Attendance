@@ -39,6 +39,13 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
     
+    // Listen for attendance recorded events from scanner.js
+    document.addEventListener('attendance-recorded', function(event) {
+        console.log('Attendance recorded event received:', event.detail);
+        // Reload attendance history when scanner.js records attendance
+        loadAttendanceHistory();
+    });
+    
     // Set up debug listeners
     setupDebugListeners();
 });
