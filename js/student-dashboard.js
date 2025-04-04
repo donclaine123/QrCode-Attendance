@@ -21,21 +21,12 @@ document.addEventListener('DOMContentLoaded', function() {
         console.error('Logout button not found');
     }
     
-    // Add event listeners for dashboard actions
+    // Add event listener for scan QR button
     const scanQrBtn = document.getElementById('scan-qr-btn');
-    const viewAttendanceBtn = document.getElementById('view-attendance-btn');
     
     if (scanQrBtn) {
         scanQrBtn.addEventListener('click', function() {
             document.getElementById('qr-scanner-section').style.display = 'block';
-            document.getElementById('attendance-section').style.display = 'none';
-        });
-    }
-    
-    if (viewAttendanceBtn) {
-        viewAttendanceBtn.addEventListener('click', function() {
-            document.getElementById('qr-scanner-section').style.display = 'none';
-            document.getElementById('attendance-section').style.display = 'block';
         });
     }
     
@@ -93,8 +84,7 @@ async function initDashboard() {
                     studentSection.style.display = 'block';
                 }
                 
-                // Load enrolled classes
-                loadEnrolledClasses();
+                // No longer need to load enrolled classes
             } else {
                 console.error("Authentication failed, redirecting to login...");
                 window.location.href = getBasePath() + '/index.html';
@@ -115,8 +105,7 @@ async function initDashboard() {
                 studentSection.style.display = 'block';
             }
             
-            // Load enrolled classes
-            loadEnrolledClasses();
+            // No longer need to load enrolled classes
         }
     } catch (error) {
         console.error("Error initializing dashboard:", error);
@@ -205,55 +194,6 @@ async function loadAttendanceHistory() {
     }
 }
 
-// Load enrolled classes for the student
-async function loadEnrolledClasses() {
-    try {
-        const classSelect = document.getElementById('class-select');
-        if (!classSelect) {
-            console.error("Class select element not found");
-            return;
-        }
-        
-        classSelect.innerHTML = '<option value="">Select a class</option>';
-        
-        const userId = sessionStorage.getItem('userId');
-        console.log(`Fetching enrolled classes for student ID: ${userId}`);
-        
-        const response = await fetch(`${API_URL}/auth/student-classes/${userId}`, {
-            credentials: 'include',
-            headers: {
-                'Accept': 'application/json',
-                'Cache-Control': 'no-cache'
-            }
-        });
-        
-        if (!response.ok) {
-            throw new Error(`Server returned ${response.status}: ${response.statusText}`);
-        }
-        
-        const data = await response.json();
-        console.log('Enrolled classes data:', data);
-        
-        if (data.success && data.classes && data.classes.length > 0) {
-            data.classes.forEach(cls => {
-                const option = document.createElement('option');
-                option.value = cls.id;
-                option.textContent = cls.class_name || cls.name;
-                classSelect.appendChild(option);
-            });
-        } else {
-            classSelect.innerHTML += '<option disabled>No classes found</option>';
-        }
-    } catch (error) {
-        console.error('Error loading enrolled classes:', error);
-        const classSelect = document.getElementById('class-select');
-        if (classSelect) {
-            classSelect.innerHTML = '<option value="">Select a class</option>';
-            classSelect.innerHTML += `<option disabled>Error loading classes: ${error.message}</option>`;
-        }
-    }
-}
-
 // Record attendance from QR code
 async function recordAttendance() {
     try {
@@ -307,13 +247,7 @@ async function recordAttendance() {
             // Reload attendance history
             loadAttendanceHistory();
             
-            // Hide the QR attendance section after a delay
-            setTimeout(() => {
-                const qrAttendance = document.getElementById('qr-scanner-section');
-                if (qrAttendance) {
-                    qrAttendance.style.display = 'none';
-                }
-            }, 5000);
+            // No longer need to hide the attendance section
         } else {
             statusElement.innerHTML = `<div class="error-message">${data.message || 'Error recording attendance'}</div>`;
         }
