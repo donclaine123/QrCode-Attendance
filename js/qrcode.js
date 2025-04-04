@@ -4,7 +4,7 @@
 async function generateQRCode() {
   console.log("generateQRCode called");
   
-  const classSelect = document.getElementById('classSelect');
+  const classSelect = document.getElementById('class-select');
   const statusDiv = document.getElementById('status');
   const qrCodeDiv = document.getElementById('qrcode');
   const selectedClassId = classSelect.value;

@@ -613,7 +613,7 @@ async function deleteClass(classId) {
 
 // Load sessions for a class
 async function loadSessions(classId) {
-    const sessionSelect = document.getElementById('sessionSelect');
+    const sessionSelect = document.getElementById('session-select');
     sessionSelect.innerHTML = '<option value="">Select a session</option>';
     
     if (!classId) {
@@ -702,8 +702,8 @@ async function loadSessions(classId) {
 
 // Load attendance records for a session
 async function loadAttendanceRecords() {
-    const sessionId = document.getElementById('sessionSelect').value;
-    const recordsDiv = document.getElementById('attendanceRecords');
+    const sessionId = document.getElementById('session-select').value;
+    const recordsDiv = document.getElementById('attendance-records');
     
     if (!sessionId) {
         recordsDiv.innerHTML = '<div class="error-message">Please select a session</div>';
@@ -815,30 +815,36 @@ async function loadAttendanceRecords() {
     }
 }
 
-// View attendance for current session
+// View attendance for the current session
 async function viewCurrentSessionAttendance() {
-    const currentSessionId = localStorage.getItem('currentSessionId');
-    
-    if (!currentSessionId) {
-        alert('No active session found. Generate a QR code first.');
-        return;
+    try {
+        const currentSessionId = sessionStorage.getItem('currentQrSessionId');
+        
+        if (!currentSessionId) {
+            alert('No active session. Please generate a QR code first.');
+            return;
+        }
+        
+        // Switch to the attendance tab
+        document.querySelector('[data-tab="attendance-tab"]').click();
+        
+        // Set the class select to match the current session
+        const classId = document.getElementById('class-select').value;
+        document.getElementById('attendance-class-select').value = classId;
+        
+        // Load sessions for this class
+        await loadSessions(classId);
+        
+        // Set the session select to the current session
+        document.getElementById('session-select').value = currentSessionId;
+        
+        // Load attendance records for this session
+        await loadAttendanceRecords();
+        
+    } catch (error) {
+        console.error('Error viewing current attendance:', error);
+        alert('Error loading current attendance data. Please try again.');
     }
-    
-    // Switch to attendance tab
-    document.querySelector('[data-tab="attendance-tab"]').click();
-    
-    // Select the current class in the dropdown
-    const classId = document.getElementById('classSelect').value;
-    document.getElementById('attendanceClassSelect').value = classId;
-    
-    // Load sessions for this class
-    await loadSessions(classId);
-    
-    // Select the current session
-    document.getElementById('sessionSelect').value = currentSessionId;
-    
-    // Load attendance records
-    loadAttendanceRecords();
 }
 
 // Logout function
