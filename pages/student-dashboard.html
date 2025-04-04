@@ -5,8 +5,10 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Student Dashboard - QR Attendance System</title>
-  <link rel="stylesheet" href="../css/styles.css">
+  <link rel="stylesheet" href="../css/style.css">
+  <link rel="stylesheet" href="../css/student.css">
   <link rel="stylesheet" href="../css/student-dashboard.css">
+  <link rel="stylesheet" href="../css/scanner.css">
   <script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.min.js"></script>
   <link rel="icon" href="data:," />
 </head>
@@ -38,8 +40,14 @@
 
       <div id="qr-scanner-section" class="dashboard-section" style="display: none;">
         <h3>Scan QR Code for Attendance</h3>
-        <div id="qr-reader"></div>
+        <div class="video-container">
+          <video id="video" autoplay playsinline></video>
+          <canvas id="canvas" style="display: none;"></canvas>
+          <div id="scannerBox"></div>
+        </div>
+        <div id="scanStatus"></div>
         <div id="scan-result"></div>
+        <button id="startScanBtn" class="action-button">Start Scanner</button>
       </div>
 
       <div id="attendance-section" class="dashboard-section" style="display: none;">
@@ -68,6 +76,7 @@
   </footer>
 
   <script src="../js/config.js"></script>
+  <script src="../js/scanner.js"></script>
   <script src="../js/student-dashboard.js"></script>
 </body>
 
