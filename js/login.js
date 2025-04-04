@@ -145,7 +145,7 @@ document.addEventListener('DOMContentLoaded', function() {
         const data = await response.json();
 
         if (data.success) {
-          showSuccess('Registration successful! You can now log in.');
+          showSuccess('Registration successful! Proceed to Email to verify your account.');
           // Switch back to login form
           registerSection.style.display = 'none';
           loginSection.style.display = 'block';
