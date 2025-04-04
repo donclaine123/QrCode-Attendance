@@ -26,12 +26,27 @@ async function generateQRCode() {
     return;
   }
   
-  // Clear previous QR code and status (with null checks)
-  if (qrCodeDiv) qrCodeDiv.innerHTML = '';
+  // Force the QR code container to be visible
+  qrCodeDiv.style.display = 'block';
+  
+  // Set a temporary loading message
+  qrCodeDiv.innerHTML = `
+    <div style="text-align: center; padding: 20px;">
+      <h3>Generating QR Code...</h3>
+      <p>Please wait</p>
+    </div>
+  `;
+  
   if (statusDiv) statusDiv.textContent = 'Generating QR code...';
   
   if (!selectedClassId) {
     if (statusDiv) statusDiv.textContent = 'Please select a class first.';
+    qrCodeDiv.innerHTML = `
+      <div style="text-align: center; padding: 20px; color: red;">
+        <h3>Error</h3>
+        <p>Please select a class first.</p>
+      </div>
+    `;
     return;
   }
 
@@ -45,9 +60,6 @@ async function generateQRCode() {
       if (statusDiv) statusDiv.innerHTML = '<div class="error-message">Error: No teacher ID found. Please log in again.</div>';
       return;
     }
-    
-    // No need to get selected class again, we already have it from 'classSelect' above
-    // Use the existing classSelect and selectedClassId instead of trying to find it again
     
     const selectedOption = classSelect.options[classSelect.selectedIndex];
     
@@ -75,7 +87,6 @@ async function generateQRCode() {
     }
     
     console.log("Request headers:", headers);
-    console.log("Cookies:", document.cookie);
     
     // First try with credentials and headers
     let response = await fetch(`${API_URL}/auth/generate-qr`, {
@@ -125,163 +136,109 @@ async function generateQRCode() {
       const qrCodeUrl = data.qrCodeUrl;
       console.log("QR Code URL:", qrCodeUrl);
       
-      // Generate QR code using the library
-      try {
-        // Clear any previous content (with null check)
-        if (qrCodeDiv) qrCodeDiv.innerHTML = '';
-        else {
-          throw new Error("QR code container element not found");
+      // SUPER SIMPLE APPROACH - USE IFRAME WITH THE QR SERVER
+      qrCodeDiv.innerHTML = `
+        <div style="background: white; padding: 20px; text-align: center;">
+          <h3 style="margin-bottom: 15px;">Scan this QR code to mark attendance</h3>
+          <iframe 
+            src="https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=${encodeURIComponent(qrCodeUrl)}" 
+            style="width: 250px; height: 250px; border: none; display: block; margin: 0 auto;"
+            title="QR Code for Attendance"
+          ></iframe>
+          <div style="margin-top: 15px;">
+            <a href="${qrCodeUrl}" target="_blank" style="color: blue; text-decoration: underline;">
+              Open direct link
+            </a>
+          </div>
+        </div>
+      `;
+      
+      // Display success message and URL with expiration timer
+      if (statusDiv && statusDiv !== qrCodeDiv) {
+        statusDiv.innerHTML = `
+          <div class="success-message">
+            QR Code generated successfully for class session!<br>
+            <small>Session ID: ${sessionId}</small>
+          </div>
+          <p>QR Code URL: <a href="${qrCodeUrl}" target="_blank">${qrCodeUrl}</a></p>
+          <div class="expiration-timer">
+            <p>This QR code will expire in <span id="countdown">10:00</span></p>
+          </div>
+        `;
+      }
+      
+      // Set up the countdown timer
+      const countdownEl = document.getElementById('countdown');
+      if (countdownEl) {
+        let timeLeft = 10 * 60; // 10 minutes in seconds
+        
+        // Parse the expiration time from the response if available
+        if (data.expiresAt) {
+          const expiresAt = new Date(data.expiresAt);
+          const now = new Date();
+          timeLeft = Math.max(0, Math.floor((expiresAt - now) / 1000));
         }
         
-        // First try using a direct image approach (more reliable)
-        const qrImg = document.createElement('img');
-        qrImg.src = `https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=${encodeURIComponent(qrCodeUrl)}`;
-        qrImg.alt = "QR Code for Attendance";
-        qrImg.style.display = "block";
-        qrImg.style.margin = "20px auto";
-        qrImg.style.maxWidth = "250px";
-        qrImg.style.height = "auto";
-        qrImg.style.border = "1px solid #ddd";
-        qrImg.style.borderRadius = "4px";
-        qrImg.style.padding = "10px";
-        qrImg.style.backgroundColor = "white";
-        
-        // Add the image to the container
-        qrCodeDiv.appendChild(qrImg);
-        
-        console.log("QR code generated using direct image approach");
-        
-        // Only attempt the library-based approach as fallback
-        try {
-          // Create a separate div for library-based QR code
-          if (typeof QRCode !== 'undefined') {
-            const fallbackDiv = document.createElement('div');
-            fallbackDiv.id = 'qrcode-display-fallback';
-            fallbackDiv.style.display = 'none'; // Hide by default
-            qrCodeDiv.appendChild(fallbackDiv);
-            
-            // Attempt library-based QR code as fallback
-            new QRCode(fallbackDiv, {
-              text: qrCodeUrl,
-              width: 250,
-              height: 250,
-              colorDark: '#000000',
-              colorLight: '#ffffff',
-              correctLevel: QRCode.CorrectLevel ? QRCode.CorrectLevel.H : 2
-            });
-          }
-        } catch (libraryError) {
-          console.error("Library-based QR code generation failed:", libraryError);
-          // Already using direct image approach, so no additional fallback needed
-        }
-        
-        // Display success message and URL with expiration timer
-        if (statusDiv) {
-          statusDiv.innerHTML = `
-            <div class="success-message">
-              QR Code generated successfully for class session!<br>
-              <small>Session ID: ${sessionId}</small>
-            </div>
-            <p>QR Code URL: <a href="${qrCodeUrl}" target="_blank">${qrCodeUrl}</a></p>
-            <div class="expiration-timer">
-              <p>This QR code will expire in <span id="countdown">10:00</span></p>
-            </div>
-          `;
-        }
-        
-        // Set up the countdown timer
-        const countdownEl = document.getElementById('countdown');
-        if (countdownEl) {
-          let timeLeft = 10 * 60; // 10 minutes in seconds
+        const countdownInterval = setInterval(() => {
+          timeLeft--;
           
-          // Parse the expiration time from the response if available
-          if (data.expiresAt) {
-            const expiresAt = new Date(data.expiresAt);
-            const now = new Date();
-            timeLeft = Math.max(0, Math.floor((expiresAt - now) / 1000));
+          if (timeLeft <= 0) {
+            clearInterval(countdownInterval);
+            countdownEl.textContent = "Expired";
             
-            // Cap at reasonable value (10 minutes) to prevent display issues
-            if (timeLeft > 10 * 60) {
-              timeLeft = 10 * 60;
-              console.warn("Expiration time too far in future, capping at 10 minutes");
+            // Update status
+            if (statusDiv && statusDiv !== qrCodeDiv) {
+              statusDiv.innerHTML += `
+                <div class="error-message">
+                  QR code has expired. Please generate a new one.
+                </div>
+              `;
             }
+          } else {
+            // Format minutes:seconds
+            const minutes = Math.floor(timeLeft / 60);
+            const seconds = timeLeft % 60;
+            countdownEl.textContent = `${minutes}:${seconds.toString().padStart(2, '0')}`;
           }
-          
-          // Start the countdown
-          const countdownInterval = setInterval(() => {
-            timeLeft--;
-            
-            if (timeLeft <= 0) {
-              clearInterval(countdownInterval);
-              countdownEl.textContent = "Expired";
-              countdownEl.style.color = "red";
-              
-              // Disable the attendance button
-              const attendanceBtn = document.getElementById('viewAttendanceBtn') || document.getElementById('view-current-attendance-btn');
-              if (attendanceBtn) {
-                attendanceBtn.disabled = true;
-              }
-              
-              // Update status
-              if (statusDiv) {
-                statusDiv.innerHTML += `
-                  <div class="error-message">
-                    QR code has expired. Please generate a new one.
-                  </div>
-                `;
-              }
-              
-              // Clear the QR code
-              if (qrCodeDiv) {
-                qrCodeDiv.innerHTML = `
-                  <div class="qr-fallback">
-                    <p>QR Code has expired. Please generate a new one.</p>
-                  </div>
-                `;
-              }
-            } else {
-              // Format minutes:seconds
-              const minutes = Math.floor(timeLeft / 60);
-              const seconds = timeLeft % 60;
-              countdownEl.textContent = `${minutes}:${seconds.toString().padStart(2, '0')}`;
-              
-              // Change color when less than 1 minute
-              if (timeLeft < 60) {
-                countdownEl.style.color = "red";
-              }
-            }
-          }, 1000);
-        }
-        
-        // Save the current session ID for attendance tracking
-        sessionStorage.setItem('currentQrSessionId', sessionId);
-        
-        // Enable the attendance view button
-        const attendanceBtn = document.getElementById('viewAttendanceBtn') || document.getElementById('view-current-attendance-btn');
-        if (attendanceBtn) {
-          attendanceBtn.disabled = false;
-        }
-      } catch (qrError) {
-        console.error("QR code library error:", qrError);
-        if (qrCodeDiv) {
-          qrCodeDiv.innerHTML = `
-            <div class="qr-fallback">
-              <p>QR Code could not be generated. Please use this link:</p>
-              <a href="${qrCodeUrl}" target="_blank">${qrCodeUrl}</a>
-            </div>
-          `;
-        }
+        }, 1000);
+      }
+      
+      // Save the current session ID for attendance tracking
+      sessionStorage.setItem('currentQrSessionId', sessionId);
+      
+      // Enable the attendance view button
+      const attendanceBtn = document.getElementById('viewAttendanceBtn') || document.getElementById('view-current-attendance-btn');
+      if (attendanceBtn) {
+        attendanceBtn.disabled = false;
       }
     } else {
       if (statusDiv) {
         statusDiv.innerHTML = `<div class="error-message">Error: ${data.message}</div>`;
       }
+      
+      qrCodeDiv.innerHTML = `
+        <div style="text-align: center; padding: 20px; color: red; border: 1px solid red;">
+          <h3>Error</h3>
+          <p>${data.message || 'Failed to generate QR code'}</p>
+        </div>
+      `;
     }
   } catch (error) {
     console.error('Error generating QR code:', error);
     if (statusDiv) {
       statusDiv.innerHTML = `<div class="error-message">Server connection error. Please try again.</div>`;
     }
+    
+    // Display error in QR code container
+    qrCodeDiv.innerHTML = `
+      <div style="text-align: center; padding: 20px; color: red; border: 1px solid red;">
+        <h3>Error</h3>
+        <p>Server connection error: ${error.message}</p>
+        <button onclick="generateQRCode()" style="background: #007bff; color: white; border: none; padding: 8px 15px; border-radius: 4px; margin-top: 10px; cursor: pointer;">
+          Try Again
+        </button>
+      </div>
+    `;
   }
 }
 
