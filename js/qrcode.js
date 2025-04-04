@@ -59,18 +59,59 @@ async function generateQRCode() {
     
     // Create a session for the selected class
     console.log("Fetching from:", `${API_URL}/auth/generate-qr`);
-    const response = await fetch(`${API_URL}/auth/generate-qr`, {
+    
+    // Build auth headers from session data
+    const headers = {
+      'Content-Type': 'application/json',
+      'Accept': 'application/json',
+      'Cache-Control': 'no-cache'
+    };
+    
+    // Add user ID and role to headers as fallback authentication
+    const userRole = sessionStorage.getItem('userRole') || localStorage.getItem('userRole');
+    if (teacherId && userRole) {
+      headers['X-User-ID'] = teacherId;
+      headers['X-User-Role'] = userRole;
+    }
+    
+    console.log("Request headers:", headers);
+    console.log("Cookies:", document.cookie);
+    
+    // First try with credentials and headers
+    let response = await fetch(`${API_URL}/auth/generate-qr`, {
       method: 'POST',
-      credentials: 'include', // Important for cookies
-      headers: {
-        'Content-Type': 'application/json'
-      },
+      credentials: 'include',
+      headers: headers,
       body: JSON.stringify({
         subject: subject,
         class_id: selectedClassId,
         teacher_id: teacherId
       })
     });
+    
+    console.log("First attempt status:", response.status);
+    
+    // If unauthorized, try with a more direct approach for Netlify deployment
+    if (response.status === 401) {
+      console.log("Retrying with different auth approach for Netlify...");
+      
+      // For Netlify, we need to try a different endpoint pattern
+      const netlifyURL = `/api/auth/generate-qr`;
+      console.log("Retrying with URL:", netlifyURL);
+      
+      response = await fetch(netlifyURL, {
+        method: 'POST',
+        credentials: 'include',
+        headers: headers,
+        body: JSON.stringify({
+          subject: subject,
+          class_id: selectedClassId,
+          teacher_id: teacherId
+        })
+      });
+      
+      console.log("Second attempt status:", response.status);
+    }
 
     console.log("Response status:", response.status);
     const data = await response.json();
@@ -245,34 +286,108 @@ async function populateClassDropdown() {
   try {
     classSelect.innerHTML = '<option value="">Loading classes...</option>';
     
-    const response = await fetch(`${API_URL}/auth/teacher-classes/${teacherId}`, {
+    // Build auth headers from session data
+    const headers = {
+      'Accept': 'application/json',
+      'Content-Type': 'application/json',
+      'Cache-Control': 'no-cache'
+    };
+    
+    // Add user ID and role to headers as fallback authentication
+    const userRole = sessionStorage.getItem('userRole') || localStorage.getItem('userRole');
+    if (teacherId && userRole) {
+      headers['X-User-ID'] = teacherId;
+      headers['X-User-Role'] = userRole;
+    }
+    
+    console.log(`Fetching classes for teacher ID: ${teacherId}`);
+    console.log("Request headers:", headers);
+    console.log("Cookies:", document.cookie);
+    
+    // First try with credentials only (cookie-based auth)
+    let response = await fetch(`${API_URL}/auth/teacher-classes/${teacherId}`, {
       method: 'GET',
-      credentials: 'include' // Important for cookies
+      credentials: 'include',
+      headers: headers
     });
-
-    const data = await response.json();
-
-    if (data.success) {
-      // Clear current options
-      classSelect.innerHTML = '<option value="">Select a class</option>';
+    
+    console.log("First attempt status:", response.status);
+    
+    // If unauthorized, try with a more direct approach for Netlify deployment
+    if (response.status === 401) {
+      console.log("Retrying with different auth approach for Netlify...");
       
-      // Add classes to dropdown
-      if (data.classes && data.classes.length > 0) {
-        data.classes.forEach(cls => {
-          const option = document.createElement('option');
-          option.value = cls.id;
-          option.textContent = cls.class_name || cls.name;
-          if (cls.subject) {
-            option.textContent += ` (${cls.subject})`;
-          }
-          classSelect.appendChild(option);
-        });
+      // For Netlify, we need to try a different endpoint pattern
+      // Try the full request again with explicit auth headers
+      const netlifyURL = `/api/auth/teacher-classes/${teacherId}`;
+      console.log("Retrying with URL:", netlifyURL);
+      
+      response = await fetch(netlifyURL, {
+        method: 'GET',
+        credentials: 'include',
+        headers: headers
+      });
+      
+      console.log("Second attempt status:", response.status);
+    }
+    
+    // Process the response
+    if (response.ok) {
+      const data = await response.json();
+      console.log("Classes data:", data);
+
+      if (data.success) {
+        // Clear current options
+        classSelect.innerHTML = '<option value="">Select a class</option>';
+        
+        // Add classes to dropdown
+        if (data.classes && data.classes.length > 0) {
+          data.classes.forEach(cls => {
+            const option = document.createElement('option');
+            option.value = cls.id;
+            option.textContent = cls.class_name || cls.name;
+            if (cls.subject) {
+              option.textContent += ` (${cls.subject})`;
+            }
+            classSelect.appendChild(option);
+          });
+          console.log(`Added ${data.classes.length} classes to dropdown`);
+        } else {
+          classSelect.innerHTML += '<option disabled value="">No classes found</option>';
+          console.log("No classes found in response");
+        }
       } else {
-        classSelect.innerHTML += '<option disabled value="">No classes found</option>';
+        console.error('Failed to fetch classes:', data.message);
+        classSelect.innerHTML = `<option value="">Error: ${data.message}</option>`;
       }
     } else {
-      console.error('Failed to fetch classes:', data.message);
-      classSelect.innerHTML = '<option value="">Error loading classes</option>';
+      // Handle non-OK response
+      let errorMessage = `Server error (${response.status})`;
+      try {
+        const errorData = await response.json();
+        errorMessage = errorData.message || errorMessage;
+      } catch (e) {
+        console.error("Couldn't parse error response:", e);
+      }
+      
+      console.error('Failed to fetch classes:', errorMessage);
+      classSelect.innerHTML = `<option value="">Error: ${errorMessage}</option>`;
+      
+      // If we get a 401, show a more helpful message with a reload option
+      if (response.status === 401) {
+        console.error("Authentication failed. Showing login prompt.");
+        classSelect.innerHTML = `
+          <option value="">Error: Authentication failed</option>
+          <option value="reload">🔄 Click to reload and try again</option>
+        `;
+        
+        // Add event listener to handle the reload option
+        classSelect.addEventListener('change', function(e) {
+          if (e.target.value === 'reload') {
+            window.location.reload();
+          }
+        });
+      }
     }
   } catch (error) {
     console.error('Error fetching classes:', error);
@@ -284,31 +399,83 @@ async function populateClassDropdown() {
 async function viewAttendance() {
   try {
     // Check if the element exists
-    const statusDiv = document.getElementById('status');
-    const attendanceDiv = document.getElementById('attendanceList');
+    const statusDiv = document.getElementById('status') || document.getElementById('qr-code-container');
+    const attendanceDiv = document.getElementById('attendanceList') || document.getElementById('attendance-records');
     
     // Safe check for elements existing
-    if (!statusDiv || !attendanceDiv) {
+    if (!statusDiv && !attendanceDiv) {
       console.error('Required DOM elements not found for viewAttendance');
+      alert("Error: Cannot find attendance display elements");
       return;
     }
     
-    const sessionId = localStorage.getItem('currentSessionId');
+    // Get session ID from sessionStorage first, then fall back to localStorage
+    const sessionId = sessionStorage.getItem('currentQrSessionId') || localStorage.getItem('currentSessionId');
     
     if (!sessionId) {
-      statusDiv.textContent = 'No active session found. Please generate a QR code first.';
+      if (statusDiv) statusDiv.textContent = 'No active session found. Please generate a QR code first.';
       return;
     }
 
-    statusDiv.textContent = 'Loading attendance data...';
-    attendanceDiv.innerHTML = '';
+    if (statusDiv) statusDiv.textContent = 'Loading attendance data...';
+    if (attendanceDiv) attendanceDiv.innerHTML = '';
     
-    const response = await fetch(`${API_URL}/auth/attendance-reports?session_id=${sessionId}`, {
+    // Get auth data
+    const teacherId = sessionStorage.getItem('userId') || localStorage.getItem('userId');
+    const userRole = sessionStorage.getItem('userRole') || localStorage.getItem('userRole');
+    
+    if (!teacherId || !userRole) {
+      console.error("No teacher ID or role found in storage");
+      if (statusDiv) statusDiv.innerHTML = '<div class="error-message">Error: No user data found. Please log in again.</div>';
+      return;
+    }
+    
+    // Build auth headers
+    const headers = {
+      'Accept': 'application/json',
+      'Content-Type': 'application/json',
+      'Cache-Control': 'no-cache'
+    };
+    
+    // Add user ID and role to headers as fallback authentication
+    if (teacherId && userRole) {
+      headers['X-User-ID'] = teacherId;
+      headers['X-User-Role'] = userRole;
+    }
+    
+    console.log(`Fetching attendance for session ID: ${sessionId}`);
+    console.log("Request headers:", headers);
+    console.log("Cookies:", document.cookie);
+    
+    // First try with credentials only
+    let response = await fetch(`${API_URL}/auth/attendance-reports?session_id=${sessionId}`, {
       method: 'GET',
-      credentials: 'include' // Important for cookies
+      credentials: 'include',
+      headers: headers
     });
+    
+    console.log("First attempt status:", response.status);
+    
+    // If unauthorized, try with a more direct approach for Netlify deployment
+    if (response.status === 401) {
+      console.log("Retrying with different auth approach for Netlify...");
+      
+      // For Netlify, we need to try a different endpoint pattern
+      const netlifyURL = `/api/auth/attendance-reports?session_id=${sessionId}`;
+      console.log("Retrying with URL:", netlifyURL);
+      
+      response = await fetch(netlifyURL, {
+        method: 'GET',
+        credentials: 'include',
+        headers: headers
+      });
+      
+      console.log("Second attempt status:", response.status);
+    }
 
+    console.log("Response status:", response.status);
     const data = await response.json();
+    console.log("Response data:", data);
 
     if (data.success) {
       if (data.attendance && data.attendance.length > 0) {
