@@ -430,38 +430,213 @@ body {
 
 /* Responsive */
 @media (max-width: 768px) {
+  /* Basic layout */
   .dashboard {
     flex-direction: column;
   }
   
   .sidebar {
-  width: 100%;
+    width: 100%;
     position: static;
     height: auto;
-    padding-bottom: 0;
+    padding: var(--spacing-md);
+    border-right: none;
+    border-bottom: 1px solid var(--color-secondary-dark);
   }
   
   .main-content {
     margin-left: 0;
     padding: var(--spacing-md);
+    border-left: none;
   }
   
+  /* Navigation */
   .nav-menu {
     display: flex;
     flex-wrap: wrap;
     gap: var(--spacing-xs);
+    padding: 0;
+    margin: 0;
   }
   
   .nav-item {
     margin-bottom: 0;
+    flex: 1 0 auto;
+    min-width: calc(50% - var(--spacing-xs));
   }
   
   .nav-link {
     padding: var(--spacing-sm);
+    text-align: center;
+    justify-content: center;
+  }
+  
+  .nav-icon {
+    margin-right: var(--spacing-xs);
+  }
+  
+  /* Content sections */
+  #student-section {
+    margin: 0;
+    padding: var(--spacing-md);
+    border-radius: var(--border-radius-sm);
+  }
+  
+  .content-header {
+    padding-bottom: var(--spacing-md);
+    margin-bottom: var(--spacing-md);
+  }
+  
+  .page-title {
+    font-size: 1.3rem;
+  }
+  
+  #welcome-message {
+    font-size: 1rem;
+  }
+  
+  /* Scanner section */
+  #qr-scanner-section {
+    padding: var(--spacing-md);
+    margin-bottom: var(--spacing-lg);
   }
   
   .video-container {
     height: auto;
-    aspect-ratio: 16 / 9;
+    aspect-ratio: 1 / 1;
+    max-width: 100%;
+  }
+  
+  #scannerBox {
+    width: 70%;
+    height: 70%;
+  }
+  
+  /* Buttons and controls */
+  .scan-controls {
+    flex-direction: column;
+    gap: var(--spacing-sm);
+  }
+  
+  .action-button, .btn {
+    width: 100%;
+    padding: var(--spacing-md);
+  }
+  
+  /* Dashboard actions */
+  .dashboard-actions {
+    margin-bottom: var(--spacing-lg);
+  }
+  
+  .dashboard-actions::before,
+  .dashboard-actions::after {
+    display: none;
+  }
+  
+  /* Attendance records */
+  #attendance-section {
+    padding: var(--spacing-md);
+  }
+  
+  .section-header {
+    margin-bottom: var(--spacing-md);
+  }
+  
+  .section-title {
+    font-size: 1.1rem;
+  }
+  
+  .history-item {
+    padding: var(--spacing-sm);
+    margin-bottom: var(--spacing-sm);
+  }
+}
+
+/* Small mobile devices */
+@media (max-width: 480px) {
+  .sidebar {
+    padding: var(--spacing-sm);
+  }
+  
+  .school-info {
+    padding: var(--spacing-sm) 0;
+    margin-bottom: var(--spacing-sm);
+  }
+  
+  .school-avatar {
+    width: 32px;
+    height: 32px;
+  }
+  
+  .nav-item {
+    min-width: 100%; /* Stack nav items on very small screens */
+  }
+  
+  .nav-link {
+    padding: var(--spacing-xs) var(--spacing-sm);
+  }
+  
+  .main-content {
+    padding: var(--spacing-sm);
+  }
+  
+  .page-title {
+    font-size: 1.2rem;
+  }
+  
+  #welcome-message {
+    font-size: 0.9rem;
+  }
+  
+  /* Make scanner box more visible on small screens */
+  #scannerBox {
+    border-width: 3px;
+  }
+  
+  /* Simplify margins and paddings */
+  #qr-scanner-section, 
+  #attendance-section {
+    padding: var(--spacing-sm);
+    margin-bottom: var(--spacing-md);
+  }
+  
+  .section-title {
+    font-size: 1rem;
+  }
+  
+  .history-subject {
+    font-size: 0.9rem;
+  }
+  
+  .history-teacher, 
+  .history-time {
+    font-size: 0.8rem;
+  }
+}
+
+/* Handle landscape orientation on mobile */
+@media (max-height: 500px) and (orientation: landscape) {
+  .sidebar {
+    padding: var(--spacing-xs);
+  }
+  
+  .school-info {
+    margin-bottom: var(--spacing-xs);
+    padding: var(--spacing-xs) 0;
+  }
+  
+  .nav-menu {
+    display: flex;
+    justify-content: space-around;
+  }
+  
+  .nav-item {
+    min-width: auto;
+    margin: 0 var(--spacing-xs);
+  }
+  
+  .video-container {
+    height: 40vh;
+    aspect-ratio: auto;
   }
 }
