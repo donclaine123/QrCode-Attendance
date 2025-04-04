@@ -26,12 +26,9 @@
         }
         
         .mobile-nav-container {
-            display: none;
+            display: flex;
             width: 100%;
-        }
-        
-        .mobile-nav-container.active {
-            display: block;
+            justify-content: space-between;
         }
         
         @media (max-width: 768px) {
@@ -42,13 +39,23 @@
                 right: 20px;
             }
             
-            .nav-links, .auth-buttons {
+            .mobile-nav-container {
                 display: none;
+                flex-direction: column;
             }
             
-            .mobile-nav-container.active .nav-links, 
-            .mobile-nav-container.active .auth-buttons {
+            .mobile-nav-container.active {
                 display: flex;
+            }
+            
+            .nav-links, .auth-buttons {
+                width: 100%;
+                flex-direction: column;
+                margin-top: var(--spacing-md);
+            }
+            
+            .nav-links li {
+                margin-bottom: var(--spacing-md);
             }
         }
     </style>
@@ -69,7 +76,7 @@
                     <span></span>
                 </div>
                 
-                <!-- Container for mobile navigation -->
+                <!-- Navigation container (visible on desktop by default) -->
                 <div class="mobile-nav-container" id="mobile-nav">
                     <ul class="nav-links">
                         <li><a href="#">Features</a></li>
@@ -154,8 +161,8 @@
                 <h2>Ready to Get Started?</h2>
                 <p>Choose your role to begin using AttendEase</p>
                 <div class="login-buttons">
-                    <a href="#" class="btn btn-primary">Student Login</a>
-                    <a href="#" class="btn btn-primary">Teacher Login</a>
+                    <a href="pages/login.html" class="btn btn-primary">Student Login</a>
+                    <a href="pages/login.html" class="btn btn-primary">Teacher Login</a>
                 </div>
             </div>
         </section>
