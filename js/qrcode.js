@@ -127,10 +127,8 @@ async function generateQRCode() {
       
       // Generate QR code using the library
       try {
-        // Check if QRCode is defined
-        if (typeof QRCode === 'undefined') {
-          throw new Error("QRCode library is not loaded");
-        }
+        // Check if QRCode is defined - but we don't need it anymore
+        console.log("QRCode library status:", typeof QRCode);
         
         // Clear any previous content (with null check)
         if (qrCodeDiv) qrCodeDiv.innerHTML = '';
@@ -138,56 +136,126 @@ async function generateQRCode() {
           throw new Error("QR code container element not found");
         }
         
-        // Create a completely isolated container with inline styles
-        const qrContainer = document.createElement('div');
-        qrContainer.id = 'qr-container-' + new Date().getTime(); // Unique ID
-        qrContainer.style.cssText = `
-          width: 280px; 
-          height: 280px; 
-          margin: 20px auto;
-          padding: 10px;
-          background-color: white;
-          border: 1px solid #ddd;
-          border-radius: 8px;
-          box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-          position: relative;
-          z-index: 9999;
-        `;
-        qrCodeDiv.appendChild(qrContainer);
+        // Create canvas element (completely isolated from document)
+        const canvas = document.createElement('canvas');
+        canvas.width = 300;
+        canvas.height = 300;
+        const ctx = canvas.getContext('2d');
         
-        // Fallback: Direct rendering of QR code as an image using a 3rd party API
-        qrContainer.innerHTML = `
-          <div style="text-align: center; padding: 5px;">
-            <img 
-              src="https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=${encodeURIComponent(qrCodeUrl)}" 
-              alt="QR Code" 
-              style="max-width: 100%; height: auto; display: block; margin: 0 auto;"
-            />
-            <p style="margin-top: 10px; font-family: Arial, sans-serif; font-size: 12px; color: #333;">
-              Scan with your phone
-            </p>
-          </div>
-        `;
+        // First fill with white background
+        ctx.fillStyle = 'white';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
         
-        console.log("QR code image created via external API");
+        // Create a new image
+        const img = new Image();
+        img.crossOrigin = 'Anonymous';  // To prevent CORS issues
         
-        // Also create direct link fallback below QR code for accessibility
-        const linkContainer = document.createElement('div');
-        linkContainer.className = 'qr-link-fallback';
-        linkContainer.style.cssText = `
-          margin-top: 10px;
-          text-align: center;
-          font-family: Arial, sans-serif;
-          font-size: 14px;
-        `;
-        linkContainer.innerHTML = `<p><a href="${qrCodeUrl}" target="_blank" style="color: #0066cc; text-decoration: underline;">Direct QR Code Link</a></p>`;
-        qrCodeDiv.appendChild(linkContainer);
+        // Add a simple loading message while the image loads
+        const loadingMsg = document.createElement('div');
+        loadingMsg.style.textAlign = 'center';
+        loadingMsg.style.padding = '20px';
+        loadingMsg.innerHTML = 'Loading QR code...';
+        qrCodeDiv.appendChild(loadingMsg);
+        
+        // Define what happens when the image loads
+        img.onload = function() {
+          // Remove loading message
+          if (loadingMsg && loadingMsg.parentNode) {
+            qrCodeDiv.removeChild(loadingMsg);
+          }
+          
+          // Draw image centered on canvas
+          ctx.drawImage(img, 25, 25, 250, 250);
+          
+          // Convert canvas to data URL - this is a completely isolated way to render an image
+          const dataUrl = canvas.toDataURL('image/png');
+          
+          // Create complete HTML document as a string (completely isolated)
+          const htmlContent = `
+            <!DOCTYPE html>
+            <html>
+            <head>
+              <meta charset="utf-8">
+              <title>QR Code</title>
+              <style>
+                body {
+                  margin: 0;
+                  padding: 0;
+                  display: flex;
+                  justify-content: center;
+                  align-items: center;
+                  background-color: white;
+                  height: 100vh;
+                  overflow: hidden;
+                }
+                img {
+                  max-width: 250px;
+                  max-height: 250px;
+                  display: block;
+                }
+                .container {
+                  text-align: center;
+                }
+                p {
+                  font-family: Arial, sans-serif;
+                  font-size: 12px;
+                  color: #333;
+                  margin-top: 8px;
+                }
+              </style>
+            </head>
+            <body>
+              <div class="container">
+                <img src="${dataUrl}" alt="QR Code">
+                <p>Scan with your phone</p>
+              </div>
+            </body>
+            </html>
+          `;
+          
+          // Create a blob URL from the HTML (completely isolated environment)
+          const blob = new Blob([htmlContent], {type: 'text/html'});
+          const blobUrl = URL.createObjectURL(blob);
+          
+          // Create an iframe to display the blob URL
+          const iframe = document.createElement('iframe');
+          iframe.src = blobUrl;
+          iframe.width = '300';
+          iframe.height = '300';
+          iframe.style.border = 'none';
+          iframe.style.overflow = 'hidden';
+          iframe.style.backgroundColor = 'white';
+          iframe.style.display = 'block';
+          iframe.style.margin = '0 auto';
+          
+          // Add iframe to page
+          qrCodeDiv.appendChild(iframe);
+          console.log("QR code rendered via blob URL iframe");
+          
+          // Release the blob URL when the iframe is no longer needed
+          iframe.onload = function() {
+            console.log("QR code iframe loaded successfully");
+          };
+          
+          // Create direct link fallback
+          const linkContainer = document.createElement('div');
+          linkContainer.innerHTML = `
+            <div style="text-align: center; margin-top: 10px; font-family: Arial, sans-serif;">
+              <a href="${qrCodeUrl}" target="_blank" style="color: #0066cc; text-decoration: underline;">Direct QR Code Link</a>
+            </div>
+          `;
+          qrCodeDiv.appendChild(linkContainer);
+        };
+        
+        // Set the image source to the QR code URL - we're using QR server API
+        img.src = `https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=${encodeURIComponent(qrCodeUrl)}`;
+        console.log("QR image loading:", img.src);
         
       } catch (qrError) {
-        console.error("QR code library error:", qrError);
+        console.error("QR code generation error:", qrError);
         if (qrCodeDiv) {
           qrCodeDiv.innerHTML = `
-            <div class="qr-fallback" style="text-align: center; padding: 20px; border: 1px solid #ff6b6b; border-radius: 8px; margin: 20px 0; background-color: #fff9f9;">
+            <div style="text-align: center; padding: 20px; border: 1px solid #ff6b6b; border-radius: 8px; margin: 20px 0; background-color: #fff9f9;">
               <p style="margin-bottom: 10px; color: #d63031; font-weight: bold;">QR Code could not be generated. Please use this link:</p>
               <a href="${qrCodeUrl}" target="_blank" style="color: #0984e3; font-weight: bold;">${qrCodeUrl}</a>
             </div>
