@@ -61,12 +61,16 @@ body {
   bottom: 0;
   left: 0;
   z-index: 10;
+  box-shadow: var(--shadow-sm);
 }
 
 .main-content {
   flex: 1;
-  margin-left: 240px;
+  margin-left: 260px;
   padding: var(--spacing-xl);
+  border-left: 1px solid var(--color-secondary-dark);
+  min-height: 100vh;
+  background-color: var(--color-white);
 }
 
 /* Add horizontal separator line */
