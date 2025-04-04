@@ -696,95 +696,59 @@ select:disabled {
   margin-bottom: 1.5rem;
 }
 
-/* QR Code Styles */
+/* QR Code Section Styles */
 #qr-code-container {
-  margin: 20px auto;
-  max-width: 300px;
-  min-height: 300px;
-  background-color: #f9f9f9;
-  border-radius: 6px;
-  padding: 20px;
+  margin: 1.5rem 0;
+  padding: 1.5rem;
+  background-color: white;
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-sm);
+  border: 1px solid var(--gray-200);
   text-align: center;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-  border: 2px solid #3a86ff;
-  background: linear-gradient(to bottom, #ffffff, #f5f8ff);
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  position: relative;
+  min-height: 300px;
 }
 
-/* Add a decorative header to make it more visible */
-#qr-code-container::before {
-  content: 'QR CODE';
-  position: absolute;
-  top: -12px;
-  left: 50%;
-  transform: translateX(-50%);
-  background-color: #3a86ff;
-  color: white;
-  padding: 4px 12px;
-  border-radius: 4px;
-  font-size: 12px;
-  font-weight: bold;
-  letter-spacing: 1px;
-}
-
-#qrcode-inner {
-  display: flex;
-  justify-content: center;
+/* Style for the actual QR code image */
+#qr-code-container img {
+  display: inline-block !important;
   margin: 0 auto;
-  max-width: 256px;
-}
-
-#qrcode-inner img {
   max-width: 100%;
   height: auto;
-  display: block;
 }
 
-.qr-fallback {
-  padding: 15px;
-  background: #fff;
-  border-radius: 8px;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-}
-
-.qr-fallback img {
-  display: block;
-  margin: 0 auto 10px;
+/* Style for the QR code canvas that the library generates */
+#qr-code-container canvas {
+  display: inline-block !important;
+  margin: 0 auto;
   max-width: 100%;
+  height: auto;
 }
 
-.qr-fallback a {
-  display: inline-block;
-  margin-top: 10px;
-  word-break: break-all;
-  font-size: 12px;
+/* Fix for QRCode.js library that sometimes adds hidden styles */
+#qr-code-container * {
+  display: block;
+  margin: 0 auto;
 }
 
 .success-message {
-  background-color: #e8f5e9;
-  border-left: 4px solid #4caf50;
-  padding: 12px;
-  margin-bottom: 15px;
-  border-radius: 4px;
+  background-color: rgba(56, 176, 0, 0.1);
+  color: var(--success);
+  padding: 1rem;
+  border-radius: var(--radius-md);
+  border-left: 4px solid var(--success);
+  margin: 1rem 0;
+  text-align: left;
 }
 
 .expiration-timer {
-  margin-top: 15px;
-  font-size: 14px;
-  color: #666;
+  margin-top: 1rem;
+  padding: 0.75rem;
+  background-color: var(--gray-100);
+  border-radius: var(--radius-md);
+  font-weight: 500;
+  color: var(--gray-700);
 }
 
-#countdown {
-  font-weight: bold;
-  color: #333;
-}
-
-.qr-fallback-image {
-  border: 1px solid #ddd;
-  border-radius: 4px;
-  padding: 4px;
-  background: white;
+.expiration-timer p {
+  margin: 0;
 }
