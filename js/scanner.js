@@ -425,8 +425,15 @@ document.addEventListener("DOMContentLoaded", async () => {
     }
   }
 
+  // Load attendance history
   async function loadAttendanceHistory() {
     try {
+      // Add null check for attendanceHistory
+      if (!attendanceHistory) {
+        console.warn("attendanceHistory element not found in the DOM");
+        return; // Exit function early if element doesn't exist
+      }
+      
       attendanceHistory.innerHTML = "<p>Loading attendance history...</p>";
       
       const response = await fetch(`${API_URL}/auth/student-attendance-history`, {
@@ -486,7 +493,9 @@ document.addEventListener("DOMContentLoaded", async () => {
       }
     } catch (error) {
       console.error("Error loading attendance history:", error);
-      attendanceHistory.innerHTML = "<p>Error loading attendance history. Please try again later.</p>";
+      if (attendanceHistory) {
+        attendanceHistory.innerHTML = "<p>Error loading attendance history. Please try again later.</p>";
+      }
     }
   }
 
