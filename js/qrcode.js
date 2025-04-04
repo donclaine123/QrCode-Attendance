@@ -138,11 +138,10 @@ async function generateQRCode() {
           throw new Error("QR code container element not found");
         }
         
-        // Create a dedicated div for the QR code
-        const qrDiv = document.createElement('div');
-        qrDiv.id = 'qrcode';
-        qrDiv.style.margin = '20px auto';
-        qrCodeDiv.appendChild(qrDiv);
+        // Create an inner div specifically for QR code
+        const qrInnerDiv = document.createElement('div');
+        qrInnerDiv.id = 'qrcode-inner';
+        qrCodeDiv.appendChild(qrInnerDiv);
         
         // Create new QR code with proper error handling
         console.log("Creating QR code with options:", {
@@ -152,55 +151,48 @@ async function generateQRCode() {
           correctLevel: QRCode.CorrectLevel ? QRCode.CorrectLevel.H : 2
         });
         
-        // Try various QR code library initialization methods
-        try {
-          new QRCode(qrDiv, {
-            text: qrCodeUrl,
-            width: 256,
-            height: 256,
-            colorDark: '#000000',
-            colorLight: '#ffffff',
-            correctLevel: QRCode.CorrectLevel ? QRCode.CorrectLevel.H : 2
-          });
-        } catch (innerError) {
-          console.error("First QR code method failed:", innerError);
-          
-          // Try alternate QR code library methods
-          try {
-            // Some QR libraries use different initialization
-            if (typeof QRCode.generateHTML === 'function') {
-              qrDiv.innerHTML = QRCode.generateHTML(qrCodeUrl, {
-                ecclevel: 'H',
-                size: 256,
-                modulesize: 8
-              });
-            } else if (typeof qrcode === 'function') {
-              qrDiv.innerHTML = qrcode(0, 'H', qrCodeUrl);
-            } else {
-              throw new Error("No compatible QR code generation method found");
-            }
-          } catch (alternateError) {
-            console.error("All QR code methods failed:", alternateError);
-            throw alternateError;
-          }
-        }
+        // Create QR Code with library
+        new QRCode(qrInnerDiv, {
+          text: qrCodeUrl,
+          width: 256,
+          height: 256,
+          colorDark: '#000000',
+          colorLight: '#ffffff',
+          correctLevel: QRCode.CorrectLevel ? QRCode.CorrectLevel.H : 2
+        });
         
-        console.log("QR code generation attempted");
+        // Also create an image as a fallback using a QR code API (double protection)
+        const fallbackImg = document.createElement('img');
+        fallbackImg.src = `https://api.qrserver.com/v1/create-qr-code/?size=256x256&data=${encodeURIComponent(qrCodeUrl)}`;
+        fallbackImg.alt = "QR Code";
+        fallbackImg.style.display = 'none';
+        fallbackImg.style.maxWidth = '100%';
+        fallbackImg.classList.add('qr-fallback-image');
+        qrCodeDiv.appendChild(fallbackImg);
+        
+        // Check if QR code was created after a short delay
+        setTimeout(() => {
+          const qrImg = qrInnerDiv.querySelector('img');
+          if (!qrImg || qrImg.naturalWidth === 0) {
+            console.warn("QR code generation may have failed, showing fallback image");
+            qrInnerDiv.style.display = 'none';
+            fallbackImg.style.display = 'block';
+          } else {
+            console.log("QR code verified as generated successfully");
+          }
+        }, 500);
+        
+        console.log("QR code generation process completed");
       } catch (qrError) {
         console.error("QR code library error:", qrError);
         if (qrCodeDiv) {
-          // Visual fallback if QR library fails
+          // Use QR Code API as fallback if library fails
           qrCodeDiv.innerHTML = `
             <div class="qr-fallback">
-              <p>QR Code library couldn't be loaded. Please use this link:</p>
-              <a href="${qrCodeUrl}" target="_blank">${qrCodeUrl}</a>
-              
-              <!-- Add a visual QR code using HTML/CSS as last resort -->
-              <div style="margin: 20px auto; width: 256px; background: white; padding: 10px;">
-                <img src="https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(qrCodeUrl)}" 
-                     alt="QR Code"
-                     style="display: block; margin: 0 auto; max-width: 100%;" />
-              </div>
+              <p>Using alternative QR generator:</p>
+              <img src="https://api.qrserver.com/v1/create-qr-code/?size=256x256&data=${encodeURIComponent(qrCodeUrl)}" 
+                   alt="QR Code" style="max-width: 100%;">
+              <p><a href="${qrCodeUrl}" target="_blank">${qrCodeUrl}</a></p>
             </div>
           `;
         }
@@ -578,35 +570,74 @@ async function viewAttendance() {
 window.addEventListener('load', function() {
   console.log("QR code library status:", typeof QRCode !== 'undefined' ? 'Loaded ✅' : 'Not loaded ❌');
   if (typeof QRCode === 'undefined') {
-    console.error("QRCode library not loaded! QR code generation will fall back to an external API.");
+    console.error("QRCode library not loaded! Creating fallback implementation");
     
-    // Define a global QRCode constructor to use as fallback
+    // Add a fallback QRCode implementation
     window.QRCode = function(element, options) {
-      console.log("Using fallback QRCode implementation with external API");
       if (typeof element === 'string') {
         element = document.getElementById(element);
       }
+      if (!element) return;
       
-      if (!element) {
-        console.error("QR code element not found");
-        return;
-      }
+      console.warn("Using fallback QRCode implementation");
       
-      // Clear element
+      // Create a container
+      const container = document.createElement('div');
+      container.style.position = 'relative';
+      container.style.width = '256px';
+      container.style.height = '256px';
+      container.style.margin = '0 auto';
+      
+      // Create an image using a QR Code API service
+      const img = document.createElement('img');
+      img.src = `https://api.qrserver.com/v1/create-qr-code/?size=256x256&data=${encodeURIComponent(options.text)}`;
+      img.alt = "QR Code";
+      img.style.width = '100%';
+      img.style.height = '100%';
+      img.style.display = 'block';
+      
+      // Add loading indicator
+      const loading = document.createElement('div');
+      loading.textContent = 'Generating QR Code...';
+      loading.style.position = 'absolute';
+      loading.style.top = '50%';
+      loading.style.left = '50%';
+      loading.style.transform = 'translate(-50%, -50%)';
+      loading.style.background = 'rgba(255,255,255,0.8)';
+      loading.style.padding = '5px 10px';
+      loading.style.borderRadius = '3px';
+      container.appendChild(loading);
+      
+      // Add image to container
+      container.appendChild(img);
+      
+      // Remove loading indicator when image loads
+      img.onload = function() {
+        container.removeChild(loading);
+      };
+      
+      // Add error handling
+      img.onerror = function() {
+        loading.textContent = 'QR Code generation failed';
+        loading.style.background = 'rgba(255,0,0,0.1)';
+        
+        // Add link as fallback
+        const link = document.createElement('a');
+        link.href = options.text;
+        link.textContent = options.text;
+        link.target = '_blank';
+        link.style.display = 'block';
+        link.style.marginTop = '10px';
+        link.style.wordBreak = 'break-all';
+        container.appendChild(link);
+      };
+      
+      // Clear and append to element
       element.innerHTML = '';
-      
-      // Create QR code using external API
-      const qrImg = document.createElement('img');
-      qrImg.src = `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(options.text)}`;
-      qrImg.alt = 'QR Code';
-      qrImg.style.display = 'block';
-      qrImg.style.margin = '0 auto';
-      qrImg.style.maxWidth = '100%';
-      
-      element.appendChild(qrImg);
+      element.appendChild(container);
     };
     
-    // Add CorrectLevel property to maintain compatibility
+    // Mock the QRCode.CorrectLevel object
     window.QRCode.CorrectLevel = { L: 1, M: 0, Q: 3, H: 2 };
   } else {
     console.log("QRCode.CorrectLevel:", QRCode.CorrectLevel ? "Available ✅" : "Missing ❌");

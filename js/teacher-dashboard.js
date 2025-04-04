@@ -819,22 +819,22 @@ async function loadAttendanceRecords() {
 async function viewCurrentSessionAttendance() {
     try {
         const currentSessionId = sessionStorage.getItem('currentQrSessionId');
-        
-        if (!currentSessionId) {
+    
+    if (!currentSessionId) {
             alert('No active session. Please generate a QR code first.');
-            return;
-        }
-        
+        return;
+    }
+    
         // Switch to the attendance tab
-        document.querySelector('[data-tab="attendance-tab"]').click();
-        
+    document.querySelector('[data-tab="attendance-tab"]').click();
+    
         // Set the class select to match the current session
         const classId = document.getElementById('class-select').value;
         document.getElementById('attendance-class-select').value = classId;
-        
-        // Load sessions for this class
-        await loadSessions(classId);
-        
+    
+    // Load sessions for this class
+    await loadSessions(classId);
+    
         // Set the session select to the current session
         document.getElementById('session-select').value = currentSessionId;
         
