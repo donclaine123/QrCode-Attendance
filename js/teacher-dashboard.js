@@ -547,18 +547,18 @@ async function loadClasses() {
 
 // Add a new class
 async function addNewClass() {
-    const className = document.getElementById('className').value.trim();
-    const classSubject = document.getElementById('classSubject').value.trim();
-    const classDescription = document.getElementById('classDescription').value.trim();
-    const statusDiv = document.getElementById('addClassStatus');
+    const className = document.getElementById('class-name').value.trim();
+    const classSubject = document.getElementById('subject').value.trim();
+    const classDescription = document.getElementById('description').value.trim();
+    const statusDiv = document.getElementById('classes-list');
     
     if (!className) {
-        statusDiv.innerHTML = '<div class="error-message">Please enter a class name</div>';
+        statusDiv.innerHTML = '<div class="error-message">Please enter a class name</div>' + statusDiv.innerHTML;
         return;
     }
     
     try {
-        statusDiv.innerHTML = '<div class="processing-status">Adding class...</div>';
+        statusDiv.innerHTML = '<div class="processing-status">Adding class...</div>' + statusDiv.innerHTML;
         
         const response = await fetch(`${API_URL}/auth/classes`, {
             method: 'POST',
@@ -576,17 +576,17 @@ async function addNewClass() {
         const data = await response.json();
         
         if (data.success) {
-            statusDiv.innerHTML = '<div class="success-message">Class added successfully!</div>';
-            document.getElementById('className').value = '';
-            document.getElementById('classSubject').value = '';
-            document.getElementById('classDescription').value = '';
+            statusDiv.innerHTML = '<div class="success-message">Class added successfully!</div>' + statusDiv.innerHTML;
+            document.getElementById('class-name').value = '';
+            document.getElementById('subject').value = '';
+            document.getElementById('description').value = '';
             await loadClasses(); // Reload classes
         } else {
-            statusDiv.innerHTML = `<div class="error-message">Error: ${data.message}</div>`;
+            statusDiv.innerHTML = `<div class="error-message">Error: ${data.message}</div>` + statusDiv.innerHTML;
         }
     } catch (error) {
         console.error('Error adding class:', error);
-        statusDiv.innerHTML = '<div class="error-message">Server error. Please try again.</div>';
+        statusDiv.innerHTML = '<div class="error-message">Server error. Please try again.</div>' + statusDiv.innerHTML;
     }
 }
 
