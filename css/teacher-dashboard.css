@@ -706,6 +706,28 @@ select:disabled {
   padding: 20px;
   text-align: center;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  border: 2px solid #3a86ff;
+  background: linear-gradient(to bottom, #ffffff, #f5f8ff);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  position: relative;
+}
+
+/* Add a decorative header to make it more visible */
+#qr-code-container::before {
+  content: 'QR CODE';
+  position: absolute;
+  top: -12px;
+  left: 50%;
+  transform: translateX(-50%);
+  background-color: #3a86ff;
+  color: white;
+  padding: 4px 12px;
+  border-radius: 4px;
+  font-size: 12px;
+  font-weight: bold;
+  letter-spacing: 1px;
 }
 
 #qrcode-inner {
