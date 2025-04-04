@@ -377,7 +377,7 @@ async function initDashboard() {
         loadClasses();
       } else {
         console.error("Authentication failed, redirecting to login...");
-        window.location.href = getBasePath() + '/login.html';
+        window.location.href = getBasePath() + '/pages/login.html';
       }
     } else {
       // User info found in sessionStorage
@@ -863,12 +863,12 @@ async function logout() {
     sessionStorage.clear();
     
     // Redirect to login page
-    window.location.href = getBasePath() + '/login.html';
+    window.location.href = getBasePath() + '/pages/login.html';
     } catch (error) {
         console.error('Logout error:', error);
     // Even if the server request fails, clear local storage and redirect
     sessionStorage.clear();
-    window.location.href = getBasePath() + '/login.html';
+    window.location.href = getBasePath() + '/pages/login.html';
   }
 }
 
