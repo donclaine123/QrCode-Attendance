@@ -945,7 +945,7 @@ async function loadRecentAttendanceRecords() {
         }
         
         // Updated endpoint to match the backend route pattern
-        const response = await fetch(`${API_URL}/teacher/recent-attendance-summary`, {
+        const response = await fetch(`${API_URL}/auth/recent-attendance-summary`, {
             method: 'GET',
             credentials: 'include',
             headers: headers
