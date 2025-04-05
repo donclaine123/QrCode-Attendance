@@ -5,6 +5,8 @@ async function generateQRCode() {
   console.log("generateQRCode called");
   
   const classSelect = document.getElementById('class-select');
+  const sectionInput = document.getElementById('qr-section-input');
+  
   if (!classSelect) {
     console.error("Element with ID 'class-select' not found");
     alert("Error: Could not find class selection element");
@@ -17,7 +19,10 @@ async function generateQRCode() {
   const statusDiv = document.getElementById('status') || document.getElementById('qr-code-container');
   
   const selectedClassId = classSelect.value;
+  const sectionValue = sectionInput ? sectionInput.value.trim() : '';
+  
   console.log("Selected class ID:", selectedClassId);
+  console.log("Section:", sectionValue);
   
   // Check if we have a place to show the QR code
   if (!qrCodeDiv) {
@@ -85,7 +90,8 @@ async function generateQRCode() {
       body: JSON.stringify({
         subject: subject,
         class_id: selectedClassId,
-        teacher_id: teacherId
+        teacher_id: teacherId,
+        section: sectionValue
       })
     });
     
@@ -106,7 +112,8 @@ async function generateQRCode() {
         body: JSON.stringify({
           subject: subject,
           class_id: selectedClassId,
-          teacher_id: teacherId
+          teacher_id: teacherId,
+          section: sectionValue
         })
       });
       

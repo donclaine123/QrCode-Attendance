@@ -763,8 +763,16 @@ async function loadAttendanceRecords() {
                 return;
             }
             
+            // Get section information to display
+            const sectionInfo = data.section ? `<p class="session-section">Section: ${data.section}</p>` : '';
+            
             // Create attendance table
             let tableHTML = `
+                <div class="attendance-header">
+                    <h3>${data.className || 'Unknown Class'}</h3>
+                    <p>Subject: ${data.subject || 'Unknown Subject'}</p>
+                    ${sectionInfo}
+                </div>
                 <table class="attendance-table">
                     <thead>
                         <tr>
