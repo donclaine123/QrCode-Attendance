@@ -5,8 +5,8 @@ const viewAttendanceButton = document.getElementById("view-attendance");
 
 if (viewAttendanceButton) {
   viewAttendanceButton.addEventListener("click", async () => {
-    const userId = localStorage.getItem("userId");
-    const role = localStorage.getItem("role");
+    const userId = sessionStorage.getItem("userId");
+    const role = sessionStorage.getItem("userRole");
 
     if (!userId || !role) {
       alert("You are not logged in. Please log in first.");
@@ -66,7 +66,7 @@ if (viewAttendanceButton) {
 }
 
 async function fetchSessions() {
-  const userId = localStorage.getItem("userId");
+  const userId = sessionStorage.getItem("userId");
 
   try {
     const response = await fetch(`${API_URL}/auth/sessions?teacher_id=${userId}`, {

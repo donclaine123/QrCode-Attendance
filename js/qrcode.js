@@ -36,8 +36,8 @@ async function generateQRCode() {
   }
 
   try {
-    // Get teacher ID from session or localStorage fallback
-    const teacherId = sessionStorage.getItem('userId') || localStorage.getItem('userId');
+    // Get teacher ID from sessionStorage
+    const teacherId = sessionStorage.getItem('userId');
     console.log("Teacher ID:", teacherId);
     
     if (!teacherId) {
@@ -68,7 +68,7 @@ async function generateQRCode() {
     };
     
     // Add user ID and role to headers as fallback authentication
-    const userRole = sessionStorage.getItem('userRole') || localStorage.getItem('userRole');
+    const userRole = sessionStorage.getItem('userRole');
     if (teacherId && userRole) {
       headers['X-User-ID'] = teacherId;
       headers['X-User-Role'] = userRole;
@@ -366,7 +366,7 @@ async function generateQRCode() {
 // Function to populate class dropdown
 async function populateClassDropdown() {
   const classSelect = document.getElementById('class-select');
-  const teacherId = sessionStorage.getItem('userId') || localStorage.getItem('userId');
+  const teacherId = sessionStorage.getItem('userId');
   
   if (!classSelect) {
     console.error("Class select element not found");
@@ -390,7 +390,7 @@ async function populateClassDropdown() {
     };
     
     // Add user ID and role to headers as fallback authentication
-    const userRole = sessionStorage.getItem('userRole') || localStorage.getItem('userRole');
+    const userRole = sessionStorage.getItem('userRole');
     if (teacherId && userRole) {
       headers['X-User-ID'] = teacherId;
       headers['X-User-Role'] = userRole;
@@ -517,8 +517,8 @@ async function viewAttendance() {
     if (attendanceDiv) attendanceDiv.innerHTML = '';
     
     // Get auth data
-    const teacherId = sessionStorage.getItem('userId') || localStorage.getItem('userId');
-    const userRole = sessionStorage.getItem('userRole') || localStorage.getItem('userRole');
+    const teacherId = sessionStorage.getItem('userId');
+    const userRole = sessionStorage.getItem('userRole');
     
     if (!teacherId || !userRole) {
       console.error("No teacher ID or role found in storage");

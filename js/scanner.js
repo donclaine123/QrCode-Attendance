@@ -45,15 +45,15 @@ document.addEventListener("DOMContentLoaded", async () => {
       console.log("Using URL parameters for authentication");
       isAuthenticated = true;
       
-      // Store user data in localStorage
-      localStorage.setItem('userId', urlUserId);
-      localStorage.setItem('userRole', 'student');
+      // Store user data in sessionStorage
+      sessionStorage.setItem('userId', urlUserId);
+      sessionStorage.setItem('userRole', 'student');
       
       const firstName = urlParams.get('firstName');
       const lastName = urlParams.get('lastName');
       
-      if (firstName) localStorage.setItem('firstName', firstName);
-      if (lastName) localStorage.setItem('lastName', lastName);
+      if (firstName) sessionStorage.setItem('firstName', firstName);
+      if (lastName) sessionStorage.setItem('lastName', lastName);
       
       if (authDebug) {
         authDebug.textContent = "Authentication from URL parameters successful!";
@@ -63,17 +63,17 @@ document.addEventListener("DOMContentLoaded", async () => {
         welcomeMessage.textContent = `Welcome, ${firstName}!`;
       }
     }
-    // Check localStorage if URL parameters aren't available
-    else if (localStorage.getItem('userId') && localStorage.getItem('userRole') === 'student') {
-      console.log("Using localStorage for authentication");
+    // Check sessionStorage if URL parameters aren't available
+    else if (sessionStorage.getItem('userId') && sessionStorage.getItem('userRole') === 'student') {
+      console.log("Using sessionStorage for authentication");
       isAuthenticated = true;
       
       if (authDebug) {
-        authDebug.textContent = "Authentication from localStorage successful!";
+        authDebug.textContent = "Authentication from sessionStorage successful!";
       }
       
-      if (welcomeMessage && localStorage.getItem('firstName')) {
-        welcomeMessage.textContent = `Welcome, ${localStorage.getItem('firstName')}!`;
+      if (welcomeMessage && sessionStorage.getItem('firstName')) {
+        welcomeMessage.textContent = `Welcome, ${sessionStorage.getItem('firstName')}!`;
       }
     }
     // Finally, try session-based authentication
@@ -99,11 +99,11 @@ document.addEventListener("DOMContentLoaded", async () => {
           console.log("User is authenticated as student");
           isAuthenticated = true;
           
-          // Store in localStorage for future use
-          localStorage.setItem('userId', authData.user.id);
-          localStorage.setItem('userRole', 'student');
-          if (authData.user.firstName) localStorage.setItem('firstName', authData.user.firstName);
-          if (authData.user.lastName) localStorage.setItem('lastName', authData.user.lastName);
+          // Store in sessionStorage for future use
+          sessionStorage.setItem('userId', authData.user.id);
+          sessionStorage.setItem('userRole', 'student');
+          if (authData.user.firstName) sessionStorage.setItem('firstName', authData.user.firstName);
+          if (authData.user.lastName) sessionStorage.setItem('lastName', authData.user.lastName);
           
           if (authDebug) {
             authDebug.textContent += "\nAuthentication successful! Loading dashboard...";
@@ -140,7 +140,7 @@ document.addEventListener("DOMContentLoaded", async () => {
       }
       
       // Clear any existing authentication data
-      localStorage.clear();
+      sessionStorage.clear();
       document.cookie.split(";").forEach(function(c) { 
         document.cookie = c.replace(/^ +/, "").replace(/=.*/, "=;expires=" + new Date().toUTCString() + ";path=/"); 
       });
@@ -156,7 +156,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     }
     
     // Clear any existing authentication data
-    localStorage.clear();
+    sessionStorage.clear();
     document.cookie.split(";").forEach(function(c) { 
       document.cookie = c.replace(/^ +/, "").replace(/=.*/, "=;expires=" + new Date().toUTCString() + ";path=/"); 
     });
@@ -454,14 +454,14 @@ document.addEventListener("DOMContentLoaded", async () => {
     
     try {
       // Use the same authentication approach as in other areas
-      const userId = localStorage.getItem('userId');
-      const userRole = localStorage.getItem('userRole');
+      const userId = sessionStorage.getItem('userId');
+      const userRole = sessionStorage.getItem('userRole');
       const headers = {
         'Accept': 'application/json',
         'Cache-Control': 'no-cache'
       };
       
-      // Add user headers if available in localStorage as fallback
+      // Add user headers if available in sessionStorage as fallback
       if (userId && userRole) {
         headers['X-User-ID'] = userId;
         headers['X-User-Role'] = userRole;
@@ -522,8 +522,8 @@ document.addEventListener("DOMContentLoaded", async () => {
         `;
         
         // Clear session data after successful recording
-        localStorage.removeItem('currentSessionId');
-        localStorage.removeItem('currentTeacherId');
+        sessionStorage.removeItem('currentSessionId');
+        sessionStorage.removeItem('currentTeacherId');
         
         // Dispatch an event so student-dashboard.js can refresh attendance history
         document.dispatchEvent(new CustomEvent('attendance-recorded', { 

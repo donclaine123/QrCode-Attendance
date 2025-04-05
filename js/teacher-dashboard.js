@@ -420,11 +420,14 @@ async function loadClasses() {
             'Cache-Control': 'no-cache'
         };
         
-        // Add auth from sessionStorage if available
-        const userRole = sessionStorage.getItem('userRole');
-        if (userId && userRole) {
-            headers['X-User-ID'] = userId;
-            headers['X-User-Role'] = userRole;
+        // Only add header auth if no valid cookie exists
+        if (!document.cookie.includes('qr_attendance_sid')) {
+            const userId = sessionStorage.getItem('userId');
+            const userRole = sessionStorage.getItem('userRole');
+            if (userId && userRole) {
+                headers['X-User-ID'] = userId;
+                headers['X-User-Role'] = userRole;
+            }
         }
         
         // Try the authenticated endpoint with headers
@@ -632,8 +635,8 @@ async function loadSessions(classId) {
         
         // Only add header auth if no valid cookie exists
         if (!document.cookie.includes('qr_attendance_sid')) {
-            const userId = localStorage.getItem('userId');
-            const userRole = localStorage.getItem('userRole');
+            const userId = sessionStorage.getItem('userId');
+            const userRole = sessionStorage.getItem('userRole');
             if (userId && userRole) {
                 headers['X-User-ID'] = userId;
                 headers['X-User-Role'] = userRole;
@@ -721,8 +724,8 @@ async function loadAttendanceRecords() {
         };
         
         // Add fallback header auth
-        const userId = localStorage.getItem('userId');
-        const userRole = localStorage.getItem('userRole');
+        const userId = sessionStorage.getItem('userId');
+        const userRole = sessionStorage.getItem('userRole');
         if (userId && userRole) {
             headers['X-User-ID'] = userId;
             headers['X-User-Role'] = userRole;
