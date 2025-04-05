@@ -820,20 +820,32 @@ async function viewCurrentSessionAttendance() {
     try {
         const currentSessionId = sessionStorage.getItem('currentQrSessionId');
     
-    if (!currentSessionId) {
+        if (!currentSessionId) {
             alert('No active session. Please generate a QR code first.');
-        return;
-    }
+            return;
+        }
     
-        // Switch to the attendance tab
-    document.querySelector('[data-tab="attendance-tab"]').click();
+        // Switch to the attendance view
+        const viewAttendanceBtn = document.getElementById('view-attendance-btn');
+        if (viewAttendanceBtn) {
+            viewAttendanceBtn.click();
+        } else {
+            // If button not found, show the attendance section directly
+            document.getElementById('qr-section').style.display = 'none';
+            document.getElementById('classes-section').style.display = 'none';
+            document.getElementById('attendance-section').style.display = 'block';
+            
+            // Also update active class in navigation
+            document.querySelectorAll('.nav-link').forEach(link => link.classList.remove('active'));
+            document.querySelector('#view-attendance-btn').classList.add('active');
+        }
     
         // Set the class select to match the current session
         const classId = document.getElementById('class-select').value;
         document.getElementById('attendance-class-select').value = classId;
     
-    // Load sessions for this class
-    await loadSessions(classId);
+        // Load sessions for this class
+        await loadSessions(classId);
     
         // Set the session select to the current session
         document.getElementById('session-select').value = currentSessionId;

@@ -519,7 +519,7 @@ body {
   }
   
   .action-button, .btn {
-    width: 100%;
+  width: 100%;
     padding: var(--spacing-md);
   }
   
@@ -635,7 +635,7 @@ body {
     margin: 0 var(--spacing-xs);
   }
   
-  .video-container {
+.video-container {
     height: 40vh;
     aspect-ratio: auto;
   }

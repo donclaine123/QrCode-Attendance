@@ -488,6 +488,6 @@ button:hover {
   .attendance-table th,
   .attendance-table td {
     padding: var(--spacing-sm);
-    font-size: 0.9rem;
-  }
+  font-size: 0.9rem;
+}
 }
