@@ -684,3 +684,45 @@ window.addEventListener('load', function() {
       populateClassDropdown();
     }
 });
+
+document.addEventListener('DOMContentLoaded', function() {
+    // Check if teacher-dashboard.js already initialized things
+    if (window.dashboardInitialized) {
+        console.log('[QRCode] DOMContentLoaded - Dashboard already initialized, skipping potentially overlapping setup.');
+        // Only attach listeners specific to QR generation if needed, 
+        // but skip attaching listeners for elements handled by teacher-dashboard.js
+        const generateQrCodeBtn = document.getElementById('generate-qr-code-btn');
+        if (generateQrCodeBtn) {
+            console.log('[QRCode] Attaching CLICK listener to #generate-qr-code-btn');
+            generateQrCodeBtn.addEventListener('click', generateQRCode);
+        }
+        return; // Exit early
+    }
+    console.log('[QRCode] DOMContentLoaded - Attaching listeners...');
+    window.dashboardInitialized = true; // Set the flag if this script runs first
+
+    // Add listeners for elements specific to QR generation AND potentially others
+    const generateQrCodeBtn = document.getElementById('generate-qr-code-btn');
+    if (generateQrCodeBtn) {
+        console.log('[QRCode] Attaching CLICK listener to #generate-qr-code-btn');
+        generateQrCodeBtn.addEventListener('click', generateQRCode);
+    }
+
+    // **Crucially, remove or conditionalize any listeners here that are ALREADY handled in teacher-dashboard.js**
+    // For example, if qrcode.js was ALSO attaching a listener to #attendance-class-select, remove it:
+    /*
+    const attendanceClassSelect = document.getElementById('attendance-class-select');
+    if (attendanceClassSelect) {
+        // REMOVE THIS LISTENER if teacher-dashboard.js handles it
+        // attendanceClassSelect.addEventListener('change', function() { ... }); 
+    }
+    */
+    
+    // If qrcode.js called loadClasses or loadSessions directly on init, remove/conditionalize that too.
+    // loadClasses(); // REMOVE or check flag if teacher-dashboard.js calls it in initDashboard
+
+    // Call functions needed specifically for QR page that might NOT be in teacher-dashboard init
+    // e.g., If QR code generation needs the class list immediately:
+    // loadClassesForQr(); // Maybe create a specific function if needed only here
+    
+});
