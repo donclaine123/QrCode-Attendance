@@ -448,7 +448,9 @@ button:active {
   font-size: 1.1rem;
   letter-spacing: 0.5px;
   background: linear-gradient(135deg, #706D54, #A08963);
+  background-clip: text;
   -webkit-background-clip: text;
+  color: transparent;
   -webkit-text-fill-color: transparent;
   font-weight: 700;
   word-wrap: break-word;
