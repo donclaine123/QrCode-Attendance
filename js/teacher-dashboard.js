@@ -1121,22 +1121,33 @@ function displayAttendanceRecords(records) {
     const tableBody = document.querySelector('#recent-attendance-table tbody');
     if (!tableBody) return;
     
-    tableBody.innerHTML = '';
+    tableBody.innerHTML = ''; // Clear previous records
+
+    if (!records || records.length === 0) {
+        tableBody.innerHTML = `<tr><td colspan="5" class="text-center">No attendance records found</td></tr>`; // Update colspan
+        return;
+    }
     
     records.forEach(record => {
         const row = document.createElement('tr');
         
         // Format date to be more readable
-        const dateObj = new Date(record.attendance_date);
+        const dateObj = new Date(record.attendance_date + 'T00:00:00'); // Ensure correct parsing
         const formattedDate = dateObj.toLocaleDateString('en-US', { 
             year: 'numeric', 
             month: 'short', 
             day: 'numeric' 
         });
         
+        // Use the time directly from the backend query
+        const formattedTime = record.attendance_time || 'N/A'; 
+        const sectionDisplay = record.section || 'N/A'; // Handle null sections
+
         row.innerHTML = `
             <td>${record.class_name}</td>
+            <td>${sectionDisplay}</td>
             <td>${formattedDate}</td>
+            <td>${formattedTime}</td>
             <td>${record.present_count}</td>
         `;
         
