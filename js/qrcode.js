@@ -6,6 +6,7 @@ async function generateQRCode() {
   
   const classSelect = document.getElementById('class-select');
   const sectionInput = document.getElementById('qr-section-input');
+  const generateBtn = document.getElementById('generate-qr-code-btn'); // Get the button
   
   if (!classSelect) {
     console.error("Element with ID 'class-select' not found");
@@ -39,6 +40,9 @@ async function generateQRCode() {
     if (statusDiv) statusDiv.textContent = 'Please select a class first.';
     return;
   }
+  
+  // Disable button to prevent double clicks
+  if (generateBtn) generateBtn.disabled = true;
 
   try {
     // Get teacher ID from sessionStorage
@@ -367,6 +371,9 @@ async function generateQRCode() {
     if (statusDiv) {
     statusDiv.innerHTML = `<div class="error-message">Server connection error. Please try again.</div>`;
     }
+  } finally {
+    // Re-enable button regardless of success or failure
+    if (generateBtn) generateBtn.disabled = false;
   }
 }
 
