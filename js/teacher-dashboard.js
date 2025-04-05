@@ -105,16 +105,26 @@ document.addEventListener('DOMContentLoaded', function() {
     }
     
     // Set up event listeners for attendance viewing
-    const loadAttendanceBtn = document.getElementById('load-attendance-btn');
     const attendanceClassSelect = document.getElementById('attendance-class-select');
-    
-    if (loadAttendanceBtn) {
-        loadAttendanceBtn.addEventListener('click', loadAttendanceRecords);
-    }
+    const sessionSelect = document.getElementById('session-select'); // Get the session dropdown
     
     if (attendanceClassSelect) {
         attendanceClassSelect.addEventListener('change', function() {
             loadSessions(this.value);
+            // Clear attendance when class changes
+            document.getElementById('attendance-records').innerHTML = ''; 
+        });
+    }
+    
+    // Add listener to session dropdown to load attendance automatically
+    if (sessionSelect) {
+        sessionSelect.addEventListener('change', function() {
+            if (this.value) { // Only load if a session is selected
+                loadAttendanceRecords();
+            } else {
+                // Clear attendance if the default option is selected
+                document.getElementById('attendance-records').innerHTML = '';
+            }
         });
     }
     
