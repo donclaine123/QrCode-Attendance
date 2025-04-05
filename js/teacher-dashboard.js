@@ -829,10 +829,10 @@ async function viewCurrentSessionAttendance() {
     try {
         const currentSessionId = sessionStorage.getItem('currentQrSessionId');
     
-        if (!currentSessionId) {
+    if (!currentSessionId) {
             alert('No active session. Please generate a QR code first.');
-            return;
-        }
+        return;
+    }
     
         // Switch to the attendance view
         const viewAttendanceBtn = document.getElementById('view-attendance-btn');
@@ -853,8 +853,8 @@ async function viewCurrentSessionAttendance() {
         const classId = document.getElementById('class-select').value;
         document.getElementById('attendance-class-select').value = classId;
     
-        // Load sessions for this class
-        await loadSessions(classId);
+    // Load sessions for this class
+    await loadSessions(classId);
     
         // Set the session select to the current session
         document.getElementById('session-select').value = currentSessionId;
@@ -913,7 +913,7 @@ document.addEventListener('DOMContentLoaded', function() {
     attendanceClassSelect.addEventListener('change', function() {
         loadSessions(this.value);
     });
-});
+}); 
 
 // Function to load recent attendance records
 async function loadRecentAttendanceRecords() {
@@ -921,13 +921,12 @@ async function loadRecentAttendanceRecords() {
     if (!tableBody) return;
     
     // Show loading state
-    tableBody.innerHTML = '<tr><td colspan="3" class="text-center">Loading attendance records...</td></tr>';
+    tableBody.innerHTML = '<tr><td colspan="3" class="text-center">Loading recent attendance records...</td></tr>';
     
     try {
         const teacherId = sessionStorage.getItem('userId');
         if (!teacherId) {
             console.error('Teacher ID not found in session storage');
-            tableBody.innerHTML = '<tr><td colspan="3" class="text-center">User ID not found, please login again</td></tr>';
             return;
         }
         
@@ -945,57 +944,25 @@ async function loadRecentAttendanceRecords() {
             headers['X-User-Role'] = userRole;
         }
         
-        console.log(`Fetching recent attendance records for teacher ID: ${teacherId}`);
+        const response = await fetch(`${API_URL}/auth/recent-attendance-summary`, {
+            method: 'GET',
+            credentials: 'include',
+            headers: headers
+        });
         
-        let apiSuccess = false;
-        
-        // Try the teacher endpoint first
-        try {
-            console.log('Attempting to fetch from /teacher/recent-attendance-summary');
-            const response = await fetch(`${API_URL}/teacher/recent-attendance-summary`, {
-                method: 'GET',
-                credentials: 'include',
-                headers: headers
-            });
-            
-            console.log(`Response status from /teacher path: ${response.status}`);
-            
-            if (response.ok) {
-                const data = await response.json();
-                if (data.success && data.records && data.records.length > 0) {
-                    displayAttendanceRecords(data.records);
-                    apiSuccess = true;
-                }
-            }
-            
-            // If teacher endpoint fails, try the auth endpoint as fallback
-            if (!apiSuccess) {
-                console.log('Teacher endpoint failed, trying auth endpoint as fallback');
-                const authResponse = await fetch(`${API_URL}/auth/recent-attendance-summary`, {
-                    method: 'GET',
-                    credentials: 'include',
-                    headers: headers
-                });
-                console.log(`Response status from /auth path: ${authResponse.status}`);
-                
-                if (authResponse.ok) {
-                    const authData = await authResponse.json();
-                    if (authData.success && authData.records && authData.records.length > 0) {
-                        displayAttendanceRecords(authData.records);
-                        apiSuccess = true;
-                    }
-                }
-            }
-        } catch (fetchError) {
-            console.error('API fetch error:', fetchError);
+        if (!response.ok) {
+            throw new Error(`Failed to fetch attendance records: ${response.status}`);
         }
         
-        // If both API calls failed or returned no records, show no records message
-        if (!apiSuccess) {
-            tableBody.innerHTML = '<tr><td colspan="3" class="text-center">No recent attendance records yet</td></tr>';
+        const data = await response.json();
+        
+        if (data.success && data.records && data.records.length > 0) {
+            displayAttendanceRecords(data.records);
+        } else {
+            tableBody.innerHTML = '<tr><td colspan="3" class="text-center">No attendance records found</td></tr>';
         }
     } catch (error) {
-        console.error('Error in attendance records function:', error);
+        console.error('Error fetching recent attendance records:', error);
         tableBody.innerHTML = `<tr><td colspan="3" class="text-center">Error loading records: ${error.message}</td></tr>`;
     }
 }
