@@ -331,7 +331,7 @@ async function login(email, password) {
     sessionStorage.setItem('userRole', data.role);
     sessionStorage.setItem('userName', `${data.user.firstName} ${data.user.lastName}`);
     sessionStorage.setItem('userEmail', email);
-    sessionStorage.setItem('loginTime', new Date().toISOString());
+    sessionStorage.setItem('loginTime', convertToUTC8(new Date()));
     
     return {
       success: true,
@@ -424,4 +424,13 @@ async function checkAuthentication() {
       }
     }
   }
+}
+
+// Helper function to convert UTC date to UTC+8
+function convertToUTC8(date) {
+  // Create a new date object with UTC+8 hours
+  const utc8Date = new Date(date.getTime() + (8 * 60 * 60 * 1000));
+  
+  // Format the date to readable format
+  return utc8Date.toISOString().replace('Z', '+08:00');
 }
