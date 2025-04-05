@@ -163,9 +163,6 @@ body {
 
 /* Teacher Section */
 #teacher-section {
-  border-top: 1px solid var(--color-secondary-dark);
-  border-left: 1px solid var(--color-secondary-dark);
-  border-right: 1px solid var(--color-secondary-dark);
   border-radius: var(--border-radius-md) var(--border-radius-md) 0 0;
   background-color: var(--color-white);
   padding: var(--spacing-lg);

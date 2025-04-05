@@ -921,12 +921,13 @@ async function loadRecentAttendanceRecords() {
     if (!tableBody) return;
     
     // Show loading state
-    tableBody.innerHTML = '<tr><td colspan="3" class="text-center">Loading recent attendance records...</td></tr>';
+    tableBody.innerHTML = '<tr><td colspan="3" class="text-center">Loading attendance records...</td></tr>';
     
     try {
         const teacherId = sessionStorage.getItem('userId');
         if (!teacherId) {
             console.error('Teacher ID not found in session storage');
+            tableBody.innerHTML = '<tr><td colspan="3" class="text-center">User ID not found, please login again</td></tr>';
             return;
         }
         
@@ -944,17 +945,41 @@ async function loadRecentAttendanceRecords() {
             headers['X-User-Role'] = userRole;
         }
         
-        const response = await fetch(`${API_URL}/auth/recent-attendance-summary`, {
-            method: 'GET',
-            credentials: 'include',
-            headers: headers
-        });
+        console.log(`Fetching recent attendance records for teacher ID: ${teacherId}`);
+        
+        // Try the teacher endpoint first
+        let response;
+        try {
+            console.log('Attempting to fetch from /teacher/recent-attendance-summary');
+            response = await fetch(`${API_URL}/teacher/recent-attendance-summary`, {
+                method: 'GET',
+                credentials: 'include',
+                headers: headers
+            });
+            
+            console.log(`Response status from /teacher path: ${response.status}`);
+            
+            // If teacher endpoint fails, try the auth endpoint as fallback
+            if (response.status === 404) {
+                console.log('Teacher endpoint not found, trying auth endpoint as fallback');
+                response = await fetch(`${API_URL}/auth/recent-attendance-summary`, {
+                    method: 'GET',
+                    credentials: 'include',
+                    headers: headers
+                });
+                console.log(`Response status from /auth path: ${response.status}`);
+            }
+        } catch (fetchError) {
+            console.error('Fetch error:', fetchError);
+            throw new Error(`Network error: ${fetchError.message}`);
+        }
         
         if (!response.ok) {
             throw new Error(`Failed to fetch attendance records: ${response.status}`);
         }
         
         const data = await response.json();
+        console.log('Recent attendance data:', data);
         
         if (data.success && data.records && data.records.length > 0) {
             displayAttendanceRecords(data.records);
