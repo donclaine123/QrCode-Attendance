@@ -116,14 +116,82 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
     
-    // Add listener to session dropdown to load attendance automatically
+    // Add listener to session dropdown to fetch sections for the selected date
     if (sessionSelect) {
-        sessionSelect.addEventListener('change', function() {
-            if (this.value) { // Only load if a session is selected
-                loadAttendanceRecords();
-            } else {
-                // Clear attendance if the default option is selected
-                document.getElementById('attendance-records').innerHTML = '';
+        sessionSelect.addEventListener('change', async function() {
+            const attendanceRecordsDiv = document.getElementById('attendance-records');
+            const sectionChoicesDiv = document.getElementById('section-choices');
+            const sectionButtonsContainer = document.getElementById('section-buttons-container');
+            
+            // Clear previous attendance and section choices
+            if (attendanceRecordsDiv) attendanceRecordsDiv.innerHTML = '';
+            if (sectionButtonsContainer) sectionButtonsContainer.innerHTML = '';
+            if (sectionChoicesDiv) sectionChoicesDiv.style.display = 'none';
+
+            const selectedOption = this.options[this.selectedIndex];
+            const classId = document.getElementById('attendance-class-select').value;
+            const sessionDate = selectedOption.getAttribute('data-session-date');
+
+            if (this.value && classId && sessionDate) { // Only proceed if we have class, session, and date
+                console.log(`Session selected. Fetching sections for Class ${classId} on Date ${sessionDate}`);
+                try {
+                    const response = await fetch(`${API_URL}/auth/sessions-on-date?classId=${classId}&date=${sessionDate}`, {
+                        method: 'GET',
+                        credentials: 'include',
+                        headers: {
+                            'Accept': 'application/json',
+                            'Cache-Control': 'no-cache'
+                        }
+                    });
+                    
+                    if (!response.ok) {
+                         throw new Error(`Failed to fetch sections: ${response.status}`);
+                     }
+                     
+                     const data = await response.json();
+                     console.log("Sections data:", data);
+                     
+                     if (data.success && data.sections && data.sections.length > 0) {
+                         // Display section choices
+                         if (sectionChoicesDiv) sectionChoicesDiv.style.display = 'block';
+                         
+                         data.sections.forEach(sec => {
+                             const button = document.createElement('button');
+                             button.textContent = sec.section || 'No Section';
+                             button.className = 'btn btn-secondary section-choice-btn';
+                             button.setAttribute('data-session-id', sec.session_id);
+                             
+                             button.addEventListener('click', function() {
+                                 const specificSessionId = this.getAttribute('data-session-id');
+                                 console.log(`Loading attendance for selected section's session ID: ${specificSessionId}`);
+                                 // We need to update the main sessionSelect value to reflect the *actual* session ID 
+                                 // that corresponds to the clicked section, so loadAttendanceRecords uses the right ID.
+                                 sessionSelect.value = specificSessionId;
+                                 loadAttendanceRecords(); // Now load the attendance for this specific session
+                             });
+                             
+                             if (sectionButtonsContainer) sectionButtonsContainer.appendChild(button);
+                         });
+                         
+                         // If there's only one section, load it automatically?
+                         // Optional: If you want to auto-load if only one section exists for the date.
+                         // if (data.sections.length === 1) {
+                         //     const singleSectionSessionId = data.sections[0].session_id;
+                         //     sessionSelect.value = singleSectionSessionId;
+                         //     loadAttendanceRecords();
+                         // }
+                         
+                     } else {
+                         console.log('No sections found for this class/date, or only one session without a section name. Trying to load the selected session directly.');
+                         // Fallback: If no sections are returned (maybe only one session without a section name), 
+                         // try loading attendance for the initially selected session ID directly.
+                         loadAttendanceRecords(); 
+                     }
+                     
+                } catch (error) {
+                    console.error('Error fetching sections:', error);
+                    if (attendanceRecordsDiv) attendanceRecordsDiv.innerHTML = `<div class="error-message">Error loading section choices: ${error.message}</div>`;
+                }
             }
         });
     }
@@ -694,12 +762,14 @@ async function loadSessions(classId) {
                 const option = document.createElement('option');
                 option.value = session.session_id || session.id; 
                 
-                // Format date safely with error handling
                 let formattedDate = 'Unknown Date';
+                let sessionDateStr = ''; // YYYY-MM-DD format
+                
                 try {
                     if (session.created_at) {
                         const sessionDate = new Date(session.created_at);
                         if (!isNaN(sessionDate.getTime())) {
+                            // For display
                             formattedDate = sessionDate.toLocaleString('en-US', {
                                 year: 'numeric',
                                 month: 'short',
@@ -709,6 +779,8 @@ async function loadSessions(classId) {
                                 second: '2-digit',
                                 hour12: true
                             });
+                            // For data attribute (YYYY-MM-DD)
+                            sessionDateStr = sessionDate.toISOString().split('T')[0];
                         }
                     }
                 } catch (dateError) {
@@ -716,6 +788,7 @@ async function loadSessions(classId) {
                 }
                 
                 option.textContent = `Session #${session.id} - ${formattedDate}`;
+                option.setAttribute('data-session-date', sessionDateStr);
                 sessionSelect.appendChild(option);
             });
             
