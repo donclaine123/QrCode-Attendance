@@ -1,13 +1,31 @@
 // Teacher Dashboard functionality
 
 document.addEventListener('DOMContentLoaded', function() {
-    // Skip initialization if already done by qrcode.js
-    if (window.dashboardInitialized) {
-        console.log('[TeacherDashboard] DOMContentLoaded - Already initialized, skipping listener attachment.');
-        return;
-    }
+    // REMOVED: Don't skip the whole setup anymore. Allow listeners to attach.
+    // if (window.dashboardInitialized) {
+    //     console.log('[TeacherDashboard] DOMContentLoaded - Already initialized, skipping listener attachment.');
+    //     return;
+    // }
     console.log('[TeacherDashboard] DOMContentLoaded - Attaching listeners...');
 
+    // Check if the specific listener *for attendance class select* has already been attached 
+    // (e.g., by qrcode.js if it loaded first and attached it - although it shouldn't anymore)
+    // This is a more granular check than the broad flag.
+    const attendanceClassSelect = document.getElementById('attendance-class-select');
+    if (attendanceClassSelect && !attendanceClassSelect.dataset.listenerAttached) {
+        console.log('[TeacherDashboard] Attaching CHANGE listener to #attendance-class-select');
+        attendanceClassSelect.addEventListener('change', function() {
+            console.log('[TeacherDashboard] #attendance-class-select CHANGE event fired. Value:', this.value);
+            loadSessions(this.value);
+            const attendanceRecordsDiv = document.getElementById('attendance-records');
+            if(attendanceRecordsDiv) attendanceRecordsDiv.innerHTML = ''; 
+        });
+        attendanceClassSelect.dataset.listenerAttached = 'true'; // Mark as attached
+    } else if (attendanceClassSelect) {
+        console.log('[TeacherDashboard] CHANGE listener already attached to #attendance-class-select.');
+    }
+
+    // Attach other listeners unconditionally as they are specific to this dashboard
     const logoutBtn = document.getElementById('logout-btn');
     if (logoutBtn) {
         logoutBtn.addEventListener('click', function(e) {
@@ -16,13 +34,8 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
     
-    window.dashboardInitialized = true;
-    console.log('[TeacherDashboard] Initializing dashboard...');
-    
-    // Initialize the dashboard
-    initDashboard();
-
-    // Set up event listeners for navigation in the sidebar
+    // Attach sidebar navigation listeners
+    console.log('[TeacherDashboard] Attaching listeners to .nav-link elements');
     const navLinks = document.querySelectorAll('.nav-link');
     navLinks.forEach(link => {
         link.addEventListener('click', function(e) {
@@ -34,94 +47,23 @@ document.addEventListener('DOMContentLoaded', function() {
             // Update active state
             navLinks.forEach(navLink => navLink.classList.remove('active'));
             this.classList.add('active');
+            
+            // Show/hide sections based on clicked link ID
+            const overview = document.getElementById('dashboard-overview');
+            const qrSection = document.getElementById('qr-section');
+            const classesSection = document.getElementById('classes-section');
+            const attendanceSection = document.getElementById('attendance-section');
+
+            if (overview) overview.style.display = (this.id === 'dashboard-nav') ? 'block' : 'none';
+            if (qrSection) qrSection.style.display = (this.id === 'generate-qr-btn') ? 'block' : 'none';
+            if (classesSection) classesSection.style.display = (this.id === 'manage-classes-btn') ? 'block' : 'none';
+            if (attendanceSection) attendanceSection.style.display = (this.id === 'view-attendance-btn') ? 'block' : 'none';
         });
     });
     
-    // Set up event listeners for dashboard actions
-    const generateQrBtn = document.getElementById('generate-qr-btn');
-    const manageClassesBtn = document.getElementById('manage-classes-btn');
-    const viewAttendanceBtn = document.getElementById('view-attendance-btn');
-    const dashboardNav = document.getElementById('dashboard-nav');
-    
-    if (dashboardNav) {
-        dashboardNav.addEventListener('click', function() {
-            // Show dashboard overview, hide other sections
-            document.getElementById('dashboard-overview').style.display = 'block';
-            document.getElementById('qr-section').style.display = 'none';
-            document.getElementById('classes-section').style.display = 'none';
-            document.getElementById('attendance-section').style.display = 'none';
-        });
-    }
-    
-    if (generateQrBtn) {
-        generateQrBtn.addEventListener('click', function() {
-            document.getElementById('dashboard-overview').style.display = 'none'; // Hide overview
-            document.getElementById('qr-section').style.display = 'block';
-            document.getElementById('classes-section').style.display = 'none';
-            document.getElementById('attendance-section').style.display = 'none';
-        });
-    }
-    
-    if (manageClassesBtn) {
-        manageClassesBtn.addEventListener('click', function() {
-            document.getElementById('dashboard-overview').style.display = 'none'; // Hide overview
-            document.getElementById('qr-section').style.display = 'none';
-            document.getElementById('classes-section').style.display = 'block';
-            document.getElementById('attendance-section').style.display = 'none';
-        });
-    }
-    
-    if (viewAttendanceBtn) {
-        viewAttendanceBtn.addEventListener('click', function() {
-            document.getElementById('dashboard-overview').style.display = 'none'; // Hide overview
-            document.getElementById('qr-section').style.display = 'none';
-            document.getElementById('classes-section').style.display = 'none';
-            document.getElementById('attendance-section').style.display = 'block';
-        });
-    }
-    
-    // Initially show the dashboard overview and hide other sections
-    document.getElementById('dashboard-overview').style.display = 'block';
-    document.getElementById('qr-section').style.display = 'none';
-    document.getElementById('classes-section').style.display = 'none';
-    document.getElementById('attendance-section').style.display = 'none';
-    
-    // Set up event listeners for QR code generation
-    const generateQrCodeBtn = document.getElementById('generate-qr-code-btn');
-    const viewCurrentAttendanceBtn = document.getElementById('view-current-attendance-btn');
-    
-    if (generateQrCodeBtn) {
-        generateQrCodeBtn.addEventListener('click', generateQRCode);
-    }
-    
-    if (viewCurrentAttendanceBtn) {
-        viewCurrentAttendanceBtn.addEventListener('click', viewCurrentSessionAttendance);
-    }
-    
-    // Set up event listeners for class management
-    const addClassBtn = document.getElementById('add-class-btn');
-    
-    if (addClassBtn) {
-        addClassBtn.addEventListener('click', addNewClass);
-    }
-    
-    // Set up event listeners for attendance viewing
-    const attendanceClassSelect = document.getElementById('attendance-class-select');
-    const sessionSelect = document.getElementById('session-select'); // Get the session dropdown
-    
-    if (attendanceClassSelect) {
-        console.log('[TeacherDashboard] Attaching CHANGE listener to #attendance-class-select');
-        attendanceClassSelect.addEventListener('change', function() {
-            console.log('[TeacherDashboard] #attendance-class-select CHANGE event fired. Value:', this.value);
-            loadSessions(this.value);
-            // Clear attendance when class changes
-            const attendanceRecordsDiv = document.getElementById('attendance-records');
-            if(attendanceRecordsDiv) attendanceRecordsDiv.innerHTML = ''; 
-        });
-    }
-    
-    // Add listener to session dropdown to fetch sections for the selected date
-    if (sessionSelect) {
+    // Attach session select listener (now safe to attach here)
+    const sessionSelect = document.getElementById('session-select'); 
+    if (sessionSelect && !sessionSelect.dataset.listenerAttached) {
         console.log('[TeacherDashboard] Attaching CHANGE listener to #session-select');
         sessionSelect.addEventListener('change', async function() {
             const attendanceRecordsDiv = document.getElementById('attendance-records');
@@ -199,6 +141,93 @@ document.addEventListener('DOMContentLoaded', function() {
                 }
             }
         });
+        sessionSelect.dataset.listenerAttached = 'true';
+    } else if (sessionSelect) {
+         console.log('[TeacherDashboard] CHANGE listener already attached to #session-select.');
+    }
+
+    // Initialize the dashboard (safe to call, handles fetching user data etc.)
+    if (!window.dashboardInitialized) { // Prevent double *initialization* if qrcode.js ran init
+        console.log('[TeacherDashboard] Initializing dashboard logic...');
+        initDashboard();
+        window.dashboardInitialized = true; // Mark dashboard logic as initialized
+    } else {
+        console.log ('[TeacherDashboard] Dashboard logic already initialized.');
+    }
+    
+     // Ensure initial view is correct (Dashboard overview)
+     const overview = document.getElementById('dashboard-overview');
+     const qrSection = document.getElementById('qr-section');
+     const classesSection = document.getElementById('classes-section');
+     const attendanceSection = document.getElementById('attendance-section');
+     if (overview) overview.style.display = 'block';
+     if (qrSection) qrSection.style.display = 'none';
+     if (classesSection) classesSection.style.display = 'none';
+     if (attendanceSection) attendanceSection.style.display = 'none';
+     // Set initial active nav link
+     document.querySelectorAll('.nav-link').forEach(link => link.classList.remove('active'));
+     document.getElementById('dashboard-nav')?.classList.add('active');
+
+    // Set up event listeners for dashboard actions
+    const generateQrBtn = document.getElementById('generate-qr-btn');
+    const manageClassesBtn = document.getElementById('manage-classes-btn');
+    const viewAttendanceBtn = document.getElementById('view-attendance-btn');
+    const dashboardNav = document.getElementById('dashboard-nav');
+    
+    if (dashboardNav) {
+        dashboardNav.addEventListener('click', function() {
+            // Show dashboard overview, hide other sections
+            document.getElementById('dashboard-overview').style.display = 'block';
+            document.getElementById('qr-section').style.display = 'none';
+            document.getElementById('classes-section').style.display = 'none';
+            document.getElementById('attendance-section').style.display = 'none';
+        });
+    }
+    
+    if (generateQrBtn) {
+        generateQrBtn.addEventListener('click', function() {
+            document.getElementById('dashboard-overview').style.display = 'none'; // Hide overview
+            document.getElementById('qr-section').style.display = 'block';
+            document.getElementById('classes-section').style.display = 'none';
+            document.getElementById('attendance-section').style.display = 'none';
+        });
+    }
+    
+    if (manageClassesBtn) {
+        manageClassesBtn.addEventListener('click', function() {
+            document.getElementById('dashboard-overview').style.display = 'none'; // Hide overview
+            document.getElementById('qr-section').style.display = 'none';
+            document.getElementById('classes-section').style.display = 'block';
+            document.getElementById('attendance-section').style.display = 'none';
+        });
+    }
+    
+    if (viewAttendanceBtn) {
+        viewAttendanceBtn.addEventListener('click', function() {
+            document.getElementById('dashboard-overview').style.display = 'none'; // Hide overview
+            document.getElementById('qr-section').style.display = 'none';
+            document.getElementById('classes-section').style.display = 'none';
+            document.getElementById('attendance-section').style.display = 'block';
+        });
+    }
+    
+    // Set up event listeners for QR code generation
+    const generateQrCodeBtn = document.getElementById('generate-qr-code-btn');
+    const viewCurrentAttendanceBtn = document.getElementById('view-current-attendance-btn');
+    
+    if (generateQrCodeBtn) {
+        generateQrCodeBtn.addEventListener('click', generateQRCode);
+    }
+    
+    if (viewCurrentAttendanceBtn) {
+        viewCurrentAttendanceBtn.addEventListener('click', viewCurrentSessionAttendance);
+    }
+    
+    // Set up event listeners for class management
+    const addClassBtn = document.getElementById('add-class-btn');
+    
+    if (addClassBtn) {
+        addClassBtn.addEventListener('click', addNewClass);
     }
     
     // Set up debug listeners

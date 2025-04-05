@@ -686,43 +686,42 @@ window.addEventListener('load', function() {
 });
 
 document.addEventListener('DOMContentLoaded', function() {
-    // Check if teacher-dashboard.js already initialized things
-    if (window.dashboardInitialized) {
-        console.log('[QRCode] DOMContentLoaded - Dashboard already initialized, skipping potentially overlapping setup.');
-        // Only attach listeners specific to QR generation if needed, 
-        // but skip attaching listeners for elements handled by teacher-dashboard.js
-        const generateQrCodeBtn = document.getElementById('generate-qr-code-btn');
-        if (generateQrCodeBtn) {
-            console.log('[QRCode] Attaching CLICK listener to #generate-qr-code-btn');
-            generateQrCodeBtn.addEventListener('click', generateQRCode);
-        }
-        return; // Exit early
-    }
-    console.log('[QRCode] DOMContentLoaded - Attaching listeners...');
-    window.dashboardInitialized = true; // Set the flag if this script runs first
-
-    // Add listeners for elements specific to QR generation AND potentially others
+    console.log('[QRCode] DOMContentLoaded running...');
+    
+    // Always attach the listener specific to this script's core function
     const generateQrCodeBtn = document.getElementById('generate-qr-code-btn');
     if (generateQrCodeBtn) {
-        console.log('[QRCode] Attaching CLICK listener to #generate-qr-code-btn');
-        generateQrCodeBtn.addEventListener('click', generateQRCode);
+        // Use a flag to prevent attaching the listener more than once if this script somehow runs twice
+        if (!generateQrCodeBtn.dataset.listenerAttached) {
+             console.log('[QRCode] Attaching CLICK listener to #generate-qr-code-btn');
+             generateQrCodeBtn.addEventListener('click', generateQRCode);
+             generateQrCodeBtn.dataset.listenerAttached = 'true';
+        } else {
+             console.log('[QRCode] CLICK listener already attached to #generate-qr-code-btn.');
+        }
     }
 
-    // **Crucially, remove or conditionalize any listeners here that are ALREADY handled in teacher-dashboard.js**
-    // For example, if qrcode.js was ALSO attaching a listener to #attendance-class-select, remove it:
-    /*
-    const attendanceClassSelect = document.getElementById('attendance-class-select');
-    if (attendanceClassSelect) {
-        // REMOVE THIS LISTENER if teacher-dashboard.js handles it
-        // attendanceClassSelect.addEventListener('change', function() { ... }); 
-    }
-    */
+    // Check the *specific* elements that might overlap with teacher-dashboard.js
+    // Example: If this script ALSO tried to attach listeners to the dropdowns, 
+    // we would check flags for those specific elements before attaching here.
     
-    // If qrcode.js called loadClasses or loadSessions directly on init, remove/conditionalize that too.
-    // loadClasses(); // REMOVE or check flag if teacher-dashboard.js calls it in initDashboard
+    // const attendanceClassSelect = document.getElementById('attendance-class-select');
+    // if (attendanceClassSelect && !attendanceClassSelect.dataset.listenerAttached) {
+    //     console.log('[QRCode] Attaching CHANGE listener to #attendance-class-select (SHOULD NOT HAPPEN IF TEACHER DASHBOARD LOADED)');
+    //     // Attach listener... 
+    //     attendanceClassSelect.dataset.listenerAttached = 'true';
+    // } else if (attendanceClassSelect) {
+    //      console.log('[QRCode] Listener already attached to #attendance-class-select by another script.');
+    // }
 
-    // Call functions needed specifically for QR page that might NOT be in teacher-dashboard init
-    // e.g., If QR code generation needs the class list immediately:
-    // loadClassesForQr(); // Maybe create a specific function if needed only here
-    
+    // Initialize things needed ONLY for QR generation if not already done
+    if (!window.dashboardInitialized) { // Use flag only to prevent double *initialization*, not listener attachment
+        console.log('[QRCode] Initializing QR code related logic (e.g., populating class dropdown)...');
+        if (document.getElementById('class-select')) {
+             populateClassDropdown(); // This is likely needed for QR generation
+        }
+        window.dashboardInitialized = true; // Mark initialization done
+    } else {
+         console.log('[QRCode] Dashboard logic already initialized, skipping QR-specific init.');
+    }
 });
