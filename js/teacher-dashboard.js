@@ -146,17 +146,43 @@ document.addEventListener('DOMContentLoaded', function() {
          console.log('[TeacherDashboard] CHANGE listener already attached to #session-select.');
     }
 
-    // Initialize the dashboard (safe to call, handles fetching user data etc.)
-    if (!window.dashboardInitialized) { // Prevent double *initialization* if qrcode.js ran init
-        console.log('[TeacherDashboard] Initializing dashboard logic...');
-        initDashboard();
-        window.dashboardInitialized = true; // Mark dashboard logic as initialized
+    // Initialize the dashboard logic (fetches user data, classes, etc.) if not already done
+    if (!window.dashboardInitialized) { 
+        console.log('[TeacherDashboard] Initializing dashboard logic (initDashboard)...');
+        initDashboard(); // This function internally shows #teacher-section on success
+        window.dashboardInitialized = true; 
     } else {
-        console.log ('[TeacherDashboard] Dashboard logic already initialized.');
+        console.log ('[TeacherDashboard] Dashboard logic already initialized by another script.');
+        // Manually show the main container if initDashboard was skipped but we have user info
+        // This ensures the container is visible even if qrcode.js initialized first.
+        if (sessionStorage.getItem('userId') && sessionStorage.getItem('userRole') === 'teacher') {
+             const teacherSection = document.getElementById('teacher-section');
+             if(teacherSection) {
+                 console.log('[TeacherDashboard] Manually showing #teacher-section because initDashboard was skipped.');
+                 teacherSection.style.display = 'block';
+             } else {
+                 console.error('[TeacherDashboard] Cannot manually show #teacher-section, element not found.');
+             }
+             // Also ensure welcome message is updated if initDashboard was skipped
+             const userName = sessionStorage.getItem('userName');
+             const welcomeMsg = document.getElementById('welcome-message');
+             if(welcomeMsg && userName) {
+                welcomeMsg.textContent = `Welcome, ${userName}!`;
+             }
+             // We might also need to trigger loadClasses and loadRecentAttendanceRecords here
+             // if they weren't called by qrcode.js's initialization.
+             // Let's add them just in case, guarded by checks.
+             if (document.getElementById('class-select')) loadClasses();
+             if (document.getElementById('recent-attendance-table')) loadRecentAttendanceRecords();
+        } else {
+             console.log('[TeacherDashboard] Skipping manual show of #teacher-section, user info not in session storage.');
+             // Optional: redirect to login if no user info is found here either?
+             // window.location.href = getBasePath() + '/pages/login.html';
+        }
     }
     
-    // Ensure initial view is correct (Dashboard overview) - MOVED TO RUN UNCONDITIONALLY
-    console.log('[TeacherDashboard] Setting initial section visibility.');
+    // Ensure initial view is correct (Dashboard overview) - Runs Unconditionally
+    console.log('[TeacherDashboard] Setting initial section visibility within #teacher-section.');
     const overview = document.getElementById('dashboard-overview');
     const qrSection = document.getElementById('qr-section');
     const classesSection = document.getElementById('classes-section');
