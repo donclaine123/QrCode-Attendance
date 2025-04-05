@@ -313,8 +313,7 @@ button:hover {
   background-color: var(--color-white);
   box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
   max-height: 400px;
-  display: flex;
-  flex-direction: column;
+  overflow-y: auto;
 }
 
 #dashboard-overview h2 {
@@ -322,34 +321,25 @@ button:hover {
   padding-bottom: var(--spacing-sm);
   border-bottom: 1px solid var(--color-secondary);
   color: var(--color-primary);
-  flex-shrink: 0;
+  position: sticky;
+  top: 0;
+  background-color: var(--color-white);
+  z-index: 1;
 }
 
 #recent-attendance-table {
   width: 100%;
   border-collapse: collapse;
-  flex-grow: 1;
-  display: block;
-  overflow: hidden;
+  margin-top: var(--spacing-md);
 }
 
 #recent-attendance-table thead {
-  display: table;
-  width: 100%;
-  table-layout: fixed;
 }
 
 #recent-attendance-table tbody {
-  display: block;
-  max-height: calc(400px - 80px);
-  overflow-y: auto;
-  width: 100%;
 }
 
 #recent-attendance-table tr {
-  display: table;
-  width: 100%;
-  table-layout: fixed;
 }
 
 #recent-attendance-table th,
@@ -357,7 +347,6 @@ button:hover {
   padding: var(--spacing-md);
   text-align: left;
   border-bottom: 1px solid var(--color-secondary-dark);
-  width: 33.33%;
 }
 
 #recent-attendance-table th {
@@ -365,17 +354,6 @@ button:hover {
   color: var(--color-text-light);
   text-transform: uppercase;
   font-size: 0.9rem;
-  background-color: var(--color-white);
-  position: sticky;
-  top: 0;
-}
-
-#recent-attendance-table tr:last-child td {
-  border-bottom: none;
-}
-
-#recent-attendance-table tr:hover td {
-  background-color: var(--color-secondary);
 }
 
 .attendance-table {
