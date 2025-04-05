@@ -988,53 +988,11 @@ async function loadRecentAttendanceRecords() {
             }
         } catch (fetchError) {
             console.error('API fetch error:', fetchError);
-            // Continue to fallback data
         }
         
-        // If both API calls failed, generate records from existing session data
+        // If both API calls failed or returned no records, show no records message
         if (!apiSuccess) {
-            console.log('Both API endpoints failed, generating local attendance data');
-            
-            // Try to generate attendance data from existing sessions in the DOM
-            try {
-                const classSelect = document.getElementById('attendance-class-select');
-                const sessionSelect = document.getElementById('session-select');
-                
-                // Get all class options from the DOM
-                const classOptions = Array.from(classSelect.options).slice(1); // Skip the first "Select a class" option
-                
-                if (classOptions.length > 0) {
-                    // Generate records based on existing classes
-                    const generatedRecords = classOptions.map((option, index) => {
-                        // Create dates starting from today and going back
-                        const date = new Date();
-                        date.setDate(date.getDate() - index);
-                        
-                        return {
-                            class_name: option.textContent,
-                            attendance_date: date.toISOString().split('T')[0],
-                            present_count: Math.floor(Math.random() * 20) + 10 // Random between 10-30 students
-                        };
-                    }).slice(0, 5); // Limit to 5 records
-                    
-                    if (generatedRecords.length > 0) {
-                        displayAttendanceRecords(generatedRecords);
-                        return;
-                    }
-                }
-                
-                // If we couldn't generate from DOM, use hardcoded sample data
-                const sampleData = [
-                    { class_name: 'Mathematics 101', attendance_date: new Date().toISOString().split('T')[0], present_count: 28 },
-                    { class_name: 'History 202', attendance_date: new Date(Date.now() - 86400000).toISOString().split('T')[0], present_count: 24 },
-                    { class_name: 'Physics 101', attendance_date: new Date(Date.now() - 86400000 * 2).toISOString().split('T')[0], present_count: 20 }
-                ];
-                
-                displayAttendanceRecords(sampleData);
-            } catch (fallbackError) {
-                console.error('Error generating fallback data:', fallbackError);
-                tableBody.innerHTML = '<tr><td colspan="3" class="text-center">Could not load attendance records</td></tr>';
-            }
+            tableBody.innerHTML = '<tr><td colspan="3" class="text-center">No recent attendance records yet</td></tr>';
         }
     } catch (error) {
         console.error('Error in attendance records function:', error);
