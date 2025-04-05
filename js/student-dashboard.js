@@ -1,6 +1,27 @@
 // Use global API_URL instead of import
 // import API_URL from "./config.js";
 
+// Student Dashboard functionality
+
+// --- Role Check --- 
+(function() {
+    const userId = sessionStorage.getItem('userId');
+    const userRole = sessionStorage.getItem('userRole');
+    const expectedRole = 'student'; // Role expected for this page
+
+    console.log(`[Role Check - Student] Found Role: ${userRole}`);
+
+    if (!userId || userRole !== expectedRole) {
+        console.warn(`[Role Check - Student] Access denied. Role is ${userRole}, expected ${expectedRole}. Redirecting to login.`);
+        // Clear potentially incorrect session data before redirecting
+        sessionStorage.clear(); 
+        // Use getBasePath if available, otherwise assume root or relative path
+        const basePath = typeof getBasePath === 'function' ? getBasePath() : ''; 
+        window.location.href = basePath + '/index.html'; // Redirect to main login/index page
+    }
+})();
+// --- End Role Check --- 
+
 document.addEventListener('DOMContentLoaded', function() {
     console.log('Student dashboard loaded');
     // Initialize dashboard
