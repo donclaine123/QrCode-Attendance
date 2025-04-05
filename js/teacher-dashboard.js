@@ -930,12 +930,24 @@ async function loadRecentAttendanceRecords() {
             return;
         }
         
-        const response = await fetch(`${API_BASE_URL}/recent-attendance-summary?teacherId=${teacherId}`, {
+        // Prepare headers with auth information
+        const headers = {
+            'Accept': 'application/json',
+            'Cache-Control': 'no-cache'
+        };
+        
+        // Add fallback header auth
+        const userId = sessionStorage.getItem('userId');
+        const userRole = sessionStorage.getItem('userRole');
+        if (userId && userRole) {
+            headers['X-User-ID'] = userId;
+            headers['X-User-Role'] = userRole;
+        }
+        
+        const response = await fetch(`${API_URL}/auth/recent-attendance-summary`, {
             method: 'GET',
-            headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${sessionStorage.getItem('token')}`
-            }
+            credentials: 'include',
+            headers: headers
         });
         
         if (!response.ok) {
