@@ -3,9 +3,10 @@
 document.addEventListener('DOMContentLoaded', function() {
     // Skip initialization if already done by qrcode.js
     if (window.dashboardInitialized) {
-        console.log('Dashboard already initialized by qrcode.js, skipping duplicate initialization');
+        console.log('[TeacherDashboard] DOMContentLoaded - Already initialized, skipping listener attachment.');
         return;
     }
+    console.log('[TeacherDashboard] DOMContentLoaded - Attaching listeners...');
 
     const logoutBtn = document.getElementById('logout-btn');
     if (logoutBtn) {
@@ -16,7 +17,7 @@ document.addEventListener('DOMContentLoaded', function() {
     }
     
     window.dashboardInitialized = true;
-    console.log('Teacher dashboard loaded');
+    console.log('[TeacherDashboard] Initializing dashboard...');
     
     // Initialize the dashboard
     initDashboard();
@@ -109,15 +110,19 @@ document.addEventListener('DOMContentLoaded', function() {
     const sessionSelect = document.getElementById('session-select'); // Get the session dropdown
     
     if (attendanceClassSelect) {
+        console.log('[TeacherDashboard] Attaching CHANGE listener to #attendance-class-select');
         attendanceClassSelect.addEventListener('change', function() {
+            console.log('[TeacherDashboard] #attendance-class-select CHANGE event fired. Value:', this.value);
             loadSessions(this.value);
             // Clear attendance when class changes
-            document.getElementById('attendance-records').innerHTML = ''; 
+            const attendanceRecordsDiv = document.getElementById('attendance-records');
+            if(attendanceRecordsDiv) attendanceRecordsDiv.innerHTML = ''; 
         });
     }
     
     // Add listener to session dropdown to fetch sections for the selected date
     if (sessionSelect) {
+        console.log('[TeacherDashboard] Attaching CHANGE listener to #session-select');
         sessionSelect.addEventListener('change', async function() {
             const attendanceRecordsDiv = document.getElementById('attendance-records');
             const sectionChoicesDiv = document.getElementById('section-choices');
@@ -1010,14 +1015,6 @@ function getBasePath() {
         return '/QrCode-Attendance';
     }
 }
-
-// Event listener for attendance class select
-document.addEventListener('DOMContentLoaded', function() {
-    const attendanceClassSelect = document.getElementById('attendance-class-select');
-    attendanceClassSelect.addEventListener('change', function() {
-        loadSessions(this.value);
-    });
-}); 
 
 // Function to load recent attendance records
 async function loadRecentAttendanceRecords() {
