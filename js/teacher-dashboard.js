@@ -14,7 +14,7 @@
         sessionStorage.clear(); 
         // Use getBasePath if available, otherwise assume root or relative path
         const basePath = typeof getBasePath === 'function' ? getBasePath() : ''; 
-        window.location.href = basePath + '/index.html'; // Redirect to main login/index page
+        window.location.href = basePath + 'login.html'; // Redirect to main login/index page
     }
 })();
 // --- End Role Check --- 
@@ -791,12 +791,12 @@ async function loadSessions(classId) { // Renaming to loadSessionDates might be 
     sessionSelect.innerHTML = '<option value="">Select date</option>'; // Change placeholder text
     if (sectionButtonsContainer) sectionButtonsContainer.innerHTML = ''; // Clear section buttons
     if (sectionChoicesDiv) sectionChoicesDiv.style.display = 'none'; // Hide section choices
-
+    
     if (!classId) {
         sessionSelect.innerHTML = '<option disabled>Please select a class first</option>';
         return;
     }
-
+    
     try {
         console.log(`Loading DISTINCT DATES for class ID: ${classId}`);
 
@@ -848,7 +848,7 @@ async function loadSessions(classId) { // Renaming to loadSessionDates might be 
                    const dateObj = new Date(dateStr + 'T00:00:00'); // Add time to parse correctly
                    if (!isNaN(dateObj.getTime())) {
                        displayDate = dateObj.toLocaleDateString('en-US', {
-                           year: 'numeric',
+                                year: 'numeric',
                            month: 'long', // Use 'long' for full month name
                            day: 'numeric'
                        });
