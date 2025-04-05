@@ -769,19 +769,25 @@ async function deleteClass(classId) {
     }
 }
 
-// Load sessions for a class
-async function loadSessions(classId) {
+// Load sessions (now distinct dates) for a class
+async function loadSessions(classId) { // Renaming to loadSessionDates might be clearer later
     const sessionSelect = document.getElementById('session-select');
-    sessionSelect.innerHTML = '<option value="">Select a session</option>';
-    
+    // Also get the section choices div to hide it when class changes
+    const sectionChoicesDiv = document.getElementById('section-choices');
+    const sectionButtonsContainer = document.getElementById('section-buttons-container');
+
+    sessionSelect.innerHTML = '<option value="">Select date</option>'; // Change placeholder text
+    if (sectionButtonsContainer) sectionButtonsContainer.innerHTML = ''; // Clear section buttons
+    if (sectionChoicesDiv) sectionChoicesDiv.style.display = 'none'; // Hide section choices
+
     if (!classId) {
-        sessionSelect.innerHTML += '<option disabled>Please select a class first</option>';
+        sessionSelect.innerHTML = '<option disabled>Please select a class first</option>';
         return;
     }
-    
+
     try {
-        console.log(`Loading sessions for class ID: ${classId}`);
-        
+        console.log(`Loading DISTINCT DATES for class ID: ${classId}`);
+
         // Prepare headers with existing auth info
         const headers = { 
             'Accept': 'application/json',
@@ -816,50 +822,41 @@ async function loadSessions(classId) {
         }
         
         const data = await response.json();
-        console.log('Sessions data received:', data);
+        console.log('Distinct dates data received:', data);
         
-        if (data.success && data.sessions && data.sessions.length > 0) {
-            data.sessions.forEach(session => {
+        // --- UPDATED LOGIC ---
+        if (data.success && data.dates && data.dates.length > 0) {
+            data.dates.forEach(dateStr => { // Iterate through date strings
                 const option = document.createElement('option');
-                option.value = session.session_id || session.id; 
-                
-                let formattedDate = 'Unknown Date';
-                let sessionDateStr = ''; // YYYY-MM-DD format
-                
+                option.value = dateStr; // Value is the YYYY-MM-DD date string
+
+                // Format date for display (e.g., "Apr 5, 2025")
+                let displayDate = 'Unknown Date';
                 try {
-                    if (session.created_at) {
-                        const sessionDate = new Date(session.created_at);
-                        if (!isNaN(sessionDate.getTime())) {
-                            // For display
-                            formattedDate = sessionDate.toLocaleString('en-US', {
-                                year: 'numeric',
-                                month: 'short',
-                                day: 'numeric',
-                                hour: '2-digit',
-                                minute: '2-digit',
-                                second: '2-digit',
-                                hour12: true
-                            });
-                            // For data attribute (YYYY-MM-DD)
-                            sessionDateStr = sessionDate.toISOString().split('T')[0];
-                        }
-                    }
-                } catch (dateError) {
-                    console.error('Error formatting date:', dateError, session);
-                }
-                
-                option.textContent = `Session #${session.id} - ${formattedDate}`;
-                option.setAttribute('data-session-date', sessionDateStr);
+                   const dateObj = new Date(dateStr + 'T00:00:00'); // Add time to parse correctly
+                   if (!isNaN(dateObj.getTime())) {
+                       displayDate = dateObj.toLocaleDateString('en-US', {
+                           year: 'numeric',
+                           month: 'long', // Use 'long' for full month name
+                           day: 'numeric'
+                       });
+                   }
+                } catch (e) { console.error("Error parsing date for display:", e); }
+
+                // Set option text
+                option.textContent = `Session - ${displayDate}`;
+                // Keep the YYYY-MM-DD date in the data attribute for the next step
+                option.setAttribute('data-session-date', dateStr);
                 sessionSelect.appendChild(option);
             });
-            
-            console.log(`Loaded ${data.sessions.length} sessions successfully`);
+
+            console.log(`Loaded ${data.dates.length} distinct dates successfully`);
         } else {
-            sessionSelect.innerHTML += '<option disabled>No sessions found</option>';
+            sessionSelect.innerHTML += '<option disabled>No session dates found</option>';
         }
     } catch (error) {
-        console.error('Error loading sessions:', error);
-        sessionSelect.innerHTML += `<option disabled>Error loading sessions: ${error.message}</option>`;
+        console.error('Error loading distinct session dates:', error);
+        sessionSelect.innerHTML += `<option disabled>Error loading dates: ${error.message}</option>`;
     }
 }
 

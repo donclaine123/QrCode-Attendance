@@ -696,7 +696,7 @@ document.addEventListener('DOMContentLoaded', function() {
              console.log('[QRCode] Attaching CLICK listener to #generate-qr-code-btn');
              generateQrCodeBtn.addEventListener('click', generateQRCode);
              generateQrCodeBtn.dataset.listenerAttached = 'true';
-        } else {
+    } else {
              console.log('[QRCode] CLICK listener already attached to #generate-qr-code-btn.');
         }
     }
