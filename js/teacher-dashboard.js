@@ -111,10 +111,8 @@ document.addEventListener('DOMContentLoaded', function() {
                              button.addEventListener('click', function() {
                                  const specificSessionId = this.getAttribute('data-session-id');
                                  console.log(`Loading attendance for selected section's session ID: ${specificSessionId}`);
-                                 // We need to update the main sessionSelect value to reflect the *actual* session ID 
-                                 // that corresponds to the clicked section, so loadAttendanceRecords uses the right ID.
-                                 sessionSelect.value = specificSessionId;
-                                 loadAttendanceRecords(); // Now load the attendance for this specific session
+                                 // Pass the specific session ID directly to the function
+                                 loadAttendanceRecords(specificSessionId); 
                              });
                              
                              if (sectionButtonsContainer) sectionButtonsContainer.appendChild(button);
@@ -861,12 +859,14 @@ async function loadSessions(classId) { // Renaming to loadSessionDates might be 
 }
 
 // Load attendance records for a session
-async function loadAttendanceRecords() {
-    const sessionId = document.getElementById('session-select').value;
+async function loadAttendanceRecords(specificSessionId = null) {
+    // Use the provided sessionId if available, otherwise get it from the dropdown
+    const sessionId = specificSessionId || document.getElementById('session-select').value;
     const recordsDiv = document.getElementById('attendance-records');
     
     if (!sessionId) {
-        recordsDiv.innerHTML = '<div class="error-message">Please select a session</div>';
+        // Updated error message to reflect the initial selection is by date
+        recordsDiv.innerHTML = '<div class="error-message">Please select a date and then a section.</div>';
         return;
     }
     
