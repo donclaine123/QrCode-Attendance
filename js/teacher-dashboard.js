@@ -954,14 +954,17 @@ async function viewCurrentSessionAttendance() {
         const classId = document.getElementById('class-select').value;
         document.getElementById('attendance-class-select').value = classId;
     
-    // Load sessions for this class
-    await loadSessions(classId);
-    
         // Set the session select to the current session
-        document.getElementById('session-select').value = currentSessionId;
+        document.getElementById('session-select').value = currentSessionId; 
         
-        // Load attendance records for this session
-        await loadAttendanceRecords();
+        // We might need to manually trigger the section loading or attendance loading here 
+        // if just setting the sessionSelect value doesn't fire the change event reliably, 
+        // or if we want it to load immediately after clicking 'View Current'.
+        // For now, let's rely on the change event listener.
+        
+        // REMOVED: We don't want to load attendance directly here anymore, 
+        // the session select 'change' listener handles section fetching first.
+        // await loadAttendanceRecords();
         
     } catch (error) {
         console.error('Error viewing current attendance:', error);
