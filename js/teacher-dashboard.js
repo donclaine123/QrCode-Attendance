@@ -944,7 +944,8 @@ async function loadRecentAttendanceRecords() {
             headers['X-User-Role'] = userRole;
         }
         
-        const response = await fetch(`${API_URL}/auth/recent-attendance-summary`, {
+        // Updated endpoint to match the backend route pattern
+        const response = await fetch(`${API_URL}/teacher/recent-attendance-summary`, {
             method: 'GET',
             credentials: 'include',
             headers: headers
