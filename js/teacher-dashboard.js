@@ -118,19 +118,14 @@ document.addEventListener('DOMContentLoaded', function() {
                              if (sectionButtonsContainer) sectionButtonsContainer.appendChild(button);
                          });
                          
-                         // If there's only one section, load it automatically?
-                         // Optional: If you want to auto-load if only one section exists for the date.
-                         // if (data.sections.length === 1) {
-                         //     const singleSectionSessionId = data.sections[0].session_id;
-                         //     sessionSelect.value = singleSectionSessionId;
-                         //     loadAttendanceRecords();
-                         // }
-                         
                      } else {
-                         console.log('No sections found for this class/date, or only one session without a section name. Trying to load the selected session directly.');
-                         // Fallback: If no sections are returned (maybe only one session without a section name), 
-                         // try loading attendance for the initially selected session ID directly.
-                         loadAttendanceRecords(); 
+                         // Clear the records div and show a specific message
+                         console.log('No sections found for this class/date.');
+                         if (attendanceRecordsDiv) {
+                            attendanceRecordsDiv.innerHTML = '<p class="empty-message">No attendance sections found for this date.</p>';
+                         }
+                         // REMOVED: Do not call loadAttendanceRecords() as a fallback here.
+                         // loadAttendanceRecords(); 
                      }
                      
                 } catch (error) {
