@@ -155,18 +155,19 @@ document.addEventListener('DOMContentLoaded', function() {
         console.log ('[TeacherDashboard] Dashboard logic already initialized.');
     }
     
-     // Ensure initial view is correct (Dashboard overview)
-     const overview = document.getElementById('dashboard-overview');
-     const qrSection = document.getElementById('qr-section');
-     const classesSection = document.getElementById('classes-section');
-     const attendanceSection = document.getElementById('attendance-section');
-     if (overview) overview.style.display = 'block';
-     if (qrSection) qrSection.style.display = 'none';
-     if (classesSection) classesSection.style.display = 'none';
-     if (attendanceSection) attendanceSection.style.display = 'none';
-     // Set initial active nav link
-     document.querySelectorAll('.nav-link').forEach(link => link.classList.remove('active'));
-     document.getElementById('dashboard-nav')?.classList.add('active');
+    // Ensure initial view is correct (Dashboard overview) - MOVED TO RUN UNCONDITIONALLY
+    console.log('[TeacherDashboard] Setting initial section visibility.');
+    const overview = document.getElementById('dashboard-overview');
+    const qrSection = document.getElementById('qr-section');
+    const classesSection = document.getElementById('classes-section');
+    const attendanceSection = document.getElementById('attendance-section');
+    if (overview) overview.style.display = 'block';
+    if (qrSection) qrSection.style.display = 'none';
+    if (classesSection) classesSection.style.display = 'none';
+    if (attendanceSection) attendanceSection.style.display = 'none';
+    // Set initial active nav link
+    document.querySelectorAll('.nav-link').forEach(link => link.classList.remove('active'));
+    document.getElementById('dashboard-nav')?.classList.add('active');
 
     // Set up event listeners for dashboard actions
     const generateQrBtn = document.getElementById('generate-qr-btn');
