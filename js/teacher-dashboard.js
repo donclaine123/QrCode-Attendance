@@ -44,7 +44,8 @@ document.addEventListener('DOMContentLoaded', function() {
     
     if (dashboardNav) {
         dashboardNav.addEventListener('click', function() {
-            // Show a welcome screen or hide all sections
+            // Show dashboard overview, hide other sections
+            document.getElementById('dashboard-overview').style.display = 'block';
             document.getElementById('qr-section').style.display = 'none';
             document.getElementById('classes-section').style.display = 'none';
             document.getElementById('attendance-section').style.display = 'none';
@@ -53,6 +54,7 @@ document.addEventListener('DOMContentLoaded', function() {
     
     if (generateQrBtn) {
         generateQrBtn.addEventListener('click', function() {
+            document.getElementById('dashboard-overview').style.display = 'none'; // Hide overview
             document.getElementById('qr-section').style.display = 'block';
             document.getElementById('classes-section').style.display = 'none';
             document.getElementById('attendance-section').style.display = 'none';
@@ -61,6 +63,7 @@ document.addEventListener('DOMContentLoaded', function() {
     
     if (manageClassesBtn) {
         manageClassesBtn.addEventListener('click', function() {
+            document.getElementById('dashboard-overview').style.display = 'none'; // Hide overview
             document.getElementById('qr-section').style.display = 'none';
             document.getElementById('classes-section').style.display = 'block';
             document.getElementById('attendance-section').style.display = 'none';
@@ -69,11 +72,18 @@ document.addEventListener('DOMContentLoaded', function() {
     
     if (viewAttendanceBtn) {
         viewAttendanceBtn.addEventListener('click', function() {
+            document.getElementById('dashboard-overview').style.display = 'none'; // Hide overview
             document.getElementById('qr-section').style.display = 'none';
             document.getElementById('classes-section').style.display = 'none';
             document.getElementById('attendance-section').style.display = 'block';
         });
     }
+    
+    // Initially show the dashboard overview and hide other sections
+    document.getElementById('dashboard-overview').style.display = 'block';
+    document.getElementById('qr-section').style.display = 'none';
+    document.getElementById('classes-section').style.display = 'none';
+    document.getElementById('attendance-section').style.display = 'none';
     
     // Set up event listeners for QR code generation
     const generateQrCodeBtn = document.getElementById('generate-qr-code-btn');
