@@ -75,6 +75,46 @@
       </div>
       
       <div id="teacher-section" style="display: none;">
+        <div class="dashboard-actions">
+          <button id="generate-qr-btn" class="btn action-btn">
+            <span class="btn-icon">
+              <i class="fas fa-qrcode"></i>
+            </span>
+            Generate QR Codes
+          </button>
+          <button id="manage-classes-btn" class="btn action-btn">
+            <span class="btn-icon">
+              <i class="fas fa-users"></i>
+            </span>
+            Manage Classes
+          </button>
+          <button id="view-attendance-btn" class="btn action-btn">
+            <span class="btn-icon">
+              <i class="fas fa-clipboard-list"></i>
+            </span>
+            View Attendance
+          </button>
+        </div>
+        
+        <!-- Dashboard Overview with Recent Attendance Records -->
+        <div id="dashboard-overview" class="dashboard-section">
+          <h2>Recent Attendance Records</h2>
+          <table id="recent-attendance-table">
+            <thead>
+              <tr>
+                <th>CLASS</th>
+                <th>DATE</th>
+                <th>PRESENT</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td colspan="3" class="text-center">Loading attendance records...</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
         <!-- QR Code Section -->
         <div id="qr-section" class="dashboard-section" style="display: none;">
           <h3>Generate QR Code for Attendance</h3>

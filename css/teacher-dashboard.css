@@ -307,6 +307,50 @@ button:hover {
   margin-top: var(--spacing-lg);
 }
 
+/* Dashboard Overview */
+#dashboard-overview {
+  margin-top: var(--spacing-lg);
+  border: 1px solid var(--color-secondary-dark);
+  border-radius: var(--border-radius-md);
+  padding: var(--spacing-md);
+  background-color: var(--color-white);
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
+}
+
+#dashboard-overview h2 {
+  margin-bottom: var(--spacing-md);
+  padding-bottom: var(--spacing-sm);
+  border-bottom: 1px solid var(--color-secondary);
+  color: var(--color-primary);
+}
+
+#recent-attendance-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+#recent-attendance-table th,
+#recent-attendance-table td {
+  padding: var(--spacing-md);
+  text-align: left;
+  border-bottom: 1px solid var(--color-secondary-dark);
+}
+
+#recent-attendance-table th {
+  font-weight: 600;
+  color: var(--color-text-light);
+  text-transform: uppercase;
+  font-size: 0.9rem;
+}
+
+#recent-attendance-table tr:last-child td {
+  border-bottom: none;
+}
+
+#recent-attendance-table tr:hover td {
+  background-color: var(--color-secondary);
+}
+
 .attendance-table {
   width: 100%;
   border-collapse: collapse;

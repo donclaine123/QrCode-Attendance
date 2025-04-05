@@ -375,6 +375,9 @@ async function initDashboard() {
         
         // Load classes
         loadClasses();
+        
+        // Load recent attendance records
+        loadRecentAttendanceRecords();
       } else {
         console.error("Authentication failed, redirecting to login...");
         window.location.href = getBasePath() + '/pages/login.html';
@@ -391,6 +394,9 @@ async function initDashboard() {
       
       // Load classes
       loadClasses();
+      
+      // Load recent attendance records
+      loadRecentAttendanceRecords();
     }
   } catch (error) {
     console.error("Error initializing dashboard:", error);
@@ -907,4 +913,71 @@ document.addEventListener('DOMContentLoaded', function() {
     attendanceClassSelect.addEventListener('change', function() {
         loadSessions(this.value);
     });
-}); 
+});
+
+// Function to load recent attendance records
+async function loadRecentAttendanceRecords() {
+    const tableBody = document.querySelector('#recent-attendance-table tbody');
+    if (!tableBody) return;
+    
+    // Show loading state
+    tableBody.innerHTML = '<tr><td colspan="3" class="text-center">Loading recent attendance records...</td></tr>';
+    
+    try {
+        const teacherId = sessionStorage.getItem('userId');
+        if (!teacherId) {
+            console.error('Teacher ID not found in session storage');
+            return;
+        }
+        
+        const response = await fetch(`${API_BASE_URL}/recent-attendance-summary?teacherId=${teacherId}`, {
+            method: 'GET',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${sessionStorage.getItem('token')}`
+            }
+        });
+        
+        if (!response.ok) {
+            throw new Error(`Failed to fetch attendance records: ${response.status}`);
+        }
+        
+        const data = await response.json();
+        
+        if (data.success && data.records && data.records.length > 0) {
+            displayAttendanceRecords(data.records);
+        } else {
+            tableBody.innerHTML = '<tr><td colspan="3" class="text-center">No attendance records found</td></tr>';
+        }
+    } catch (error) {
+        console.error('Error fetching recent attendance records:', error);
+        tableBody.innerHTML = `<tr><td colspan="3" class="text-center">Error loading records: ${error.message}</td></tr>`;
+    }
+}
+
+function displayAttendanceRecords(records) {
+    const tableBody = document.querySelector('#recent-attendance-table tbody');
+    if (!tableBody) return;
+    
+    tableBody.innerHTML = '';
+    
+    records.forEach(record => {
+        const row = document.createElement('tr');
+        
+        // Format date to be more readable
+        const dateObj = new Date(record.attendance_date);
+        const formattedDate = dateObj.toLocaleDateString('en-US', { 
+            year: 'numeric', 
+            month: 'short', 
+            day: 'numeric' 
+        });
+        
+        row.innerHTML = `
+            <td>${record.class_name}</td>
+            <td>${formattedDate}</td>
+            <td>${record.present_count}</td>
+        `;
+        
+        tableBody.appendChild(row);
+    });
+} 
