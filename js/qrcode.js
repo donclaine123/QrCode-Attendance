@@ -22,6 +22,14 @@ window.displayQrCodeDetails = function(sessionId, qrCodeUrl, expiresAtIso, secti
         console.log("Cleared previous countdown interval.");
     }
 
+    // IMPORTANT: Check for QR image and preserve it
+    const qrImage = qrCodeDiv.querySelector('#qr-code-image');
+    let savedQrImage = null;
+    if (qrImage) {
+        console.log("[displayQrCodeDetails] Found existing QR image, preserving it");
+        savedQrImage = qrImage;
+    }
+
     // Display success message and timer placeholder
     statusDiv.innerHTML = `
         <div class="success-message">
@@ -35,6 +43,12 @@ window.displayQrCodeDetails = function(sessionId, qrCodeUrl, expiresAtIso, secti
       `;
     statusDiv.className = 'success'; // Add success class for styling
     
+    // If we removed the QR image when updating status, put it back
+    if (savedQrImage && !document.getElementById('qr-code-image')) {
+        console.log("[displayQrCodeDetails] Re-adding QR image that was removed");
+        qrCodeDiv.insertBefore(savedQrImage, qrCodeDiv.firstChild);
+    }
+    
     // Add Direct QR Code Link (ensure it's not duplicated)
     // Remove existing link first if present
     const existingLink = qrCodeDiv.querySelector('.direct-link-container');
@@ -46,6 +60,7 @@ window.displayQrCodeDetails = function(sessionId, qrCodeUrl, expiresAtIso, secti
     linkContainer.style.textAlign = 'center';
     linkContainer.style.marginTop = '10px';
     linkContainer.innerHTML = `<a href="${qrCodeUrl}" id="direct-link" target="_blank">Direct QR Code Link</a>`; // Use ID for styling
+    
     // Restore appending the link
     qrCodeDiv.appendChild(linkContainer); 
     console.log("[displayQrCodeDetails] Direct link container appended.");
@@ -279,9 +294,9 @@ async function generateQRCode() {
       }
       
       // Clear only QR content, leave status message if it exists
-      // Find iframe if it exists and remove it
-      const existingIframe = qrCodeDiv.querySelector('#qr-code-iframe');
-      if(existingIframe) qrCodeDiv.removeChild(existingIframe);
+      // Find image if it exists and remove it
+      const existingImage = qrCodeDiv.querySelector('#qr-code-image');
+      if(existingImage) qrCodeDiv.removeChild(existingImage);
       // Find link container if it exists and remove it
       const existingLinkContainer = qrCodeDiv.querySelector('.direct-link-container');
       if(existingLinkContainer) qrCodeDiv.removeChild(existingLinkContainer);
@@ -304,29 +319,63 @@ async function generateQRCode() {
             if (loadingMsg && loadingMsg.parentNode) {
                 qrCodeDiv.removeChild(loadingMsg);
             }
-            // Create iframe using Blob URL (Reverted)
-            const iframe = document.createElement('iframe');
-            const imgHTML = `<html><body style="margin:0; display:flex; justify-content:center; align-items:center; height:100%;"><img src="${img.src}" alt="QR Code" style="max-width:100%; max-height:100%;"></body></html>`;
-            const blob = new Blob([imgHTML], {type: 'text/html'});
-            iframe.src = URL.createObjectURL(blob);
-            iframe.id = 'qr-code-iframe';
-            iframe.width = '280'; 
-            iframe.height = '280';
-            iframe.style.border = 'none';
-            iframe.style.display = 'block';
-            iframe.style.margin = '0 auto';
-            // iframe.srcdoc = `...`; // Removed srcdoc line
-            qrCodeDiv.appendChild(iframe);
-            console.log("QR code rendered via blob URL iframe"); // Updated log message
             
-            // Now call the display function AFTER iframe is appended
+            console.log("[DEBUG] Before QR code image display - qrCodeDiv children:", qrCodeDiv.childNodes.length);
+            
+            // CHANGED: Use direct image instead of iframe
+            const qrImage = document.createElement('img');
+            qrImage.src = img.src;
+            qrImage.alt = "QR Code";
+            qrImage.id = "qr-code-image";
+            qrImage.style.width = "250px";
+            qrImage.style.height = "250px";
+            qrImage.style.display = "block";
+            qrImage.style.margin = "0 auto";
+            qrImage.style.border = "1px solid #ddd";
+            qrImage.style.padding = "10px";
+            qrImage.style.backgroundColor = "#ffffff";
+            
+            // Test if QR code image already exists in DOM before proceeding
+            const existingQrImage = document.getElementById('qr-code-image');
+            if(existingQrImage) {
+                console.log("[DEBUG] Found existing QR image, removing it first");
+                existingQrImage.parentNode.removeChild(existingQrImage);
+            }
+            
+            // Append image to DOM
+            qrCodeDiv.appendChild(qrImage);
+            console.log("[DEBUG] QR code image added to DOM!");
+            
+            // Add a visible indicator element to ensure container is working
+            const indicator = document.createElement('div');
+            indicator.textContent = "QR CODE SHOULD APPEAR ABOVE";
+            indicator.style.textAlign = 'center';
+            indicator.style.margin = '5px 0';
+            indicator.style.padding = '3px';
+            indicator.style.backgroundColor = '#ffff00';
+            indicator.style.color = '#000000';
+            indicator.style.fontWeight = 'bold';
+            qrCodeDiv.appendChild(indicator);
+            
+            // Now call the display function AFTER image is appended
             console.log('[generateQRCode] Calling window.displayQrCodeDetails...');
             window.displayQrCodeDetails(sessionId, qrCodeUrl, expiresAtIso, section); 
             console.log('[generateQRCode] Returned from window.displayQrCodeDetails.');
+            
+            // After window.displayQrCodeDetails - check image again
+            const imageAfter = document.getElementById('qr-code-image');
+            console.log("[DEBUG] After displayQrCodeDetails - QR image still exists:", !!imageAfter);
+            if(imageAfter) {
+                console.log("[DEBUG] QR image computed style:", 
+                    "display=" + window.getComputedStyle(imageAfter).display,
+                    "visibility=" + window.getComputedStyle(imageAfter).visibility,
+                    "height=" + window.getComputedStyle(imageAfter).height,
+                    "width=" + window.getComputedStyle(imageAfter).width);
+            }
+            
+            // Check qrCodeDiv structure
+            console.log('[generateQRCode] qrCodeDiv children count:', qrCodeDiv.childNodes.length);
             console.log('[generateQRCode] qrCodeDiv outerHTML AFTER displayQrCodeDetails:', qrCodeDiv.outerHTML);
-
-            // Release blob URL after iframe loads (Re-added)
-            iframe.onload = () => { setTimeout(() => URL.revokeObjectURL(iframe.src), 100); };
         };
 
         img.onerror = function() {
@@ -342,9 +391,9 @@ async function generateQRCode() {
                   <a href="${qrCodeUrl}" target="_blank" style="color: #0984e3; font-weight: bold;">${qrCodeUrl}</a>
               </div>
             `;
-            // Remove potential iframe before adding fallback
-            const existingIframeOnError = qrCodeDiv.querySelector('#qr-code-iframe');
-            if(existingIframeOnError) qrCodeDiv.removeChild(existingIframeOnError);
+            // Remove potential image before adding fallback
+            const existingImageOnError = qrCodeDiv.querySelector('#qr-code-image');
+            if(existingImageOnError) qrCodeDiv.removeChild(existingImageOnError);
             qrCodeDiv.appendChild(fallbackDiv); // Append fallback to main container
 
             // Still call display details to show status, timer, and *proper* direct link
