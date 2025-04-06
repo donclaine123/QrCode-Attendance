@@ -280,8 +280,8 @@ async function generateQRCode() {
         <div class="success-message">
           QR Code generated successfully for class session!<br>
           <small>Session ID: ${sessionId}</small>
+          ${data.section ? `<br><small>Section: ${data.section}</small>` : ''}
         </div>
-        <p>QR Code URL: <a href="${qrCodeUrl}" target="_blank">${qrCodeUrl}</a></p>
         <div class="expiration-timer">
           <p>This QR code will expire in <span id="countdown">10:00</span></p>
         </div>
