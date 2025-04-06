@@ -594,7 +594,7 @@ button:hover {
 
 #qr-code-container #status-message {
     margin-bottom: var(--spacing-md);
-    font-size: 1rem;
+  font-size: 1rem;
     color: var(--color-text);
     line-height: 1.6;
 }

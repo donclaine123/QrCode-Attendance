@@ -161,103 +161,65 @@ document.addEventListener('DOMContentLoaded', function() {
 
   // Handle registration form submission
   if (registerForm) {
-    registerForm.addEventListener('submit', async (e) => {
+    registerForm.addEventListener('submit', async function(e) {
       e.preventDefault();
-      // Clear previous error messages
-      // (Assuming an error display element exists, e.g., #regErrorMsg)
-      const regErrorMsgDiv = document.getElementById('regErrorMsg'); // Make sure this exists in HTML if needed
-      if (regErrorMsgDiv) regErrorMsgDiv.style.display = 'none';
-
-      const formData = new FormData(registerForm);
-      const data = Object.fromEntries(formData.entries());
-
-      // Simple validation (e.g., password match)
-      if (data.password !== data['confirm-password']) {
-        if (regErrorMsgDiv) {
-          regErrorMsgDiv.textContent = 'Passwords do not match.';
-          regErrorMsgDiv.style.display = 'block';
-        }
-        return;
-      }
-
-      // Ensure role is set from the custom toggle
-      const selectedRole = document.querySelector('.role-toggle-option.active')?.dataset.value;
-      if (!selectedRole) {
-        if (regErrorMsgDiv) {
-          regErrorMsgDiv.textContent = 'Please select a role.';
-          regErrorMsgDiv.style.display = 'block';
-        }
-        return;
-      }
-      data.role = selectedRole;
       
-      // Prepare data for backend (remove confirm-password)
-      const registrationData = { ...data };
-      delete registrationData['confirm-password'];
-
+      const role = document.getElementById('role').value;
+      const email = document.getElementById('reg-email').value;
+      const firstName = document.getElementById('first-name').value;
+      const lastName = document.getElementById('last-name').value;
+      const password = document.getElementById('reg-password').value;
+      const confirmPassword = document.getElementById('confirm-password').value;
+      const studentId = document.getElementById('student-id')?.value || null;
+      
+      // Check if passwords match
+      if (password !== confirmPassword) {
+        showError('Passwords do not match');
+        return;
+      }
+      
+      // Show loading state
+      const submitButton = e.target.querySelector('button[type="submit"]');
+      const originalButtonText = submitButton.textContent;
+      submitButton.textContent = 'Registering...';
+      submitButton.disabled = true;
+      
       try {
-        // Use fetchWithAuth or a similar function from config.js if needed, or basic fetch
-        const response = await fetch(`${API_URL}/register`, {
+        const response = await fetch(`${API_URL}/auth/register`, {
           method: 'POST',
-          headers: {
+          headers: { 
             'Content-Type': 'application/json',
+            'Accept': 'application/json'
           },
-          body: JSON.stringify(registrationData),
+          body: JSON.stringify({ 
+            role, 
+            email, 
+            firstName, 
+            lastName, 
+            password, 
+            studentId 
+          }),
+          credentials: 'include'
         });
 
-        const result = await response.json();
+        const data = await response.json();
 
-        if (response.ok && result.success) {
-          // Registration successful
-          if (result.requiresVerification) {
-            // --- Verification Required Flow ---
-            const registerSection = document.getElementById('register-section');
-            const verificationPrompt = document.getElementById('verification-prompt');
-            const verificationMessage = document.getElementById('verification-message');
-
-            if (registerSection && verificationPrompt && verificationMessage) {
-              // Update verification message with user's email
-              verificationMessage.textContent = `Registration successful! We've sent a verification link to ${registrationData.email}. Please click the link to activate your account.`;
-              
-              // Hide registration form and show verification prompt with transition
-              registerSection.style.display = 'none'; 
-              verificationPrompt.classList.add('visible'); // Add class to trigger CSS transition
-
-              // Add event listener to the 'Proceed to Login' button inside the prompt
-              const goToLoginBtn = document.getElementById('go-to-login-btn');
-              if (goToLoginBtn) {
-                goToLoginBtn.addEventListener('click', () => {
-                  // Hide verification prompt and show login section
-                  verificationPrompt.classList.remove('visible');
-                  // Use a timeout to allow fade-out transition before showing login
-                  setTimeout(() => {
-                    verificationPrompt.style.display = 'none'; // Hide completely after transition
-                    document.getElementById('login-section').style.display = 'block';
-                  }, 500); // Match CSS transition duration
-                });
-              }
-            }
-          } else {
-            // Registration successful, no verification needed (or handled differently)
-            // Maybe redirect to login or show a success message
-            alert('Registration successful! You can now log in.'); // Placeholder
-            // Optionally switch to login view immediately
-             document.getElementById('register-section').style.display = 'none';
-             document.getElementById('login-section').style.display = 'block';
-          }
+        if (data.success) {
+          showSuccess('Registration successful! Proceed to Email to verify your account.');
+          // Switch back to login form
+          registerSection.style.display = 'none';
+          loginSection.style.display = 'block';
         } else {
-          // Registration failed
-          if (regErrorMsgDiv) {
-            regErrorMsgDiv.textContent = result.message || 'Registration failed. Please try again.';
-            regErrorMsgDiv.style.display = 'block';
-          }
+          showError(data.message || 'Registration failed');
         }
+        
+        submitButton.textContent = originalButtonText;
+        submitButton.disabled = false;
       } catch (error) {
         console.error('Registration error:', error);
-        if (regErrorMsgDiv) {
-          regErrorMsgDiv.textContent = 'An error occurred during registration. Please check your connection and try again.';
-          regErrorMsgDiv.style.display = 'block';
-        }
+        showError('Server error. Please try again later.');
+        submitButton.textContent = originalButtonText;
+        submitButton.disabled = false;
       }
     });
   }
