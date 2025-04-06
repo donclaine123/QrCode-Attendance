@@ -67,8 +67,20 @@ async function fetchWithAuth(url, options = {}) {
   };
   
   try {
+    // Construct the final URL correctly
+    let finalUrl;
+    if (url.startsWith('http') || url.startsWith('/api')) {
+      // If URL is absolute or already starts with /api, use it as is
+      finalUrl = url;
+    } else {
+      // Otherwise, prepend API_URL
+      // Ensure no double slashes if url starts with /
+      finalUrl = `${API_URL}${url.startsWith('/') ? url : '/' + url}`;
+    }
+    console.log(`[fetchWithAuth] Fetching: ${finalUrl}`);
+
     // First attempt using cookies
-    const response = await fetch(`${API_URL}${url}`, mergedOptions);
+    const response = await fetch(finalUrl, mergedOptions);
     
     // If unauthorized and we have stored credentials, try with Authorization header
     if (response.status === 401 && sessionStorage.getItem('userEmail') && sessionStorage.getItem('userPassword')) {
@@ -80,7 +92,7 @@ async function fetchWithAuth(url, options = {}) {
       
       // Retry with Authorization header
       mergedOptions.headers['Authorization'] = `Basic ${base64Credentials}`;
-      return fetch(`${API_URL}${url}`, mergedOptions);
+      return fetch(finalUrl, mergedOptions);
     }
     
     return response;
