@@ -135,7 +135,12 @@
             <button id="generate-qr-code-btn">Generate QR Code</button>
             <button id="view-current-attendance-btn">View Attendance for Current Session</button>
           </div>
-          <div id="qr-code-container"></div>
+          <!-- Container for QR Code Image/Iframe AND Status/Timer -->
+          <div id="qr-code-container">
+            <!-- Added dedicated element for status message and timer -->
+            <div id="status-message"></div> 
+            <!-- QR iframe and link will be added here by JS -->
+          </div>
         </div>
 
         <!-- Classes Management Section -->

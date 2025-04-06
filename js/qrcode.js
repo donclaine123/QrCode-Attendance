@@ -3,7 +3,8 @@
 let currentCountdownInterval = null; // Added: Store interval ID globally
 
 // 📌 NEW: Reusable function to display QR Code details and start timer
-function displayQrCodeDetails(sessionId, qrCodeUrl, expiresAtIso, section) {
+// Make it globally accessible
+window.displayQrCodeDetails = function(sessionId, qrCodeUrl, expiresAtIso, section) {
     console.log("displayQrCodeDetails called for session:", sessionId);
     
     const qrCodeDiv = document.getElementById('qr-code-container') || document.getElementById('qrcode');

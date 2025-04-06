@@ -1343,7 +1343,8 @@ async function handleDeleteActiveSession(event) {
     button.disabled = true;
 
     try {
-        const response = await fetchWithAuth(`${API_URL}/qr/sessions/${sessionId}`, {
+        // CORRECTED FETCH URL based on server.js routing
+        const response = await fetchWithAuth(`/auth/sessions/${sessionId}`, {
             method: 'DELETE'
         });
         const data = await response.json();
