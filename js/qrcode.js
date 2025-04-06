@@ -46,9 +46,9 @@ window.displayQrCodeDetails = function(sessionId, qrCodeUrl, expiresAtIso, secti
     linkContainer.style.textAlign = 'center';
     linkContainer.style.marginTop = '10px';
     linkContainer.innerHTML = `<a href="${qrCodeUrl}" id="direct-link" target="_blank">Direct QR Code Link</a>`; // Use ID for styling
-    // TEMPORARILY COMMENT OUT TO TEST INTERFERENCE
-    // qrCodeDiv.appendChild(linkContainer); 
-    console.log("[displayQrCodeDetails] Direct link container prepared, but NOT appended (for testing).");
+    // Restore appending the link
+    qrCodeDiv.appendChild(linkContainer); 
+    console.log("[displayQrCodeDetails] Direct link container appended.");
 
     // Set up the countdown timer
     const countdownEl = document.getElementById('countdown');
@@ -304,24 +304,20 @@ async function generateQRCode() {
             if (loadingMsg && loadingMsg.parentNode) {
                 qrCodeDiv.removeChild(loadingMsg);
             }
-            // Create an iframe using srcdoc
+            // Create iframe using Blob URL (Reverted)
             const iframe = document.createElement('iframe');
+            const imgHTML = `<html><body style="margin:0; display:flex; justify-content:center; align-items:center; height:100%;"><img src="${img.src}" alt="QR Code" style="max-width:100%; max-height:100%;"></body></html>`;
+            const blob = new Blob([imgHTML], {type: 'text/html'});
+            iframe.src = URL.createObjectURL(blob);
             iframe.id = 'qr-code-iframe';
             iframe.width = '280'; 
             iframe.height = '280';
             iframe.style.border = 'none';
             iframe.style.display = 'block';
             iframe.style.margin = '0 auto';
-            // Embed the image directly using srcdoc
-            iframe.srcdoc = `
-              <!DOCTYPE html>
-              <html>
-              <head><style>body{margin:0; display:flex; justify-content:center; align-items:center; height:100%;}</style></head>
-              <body><img src="${img.src}" alt="QR Code" style="max-width:100%; max-height:100%;"></body>
-              </html>
-            `;
+            // iframe.srcdoc = `...`; // Removed srcdoc line
             qrCodeDiv.appendChild(iframe);
-            console.log("QR code rendered via srcdoc iframe");
+            console.log("QR code rendered via blob URL iframe"); // Updated log message
             
             // Now call the display function AFTER iframe is appended
             console.log('[generateQRCode] Calling window.displayQrCodeDetails...');
@@ -329,7 +325,8 @@ async function generateQRCode() {
             console.log('[generateQRCode] Returned from window.displayQrCodeDetails.');
             console.log('[generateQRCode] qrCodeDiv outerHTML AFTER displayQrCodeDetails:', qrCodeDiv.outerHTML);
 
-            // No need to revoke Blob URL
+            // Release blob URL after iframe loads (Re-added)
+            iframe.onload = () => { setTimeout(() => URL.revokeObjectURL(iframe.src), 100); };
         };
 
         img.onerror = function() {
