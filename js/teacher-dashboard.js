@@ -19,6 +19,86 @@
 })();
 // --- End Role Check --- 
 
+let currentAttendanceData = {}; // Store current attendance data
+
+// Initialize the dashboard when the DOM is fully loaded
+document.addEventListener('DOMContentLoaded', () => {
+  console.log("Teacher Dashboard DOM Loaded");
+  // Prevent double initialization if qrcode.js also calls init
+  if (!window.dashboardInitialized) {
+    initDashboard();
+    window.dashboardInitialized = true;
+  }
+});
+
+async function initDashboard() {
+  console.log("Initializing Teacher Dashboard...");
+  setWelcomeMessage();
+  setupEventListeners();
+
+  // Show the main teacher section now that JS is ready
+  const teacherSection = document.getElementById('teacher-section');
+  if (teacherSection) {
+    teacherSection.style.display = 'block';
+  }
+
+  // Check for active QR session first
+  const recoveredSession = await checkActiveQrSession();
+
+  if (!recoveredSession) {
+    // If no active session recovered, load default view (e.g., recent attendance)
+    showSection('dashboard-overview'); // Show overview by default
+    await loadClasses(); // Load classes needed for dropdowns
+    await loadRecentAttendanceRecords();
+  } else {
+    // If session recovered, show QR section and load classes
+    showSection('qr-section');
+    await loadClasses(); // Still load classes for the dropdown
+  }
+}
+
+// 🆕 Function to check for and display an active QR session
+async function checkActiveQrSession() {
+  console.log("Checking for active QR session...");
+  try {
+    const response = await fetchWithAuth(`${API_URL}/qr-system/active-session`);
+    const data = await response.json();
+
+    if (data.success && data.activeSession) {
+      console.log("Active session recovered:", data.activeSession);
+      // Ensure displayQrCodeUI is available (defined in qrcode.js)
+      if (typeof displayQrCodeUI === 'function') {
+        displayQrCodeUI(data.activeSession);
+        // Set the class dropdown to the recovered session's class
+        const classSelect = document.getElementById('class-select');
+        if (classSelect) {
+            classSelect.value = data.activeSession.classId;
+        }
+        // Set the section input if it exists
+        const sectionInput = document.getElementById('qr-section-input');
+        if (sectionInput && data.activeSession.section) {
+            sectionInput.value = data.activeSession.section;
+        }
+        return true; // Indicate session was recovered
+      } else {
+        console.error("displayQrCodeUI function not found. Ensure qrcode.js is loaded correctly.");
+        return false;
+      }
+    } else {
+      console.log("No active QR session found.");
+      return false;
+    }
+  } catch (error) {
+    console.error("Error checking for active QR session:", error);
+    // Optionally show an error message to the user
+    return false;
+  }
+}
+
+function setWelcomeMessage() {
+  // ... existing code ...
+}
+
 document.addEventListener('DOMContentLoaded', function() {
     // REMOVED: Don't skip the whole setup anymore. Allow listeners to attach.
     // if (window.dashboardInitialized) {
@@ -157,55 +237,6 @@ document.addEventListener('DOMContentLoaded', function() {
     } else if (sessionSelect) {
          console.log('[TeacherDashboard] CHANGE listener already attached to #session-select.');
     }
-
-    // Initialize the dashboard logic (fetches user data, classes, etc.) if not already done
-    if (!window.dashboardInitialized) { 
-        console.log('[TeacherDashboard] Initializing dashboard logic (initDashboard)...');
-        initDashboard(); // This function internally shows #teacher-section on success
-        window.dashboardInitialized = true; 
-    } else {
-        console.log ('[TeacherDashboard] Dashboard logic already initialized by another script.');
-        // Manually show the main container if initDashboard was skipped but we have user info
-        // This ensures the container is visible even if qrcode.js initialized first.
-        if (sessionStorage.getItem('userId') && sessionStorage.getItem('userRole') === 'teacher') {
-             const teacherSection = document.getElementById('teacher-section');
-             if(teacherSection) {
-                 console.log('[TeacherDashboard] Manually showing #teacher-section because initDashboard was skipped.');
-                 teacherSection.style.display = 'block';
-             } else {
-                 console.error('[TeacherDashboard] Cannot manually show #teacher-section, element not found.');
-             }
-             // Also ensure welcome message is updated if initDashboard was skipped
-             const userName = sessionStorage.getItem('userName');
-             const welcomeMsg = document.getElementById('welcome-message');
-             if(welcomeMsg && userName) {
-                welcomeMsg.textContent = `Welcome, ${userName}!`;
-             }
-             // We might also need to trigger loadClasses and loadRecentAttendanceRecords here
-             // if they weren't called by qrcode.js's initialization.
-             // Let's add them just in case, guarded by checks.
-             if (document.getElementById('class-select')) loadClasses();
-             if (document.getElementById('recent-attendance-table')) loadRecentAttendanceRecords();
-        } else {
-             console.log('[TeacherDashboard] Skipping manual show of #teacher-section, user info not in session storage.');
-             // Optional: redirect to login if no user info is found here either?
-             // window.location.href = getBasePath() + '/pages/login.html';
-        }
-    }
-    
-    // Ensure initial view is correct (Dashboard overview) - Runs Unconditionally
-    console.log('[TeacherDashboard] Setting initial section visibility within #teacher-section.');
-    const overview = document.getElementById('dashboard-overview');
-    const qrSection = document.getElementById('qr-section');
-    const classesSection = document.getElementById('classes-section');
-    const attendanceSection = document.getElementById('attendance-section');
-    if (overview) overview.style.display = 'block';
-    if (qrSection) qrSection.style.display = 'none';
-    if (classesSection) classesSection.style.display = 'none';
-    if (attendanceSection) attendanceSection.style.display = 'none';
-    // Set initial active nav link
-    document.querySelectorAll('.nav-link').forEach(link => link.classList.remove('active'));
-    document.getElementById('dashboard-nav')?.classList.add('active');
 
     // Set up event listeners for dashboard actions
     const generateQrBtn = document.getElementById('generate-qr-btn');
@@ -494,74 +525,6 @@ function setupDebugListeners() {
                 alert(`Error: ${error.message}`);
             }
         });
-    }
-}
-
-// Initialize dashboard
-async function initDashboard() {
-  try {
-    console.log("Initializing teacher dashboard...");
-    
-    // Get user info from sessionStorage instead of URL parameters
-    const userId = sessionStorage.getItem('userId');
-    const userRole = sessionStorage.getItem('userRole');
-    const userName = sessionStorage.getItem('userName');
-    
-    // If no user info in sessionStorage, try to authenticate with the server
-    if (!userId || !userRole) {
-      console.log("No user info in sessionStorage, checking authentication...");
-      
-      // Check authentication status
-      const response = await fetch(`${API_URL}/auth/check-auth`, {
-        credentials: 'include',
-        headers: {
-          'Accept': 'application/json'
-        }
-      });
-      
-      if (response.ok) {
-        const data = await response.json();
-        console.log("Authentication successful:", data);
-        
-        // Store user info in sessionStorage
-        sessionStorage.setItem('userId', data.user.id);
-        sessionStorage.setItem('userRole', data.role);
-        sessionStorage.setItem('userName', `${data.user.firstName} ${data.user.lastName}`);
-        
-        // Update welcome message
-        document.getElementById('welcome-message').textContent = `Welcome, ${data.user.firstName} ${data.user.lastName}!`;
-        
-        // Show teacher section
-        document.getElementById('teacher-section').style.display = 'block';
-        
-        // Load classes
-        loadClasses();
-        
-        // Load recent attendance records
-        loadRecentAttendanceRecords();
-      } else {
-        console.error("Authentication failed, redirecting to login...");
-        window.location.href = getBasePath() + '/pages/login.html';
-      }
-    } else {
-      // User info found in sessionStorage
-      console.log("User info found in sessionStorage:", { userId, userRole, userName });
-      
-      // Update welcome message
-      document.getElementById('welcome-message').textContent = `Welcome, ${userName}!`;
-      
-      // Show teacher section
-      document.getElementById('teacher-section').style.display = 'block';
-      
-      // Load classes
-      loadClasses();
-      
-      // Load recent attendance records
-      loadRecentAttendanceRecords();
-    }
-  } catch (error) {
-    console.error("Error initializing dashboard:", error);
-    showError("Failed to initialize dashboard. Please try again.");
     }
 }
 
