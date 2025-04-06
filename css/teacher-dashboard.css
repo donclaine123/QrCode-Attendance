@@ -407,17 +407,17 @@ button:hover {
   
   .sidebar {
     width: 100%;
-    position: static;
     height: auto;
-    padding: var(--spacing-md);
+    position: static;
     border-right: none;
     border-bottom: 1px solid var(--color-secondary-dark);
   }
   
   .main-content {
     margin-left: 0;
-    padding: var(--spacing-md);
+    padding: var(--spacing-lg);
     border-left: none;
+    box-shadow: none;
   }
   
   /* Navigation */
@@ -458,7 +458,7 @@ button:hover {
   }
   
   .page-title {
-    font-size: 1.3rem;
+    font-size: 1.25rem;
   }
   
   #welcome-message {
@@ -468,13 +468,21 @@ button:hover {
   /* Dashboard actions */
   .dashboard-actions {
     flex-direction: column;
-    gap: var(--spacing-sm);
+    align-items: stretch;
   }
   
   /* Form elements */
   .form-actions {
     flex-direction: column;
     gap: var(--spacing-sm);
+  }
+  
+  .dashboard-section {
+    margin-left: -var(--spacing-lg);
+    margin-right: -var(--spacing-lg);
+    border-radius: 0;
+    border-left: none;
+    border-right: none;
   }
 }
 
@@ -503,7 +511,7 @@ button:hover {
   }
   
   .main-content {
-    padding: var(--spacing-sm);
+    padding: var(--spacing-md);
   }
   
   .page-title {
@@ -511,14 +519,18 @@ button:hover {
   }
   
   .dashboard-section {
-    padding: var(--spacing-sm);
+    padding: var(--spacing-md);
+    margin-left: -var(--spacing-md);
+    margin-right: -var(--spacing-md);
   }
   
-  .attendance-table th,
-  .attendance-table td {
-    padding: var(--spacing-sm);
-  font-size: 0.9rem;
-}
+  .form-actions {
+    flex-direction: column;
+  }
+  
+  button {
+    width: 100%;
+  }
 }
 
 .attendance-header {
@@ -567,4 +579,82 @@ button:hover {
 .section-choice-btn:hover {
   background-color: var(--color-secondary);
   color: var(--color-white);
+}
+
+/* QR Code Section Enhancement */
+#qr-code-display {
+    text-align: center;
+    padding: var(--spacing-lg);
+    background-color: var(--color-secondary);
+    border-radius: var(--border-radius-md);
+    margin-top: var(--spacing-lg);
+    border: 1px solid var(--color-secondary-dark);
+}
+
+#status-message {
+    margin-bottom: var(--spacing-md);
+    font-size: 1rem;
+    color: var(--color-text);
+    line-height: 1.6;
+}
+
+#status-message > p {
+    margin-bottom: var(--spacing-sm);
+}
+
+#expiration-timer {
+    display: block;
+    margin-top: var(--spacing-md);
+    font-size: 0.9rem;
+    color: var(--color-warning);
+    font-weight: 500;
+}
+
+#qr-code-iframe {
+    display: block;
+    margin: var(--spacing-md) auto;
+    max-width: 100%;
+    height: auto;
+    border: none;
+    background-color: var(--color-white);
+    padding: var(--spacing-sm);
+    border-radius: var(--border-radius-sm);
+    box-shadow: var(--shadow-sm);
+}
+
+#qr-code-display small,
+#qr-code-display .scan-prompt {
+    display: block;
+    margin-top: var(--spacing-sm);
+    margin-bottom: var(--spacing-md);
+    font-size: 0.85rem;
+    color: var(--color-text-light);
+}
+
+#direct-link {
+    display: inline-block;
+    margin-top: var(--spacing-md);
+    padding: var(--spacing-sm) var(--spacing-md);
+    background-color: var(--color-primary);
+    color: var(--color-white) !important;
+    text-decoration: none;
+    border-radius: var(--border-radius-sm);
+    transition: background-color 0.2s ease;
+    font-weight: 500;
+    font-size: 0.9rem;
+}
+
+#direct-link:hover {
+    background-color: var(--color-primary-dark);
+    text-decoration: none;
+}
+
+#status-message.error {
+    color: var(--color-danger);
+    font-weight: 500;
+}
+
+#status-message.success {
+    color: var(--color-success);
+    font-weight: 500;
 }
