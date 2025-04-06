@@ -499,69 +499,47 @@ function setupDebugListeners() {
 
 // Initialize dashboard
 async function initDashboard() {
-  try {
-    console.log("Initializing teacher dashboard...");
-    
-    // Get user info from sessionStorage instead of URL parameters
+    console.log("Initializing Teacher Dashboard...");
+    // ... (existing code to get userId, userRole, welcome message) ...
     const userId = sessionStorage.getItem('userId');
     const userRole = sessionStorage.getItem('userRole');
-    const userName = sessionStorage.getItem('userName');
-    
-    // If no user info in sessionStorage, try to authenticate with the server
-    if (!userId || !userRole) {
-      console.log("No user info in sessionStorage, checking authentication...");
-      
-      // Check authentication status
-      const response = await fetch(`${API_URL}/auth/check-auth`, {
-        credentials: 'include',
-        headers: {
-          'Accept': 'application/json'
-        }
-      });
-      
-      if (response.ok) {
-        const data = await response.json();
-        console.log("Authentication successful:", data);
-        
-        // Store user info in sessionStorage
-        sessionStorage.setItem('userId', data.user.id);
-        sessionStorage.setItem('userRole', data.role);
-        sessionStorage.setItem('userName', `${data.user.firstName} ${data.user.lastName}`);
-        
-        // Update welcome message
-        document.getElementById('welcome-message').textContent = `Welcome, ${data.user.firstName} ${data.user.lastName}!`;
-        
-        // Show teacher section
-        document.getElementById('teacher-section').style.display = 'block';
-        
-        // Load classes
-        loadClasses();
-        
-        // Load recent attendance records
-        loadRecentAttendanceRecords();
-      } else {
-        console.error("Authentication failed, redirecting to login...");
-        window.location.href = getBasePath() + '/pages/login.html';
-      }
-    } else {
-      // User info found in sessionStorage
-      console.log("User info found in sessionStorage:", { userId, userRole, userName });
-      
-      // Update welcome message
-      document.getElementById('welcome-message').textContent = `Welcome, ${userName}!`;
-      
-      // Show teacher section
-      document.getElementById('teacher-section').style.display = 'block';
-      
-      // Load classes
-      loadClasses();
-      
-      // Load recent attendance records
-      loadRecentAttendanceRecords();
+    const userName = sessionStorage.getItem('userName'); // Get userName
+    const welcomeMessage = document.getElementById('welcome-message');
+    const teacherSection = document.getElementById('teacher-section');
+
+    if (welcomeMessage && userRole === 'teacher') {
+        welcomeMessage.textContent = `Welcome, ${userName || 'Teacher'}! Manage your classes and attendance here.`;
     }
-  } catch (error) {
-    console.error("Error initializing dashboard:", error);
-    showError("Failed to initialize dashboard. Please try again.");
+
+    if (teacherSection && userRole === 'teacher') {
+        teacherSection.style.display = 'block';
+        console.log("Teacher section displayed");
+
+        try {
+            console.log("Loading classes...");
+            await loadClasses(); 
+            console.log("Loading recent attendance...");
+            await loadRecentAttendanceRecords(); 
+            console.log("Loading active QR sessions...");
+            await loadActiveQrSessions(); // 📌 Call the new function here
+            console.log("Setting up navigation...");
+            setupDashboardNavigation(); 
+            console.log("Dashboard initialization complete.");
+        } catch (error) {
+            console.error("Error during dashboard initialization:", error);
+            if (welcomeMessage) {
+                 welcomeMessage.textContent = 'Error loading dashboard components. Please refresh.';
+            }
+        }
+
+    } else if (userRole !== 'teacher') {
+        console.warn('User is not a teacher, hiding teacher section.');
+        if (welcomeMessage) {
+             welcomeMessage.textContent = 'Access denied. Teacher role required.';
+        }
+        // Optionally redirect or disable features
+    } else {
+        console.error('Teacher section element not found.');
     }
 }
 
@@ -1172,4 +1150,165 @@ function displayAttendanceRecords(records) {
         
         tableBody.appendChild(row);
     });
-} 
+}
+
+// 📌 NEW: Function to fetch and display active QR sessions
+async function loadActiveQrSessions() {
+    const activeSessionsSection = document.getElementById('active-sessions-section');
+    const tableBody = document.querySelector('#active-sessions-table tbody');
+    if (!tableBody || !activeSessionsSection) return;
+
+    tableBody.innerHTML = '<tr><td colspan="5" style="text-align: center;">Loading active sessions...</td></tr>'; // Show loading state
+
+    try {
+        const response = await fetchWithAuth(`${API_URL}/qr/active-sessions`); // Use NEW endpoint
+        const data = await response.json();
+
+        if (data.success && data.sessions.length > 0) {
+            activeSessionsSection.style.display = 'block'; // Show the section if there are sessions
+            tableBody.innerHTML = ''; // Clear loading state
+
+            data.sessions.forEach(session => {
+                const row = tableBody.insertRow();
+
+                const expires = new Date(session.expires_at_iso); // Use ISO string
+                const now = new Date();
+                const isExpired = expires < now;
+                const status = isExpired ? 'Expired' : 'Active';
+
+                // Format expiration time (example: HH:MM:SS on YYYY-MM-DD)
+                const formattedExpires = expires.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' }) +
+                                       ' on ' + expires.toLocaleDateString();
+
+                row.innerHTML = `
+                    <td>${session.class_name || session.subject || 'N/A'}</td>
+                    <td>${session.section || 'N/A'}</td>
+                    <td>${formattedExpires}</td>
+                    <td><span class="status-${status.toLowerCase()}">${status}</span></td>
+                    <td>
+                        <button class="action-btn show-qr-btn">Show QR</button>
+                        <button class="action-btn delete-btn">Delete</button>
+                    </td>
+                `;
+
+                // Store session data on buttons for easy access
+                const showBtn = row.querySelector('.show-qr-btn');
+                const deleteBtn = row.querySelector('.delete-btn');
+
+                if (showBtn) {
+                    showBtn.dataset.sessionId = session.session_id;
+                    showBtn.dataset.qrCodeUrl = session.qrCodeUrl;
+                    showBtn.dataset.expiresAtIso = session.expires_at_iso;
+                    showBtn.dataset.section = session.section || ''; // Store section
+                    showBtn.dataset.subject = session.subject || ''; // Store subject
+                    showBtn.addEventListener('click', handleShowActiveQr);
+                }
+                if (deleteBtn) {
+                    deleteBtn.dataset.sessionId = session.session_id;
+                    deleteBtn.addEventListener('click', handleDeleteActiveSession);
+                }
+            });
+        } else if (data.success) {
+             activeSessionsSection.style.display = 'none'; // Hide if no active sessions
+            // Optional: Keep the section visible and show "No active sessions"
+            // tableBody.innerHTML = '<tr><td colspan="5" style="text-align: center;">No active sessions found.</td></tr>';
+            // activeSessionsSection.style.display = 'block';
+        } else {
+            tableBody.innerHTML = `<tr><td colspan="5" style="text-align: center; color: red;">Error loading sessions: ${data.message}</td></tr>`;
+            activeSessionsSection.style.display = 'block'; // Show section to display error
+        }
+    } catch (error) {
+        console.error('Error fetching active sessions:', error);
+        tableBody.innerHTML = `<tr><td colspan="5" style="text-align: center; color: red;">Network error loading active sessions.</td></tr>`;
+        activeSessionsSection.style.display = 'block'; // Show section to display error
+    }
+}
+
+// 📌 NEW: Handler for "Show QR" button click
+function handleShowActiveQr(event) {
+    const button = event.target;
+    const { sessionId, qrCodeUrl, expiresAtIso, section, subject } = button.dataset;
+
+    console.log(`Showing QR for active session: ${sessionId}`);
+
+    // Check if the display function from qrcode.js is available
+    if (typeof displayQrCodeDetails === 'function') {
+         displayQrCodeDetails(sessionId, qrCodeUrl, expiresAtIso, section);
+
+         // Optional: scroll to the QR code display area
+         const qrContainer = document.getElementById('qr-code-container');
+         if (qrContainer) {
+             qrContainer.scrollIntoView({ behavior: 'smooth' });
+         }
+    } else {
+        console.error('displayQrCodeDetails function is not available. Make sure qrcode.js exposes it.');
+        alert('Error: Could not display QR code. Function unavailable.');
+    }
+}
+
+// 📌 NEW: Handler for "Delete" button click
+async function handleDeleteActiveSession(event) {
+    const button = event.target;
+    const sessionId = button.dataset.sessionId;
+
+    if (!confirm(`Are you sure you want to delete session ${sessionId}? This will expire the QR code immediately.`)) {
+        return;
+    }
+
+    console.log(`Deleting active session: ${sessionId}`);
+    button.textContent = 'Deleting...';
+    button.disabled = true;
+
+    try {
+        const response = await fetchWithAuth(`${API_URL}/qr/sessions/${sessionId}`, {
+            method: 'DELETE'
+        });
+        const data = await response.json();
+
+        if (data.success) {
+            // Remove the row from the table
+            button.closest('tr').remove();
+             // Check if table body is empty, if so hide section or show message
+            const tableBody = document.querySelector('#active-sessions-table tbody');
+             if (tableBody && tableBody.rows.length === 0) {
+                 document.getElementById('active-sessions-section').style.display = 'none';
+                 // Or: tableBody.innerHTML = '<tr><td colspan="5" style="text-align: center;">No active sessions found.</td></tr>';
+             }
+            // Potentially clear the main QR display if it was showing this session
+            // clearQrDisplay(); // Hypothetical function
+        } else {
+            alert(`Error deleting session: ${data.message}`);
+            button.textContent = 'Delete';
+            button.disabled = false;
+        }
+    } catch (error) {
+        console.error('Error deleting session:', error);
+        alert('Network error deleting session.');
+        button.textContent = 'Delete';
+        button.disabled = false;
+    }
+}
+
+// Add utility function for formatting date if not already present
+function formatDate(dateString) {
+    if (!dateString) return 'N/A';
+    const date = new Date(dateString);
+    return date.toLocaleDateString() + ' ' + date.toLocaleTimeString();
+}
+
+// Ensure initDashboard is called on page load
+// Make sure this isn't called twice if qrcode.js also calls it
+if (!window.dashboardInitialized) {
+    document.addEventListener('DOMContentLoaded', initDashboard);
+    window.dashboardInitialized = true; 
+}
+
+// Helper function to show error messages (if not already defined)
+function showError(message) {
+    console.error("Dashboard Error:", message);
+    // You might want to display this in a dedicated error area on the page
+    // const errorDiv = document.getElementById('dashboard-error-message');
+    // if (errorDiv) { errorDiv.textContent = message; errorDiv.style.display = 'block'; }
+}
+
+// ... rest of the file ...

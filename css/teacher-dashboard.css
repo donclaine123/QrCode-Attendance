@@ -659,3 +659,63 @@ button:hover {
     color: var(--color-success);
     font-weight: 500;
 }
+
+/* Active Sessions Table */
+#active-sessions-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: var(--spacing-md);
+}
+
+#active-sessions-table th,
+#active-sessions-table td {
+  padding: var(--spacing-sm) var(--spacing-md);
+  text-align: left;
+  border-bottom: 1px solid var(--color-secondary-dark);
+  vertical-align: middle;
+}
+
+#active-sessions-table th {
+  font-weight: 600;
+  color: var(--color-text-light);
+  font-size: 0.85rem;
+  text-transform: uppercase;
+}
+
+#active-sessions-table tbody tr:last-child td {
+  border-bottom: none;
+}
+
+#active-sessions-table .status-active {
+  color: var(--color-success);
+  font-weight: 500;
+}
+
+/* Style action buttons in the table */
+#active-sessions-table .action-btn {
+  padding: var(--spacing-xs) var(--spacing-sm);
+  margin-right: var(--spacing-xs);
+  font-size: 0.8rem;
+  border-radius: var(--border-radius-sm);
+}
+
+#active-sessions-table .delete-btn {
+  background-color: var(--color-danger);
+  color: var(--color-white);
+}
+#active-sessions-table .delete-btn:hover {
+  background-color: #dc2626; /* Darker red */
+}
+
+#active-sessions-table .show-qr-btn {
+  background-color: var(--color-primary);
+  color: var(--color-white);
+}
+#active-sessions-table .show-qr-btn:hover {
+  background-color: var(--color-primary-dark);
+}
+
+/* Optional: Responsive table */
+.table-responsive {
+  overflow-x: auto;
+}
