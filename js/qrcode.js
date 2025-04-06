@@ -253,7 +253,7 @@ async function generateQRCode() {
       const section = data.section;
 
       console.log("QR Code URL:", qrCodeUrl);
-
+      
       const qrCodeDiv = document.getElementById('qr-code-container') || document.getElementById('qrcode');
       const statusDiv = document.getElementById('status-message') || document.getElementById('status') || qrCodeDiv; // Find status message div
 
@@ -309,7 +309,7 @@ async function generateQRCode() {
                  qrCodeDiv.removeChild(loadingMsg);
              }
              // Show fallback link if image fails
-             qrCodeDiv.innerHTML = `
+            qrCodeDiv.innerHTML = `
                 <div style="text-align: center; padding: 20px; border: 1px solid #ff6b6b; border-radius: 8px; margin: 20px 0; background-color: #fff9f9;">
                   <p style="margin-bottom: 10px; color: #d63031; font-weight: bold;">QR Code image failed to load. Please use this link:</p>
                   <a href="${qrCodeUrl}" target="_blank" style="color: #0984e3; font-weight: bold;">${qrCodeUrl}</a>
@@ -341,7 +341,7 @@ async function generateQRCode() {
     console.error('Error in generateQRCode fetch:', error);
     const statusDiv = document.getElementById('status-message') || document.getElementById('status') || document.getElementById('qr-code-container');
     if (statusDiv) {
-        statusDiv.innerHTML = `<div class="error-message">Server connection error. Please try again.</div>`;
+    statusDiv.innerHTML = `<div class="error-message">Server connection error. Please try again.</div>`;
         statusDiv.className = 'error';
     }
      const qrCodeDiv = document.getElementById('qr-code-container') || document.getElementById('qrcode');

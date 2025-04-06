@@ -299,7 +299,7 @@ document.addEventListener('DOMContentLoaded', function() {
 // Function to check authentication status
 async function checkAuthStatus() {
   try {
-    const response = await fetch(`${API_URL}/auth/check-auth`, {
+        const response = await fetch(`${API_URL}/auth/check-auth`, {
       method: "GET",
       credentials: "include",
       headers: { 
@@ -309,7 +309,7 @@ async function checkAuthStatus() {
     });
     
     if (!response.ok) return false;
-    const data = await response.json();
+        const data = await response.json();
     
     // Remove localStorage fallback entirely
     return data.authenticated && data.user?.role === 'teacher';
