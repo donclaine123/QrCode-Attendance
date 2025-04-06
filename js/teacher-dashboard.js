@@ -14,7 +14,7 @@
         sessionStorage.clear(); 
         // Use getBasePath if available, otherwise assume root or relative path
         const basePath = typeof getBasePath === 'function' ? getBasePath() : ''; 
-        window.location.href = basePath + '/pages/login.html'; // Redirect to main login/index page
+        window.location.href = basePath + '/pages/login.html'; // Redirect to main login page
     }
 })();
 // --- End Role Check --- 
