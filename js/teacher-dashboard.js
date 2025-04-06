@@ -1238,6 +1238,19 @@ function handleShowActiveQr(event) {
 
     console.log(`Showing QR for active session: ${sessionId}`);
 
+    // 📌 Ensure the target section is visible FIRST
+    const qrSection = document.getElementById('qr-section');
+    if (qrSection) {
+        console.log('[handleShowActiveQr] Ensuring #qr-section is visible.');
+        qrSection.style.display = 'block'; 
+    } else {
+        console.error('[handleShowActiveQr] Cannot find #qr-section to make visible.');
+        // Optionally hide other sections if needed
+        // document.getElementById('active-sessions-section').style.display = 'none';
+        // document.getElementById('classes-section').style.display = 'none';
+        // ... etc
+    }
+
     const qrCodeDiv = document.getElementById('qr-code-container');
     if (!qrCodeDiv) {
         console.error("QR Code container not found!");
