@@ -523,7 +523,7 @@ async function initDashboard() {
             console.log("Loading active QR sessions...");
             await loadActiveQrSessions(); // 📌 Call the new function here
             console.log("Setting up navigation...");
-            setupDashboardNavigation(); 
+            // setupDashboardNavigation(); // REMOVED - Navigation is set up in DOMContentLoaded
             console.log("Dashboard initialization complete.");
         } catch (error) {
             console.error("Error during dashboard initialization:", error);
@@ -1161,7 +1161,8 @@ async function loadActiveQrSessions() {
     tableBody.innerHTML = '<tr><td colspan="5" style="text-align: center;">Loading active sessions...</td></tr>'; // Show loading state
 
     try {
-        const response = await fetchWithAuth(`${API_URL}/qr/active-sessions`); // Use NEW endpoint
+        // Remove API_URL prefix, fetchWithAuth adds it
+        const response = await fetchWithAuth(`/qr/active-sessions`); 
         const data = await response.json();
 
         if (data.success && data.sessions.length > 0) {
@@ -1260,7 +1261,8 @@ async function handleDeleteActiveSession(event) {
     button.disabled = true;
 
     try {
-        const response = await fetchWithAuth(`${API_URL}/qr/sessions/${sessionId}`, {
+        // Remove API_URL prefix, fetchWithAuth adds it
+        const response = await fetchWithAuth(`/qr/sessions/${sessionId}`, {
             method: 'DELETE'
         });
         const data = await response.json();
