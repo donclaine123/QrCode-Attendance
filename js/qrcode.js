@@ -132,10 +132,10 @@ async function generateQRCode() {
     return;
   }
   
-  // Find the container for QR code - use qr-code-container as primary, fall back to qrcode
-  const qrCodeDiv = document.getElementById('qr-code-container') || document.getElementById('qrcode');
-  // Find status div - use qr-code-container as fallback if status doesn't exist
-  const statusDiv = document.getElementById('status') || document.getElementById('qr-code-container');
+  // Find the container for QR code
+  const qrCodeDiv = document.getElementById('qr-code-container');
+  // Find the dedicated status div
+  const statusDiv = document.getElementById('status-message'); 
   
   const selectedClassId = classSelect.value;
   const sectionValue = sectionInput ? sectionInput.value.trim() : '';
@@ -143,19 +143,31 @@ async function generateQRCode() {
   console.log("Selected class ID:", selectedClassId);
   console.log("Section:", sectionValue);
   
-  // Check if we have a place to show the QR code
+  // Check if we have a place to show the QR code and status
   if (!qrCodeDiv) {
-    console.error("QR code container element not found");
+    console.error("QR code container element (#qr-code-container) not found");
     alert("Error: Could not find QR code container");
     return;
   }
+   if (!statusDiv) {
+    console.error("Status message element (#status-message) not found");
+    // We might continue without status, but log it
+   }
   
-  // Clear previous QR code and status (with null checks)
-  if (qrCodeDiv) qrCodeDiv.innerHTML = '';
-  if (statusDiv) statusDiv.textContent = 'Generating QR code...';
+  // Clear previous QR code and status (use specific elements)
+  qrCodeDiv.innerHTML = ''; // Clear the main container (will re-add status div later)
+  if (statusDiv) {
+      statusDiv.textContent = 'Generating QR code...';
+      qrCodeDiv.appendChild(statusDiv); // Ensure status div is inside container after clearing
+  } else {
+      // If statusDiv doesn't exist, maybe add a temporary message to qrCodeDiv
+      qrCodeDiv.innerHTML = '<p>Generating QR code...</p>';
+  }
   
+
   if (!selectedClassId) {
     if (statusDiv) statusDiv.textContent = 'Please select a class first.';
+    else qrCodeDiv.innerHTML = '<p>Please select a class first.</p>';
     return;
   }
   
@@ -255,18 +267,25 @@ async function generateQRCode() {
 
       console.log("QR Code URL:", qrCodeUrl);
       
-      const qrCodeDiv = document.getElementById('qr-code-container') || document.getElementById('qrcode');
-      const statusDiv = document.getElementById('status-message') || document.getElementById('status') || qrCodeDiv; // Find status message div
+      // Ensure statusDiv is found again after potential DOM changes
+      const currentStatusDiv = document.getElementById('status-message');
 
-      if (!qrCodeDiv || !statusDiv) {
-          console.error("Cannot generate QR: Container or status element not found.");
-          // Re-enable button before returning
-          const generateBtn = document.getElementById('generate-qr-code-btn');
+      if (!qrCodeDiv) { /* Check qrCodeDiv again just in case */
+          console.error("Cannot generate QR: Container element lost.");
           if (generateBtn) generateBtn.disabled = false;
           return;
       }
-
-      qrCodeDiv.innerHTML = ''; // Clear previous QR
+      
+      // Clear only QR content, leave status message if it exists
+      // Find iframe if it exists and remove it
+      const existingIframe = qrCodeDiv.querySelector('#qr-code-iframe');
+      if(existingIframe) qrCodeDiv.removeChild(existingIframe);
+      // Find link container if it exists and remove it
+      const existingLinkContainer = qrCodeDiv.querySelector('.direct-link-container');
+      if(existingLinkContainer) qrCodeDiv.removeChild(existingLinkContainer);
+      
+      // Update status message if found
+      if (currentStatusDiv) currentStatusDiv.textContent = 'Loading QR Code Image...'; 
 
       // Generate QR code image using external API
       try {
@@ -303,7 +322,10 @@ async function generateQRCode() {
             console.log("QR code rendered via srcdoc iframe");
             
             // Now call the display function AFTER iframe is appended
-            window.displayQrCodeDetails(sessionId, qrCodeUrl, expiresAtIso, section); // Use window prefix for clarity
+            console.log('[generateQRCode] Calling window.displayQrCodeDetails...');
+            window.displayQrCodeDetails(sessionId, qrCodeUrl, expiresAtIso, section); 
+            console.log('[generateQRCode] Returned from window.displayQrCodeDetails.');
+            console.log('[generateQRCode] qrCodeDiv outerHTML AFTER displayQrCodeDetails:', qrCodeDiv.outerHTML);
 
             // No need to revoke Blob URL
         };
@@ -313,15 +335,21 @@ async function generateQRCode() {
              if (loadingMsg && loadingMsg.parentNode) {
                  qrCodeDiv.removeChild(loadingMsg);
              }
-             // Show fallback link if image fails
-            qrCodeDiv.innerHTML = `
+             // Show fallback link - ENSURE it targets qrCodeDiv correctly
+             const fallbackDiv = document.createElement('div');
+             fallbackDiv.innerHTML = `
                 <div style="text-align: center; padding: 20px; border: 1px solid #ff6b6b; border-radius: 8px; margin: 20px 0; background-color: #fff9f9;">
                   <p style="margin-bottom: 10px; color: #d63031; font-weight: bold;">QR Code image failed to load. Please use this link:</p>
                   <a href="${qrCodeUrl}" target="_blank" style="color: #0984e3; font-weight: bold;">${qrCodeUrl}</a>
               </div>
             `;
+            // Remove potential iframe before adding fallback
+            const existingIframeOnError = qrCodeDiv.querySelector('#qr-code-iframe');
+            if(existingIframeOnError) qrCodeDiv.removeChild(existingIframeOnError);
+            qrCodeDiv.appendChild(fallbackDiv); // Append fallback to main container
+
             // Still call display details to show status, timer, and *proper* direct link
-            displayQrCodeDetails(sessionId, qrCodeUrl, expiresAtIso, section);
+            window.displayQrCodeDetails(sessionId, qrCodeUrl, expiresAtIso, section);
         };
 
         img.src = `https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=${encodeURIComponent(qrCodeUrl)}`;
