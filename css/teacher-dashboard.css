@@ -252,73 +252,16 @@ button:hover {
   background-color: var(--color-primary-dark);
 }
 
-/* QR Code Container and Elements */
+/* QR Code Container */
 #qr-code-container {
-  text-align: center;
   margin-top: var(--spacing-lg);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
   padding: var(--spacing-lg);
-  border: 1px solid var(--color-secondary-dark);
+  border: 1px dashed var(--color-secondary-dark);
   border-radius: var(--border-radius-md);
-  background-color: var(--color-white);
-  box-shadow: var(--shadow-sm);
-}
-
-#qr-code-image {
-  display: block;
-  max-width: 100%;
-  width: 250px;
-  height: 250px;
-  margin: 0 auto var(--spacing-md);
-  border: 1px solid var(--color-secondary-dark);
-  border-radius: var(--border-radius-sm);
-  padding: var(--spacing-md);
-  background-color: white;
-  box-shadow: var(--shadow-sm);
-}
-
-#status-message {
-  margin-bottom: var(--spacing-md);
-  padding: var(--spacing-sm);
-}
-
-.direct-link-container {
-  margin-top: var(--spacing-md);
-  padding: var(--spacing-sm);
-  border-top: 1px solid var(--color-secondary-dark);
-}
-
-.direct-link-container a {
-  color: var(--color-primary);
-  font-weight: 500;
-  text-decoration: none;
-}
-
-.direct-link-container a:hover {
-  text-decoration: underline;
-}
-
-/* Success and Error Messages */
-.success-message {
-  color: var(--color-success);
-  font-weight: 500;
-  margin-bottom: var(--spacing-sm);
-}
-
-.error-message {
-  color: var(--color-danger);
-  font-weight: 500;
-  margin-bottom: var(--spacing-sm);
-}
-
-#expiration-timer {
-  margin-top: var(--spacing-sm);
-  font-size: 0.9rem;
-  color: var(--color-text-light);
-}
-
-#countdown {
-  font-weight: 600;
-  color: var(--color-text);
 }
 
 /* Classes List */
@@ -638,6 +581,83 @@ button:hover {
 .section-choice-btn:hover {
   background-color: var(--color-secondary);
   color: var(--color-white);
+}
+
+/* QR Code Section Enhancement */
+#qr-code-container {
+    text-align: center;
+    padding: var(--spacing-lg);
+    background-color: var(--color-secondary);
+    border-radius: var(--border-radius-md);
+    margin-top: var(--spacing-lg);
+}
+
+#qr-code-container #status-message {
+    margin-bottom: var(--spacing-md);
+  font-size: 1rem;
+    color: var(--color-text);
+    line-height: 1.6;
+}
+
+#qr-code-container #status-message > p {
+    margin-bottom: var(--spacing-sm);
+}
+
+#qr-code-container #expiration-timer {
+    display: block;
+    margin-top: var(--spacing-md);
+    font-size: 0.9rem;
+    color: var(--color-warning);
+    font-weight: 500;
+}
+
+#qr-code-container #qr-code-iframe {
+    display: block;
+    margin: var(--spacing-md) auto;
+    max-width: 100%;
+    height: auto;
+    border: none;
+    background-color: var(--color-white);
+    padding: var(--spacing-sm);
+    border-radius: var(--border-radius-sm);
+    box-shadow: var(--shadow-sm);
+}
+
+#qr-code-container small,
+#qr-code-container .scan-prompt {
+    display: block;
+    margin-top: var(--spacing-sm);
+    margin-bottom: var(--spacing-md);
+    font-size: 0.85rem;
+    color: var(--color-text-light);
+}
+
+#qr-code-container #direct-link {
+    display: inline-block;
+    margin-top: var(--spacing-md);
+    padding: var(--spacing-sm) var(--spacing-md);
+    background-color: var(--color-primary);
+    color: var(--color-white) !important;
+    text-decoration: none;
+    border-radius: var(--border-radius-sm);
+    transition: background-color 0.2s ease;
+    font-weight: 500;
+    font-size: 0.9rem;
+}
+
+#qr-code-container #direct-link:hover {
+    background-color: var(--color-primary-dark);
+    text-decoration: none;
+}
+
+#qr-code-container #status-message.error {
+    color: var(--color-danger);
+    font-weight: 500;
+}
+
+#qr-code-container #status-message.success {
+    color: var(--color-success);
+    font-weight: 500;
 }
 
 /* Active Sessions Table */
