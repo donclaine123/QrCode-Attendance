@@ -74,29 +74,6 @@
         <div id="welcome-message"></div>
       </div>
 
-      <!-- Active QR Sessions Section -->
-      <div id="active-sessions-section" class="dashboard-section" style="display: none;">
-        <h2>Active QR Sessions</h2>
-        <div class="table-responsive">
-          <table id="active-sessions-table">
-            <thead>
-              <tr>
-                <th>Class Name</th>
-                <th>Section</th>
-                <th>Expires At</th>
-                <th>Status</th>
-                <th>Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr>
-                <td colspan="5" style="text-align: center;">Loading active sessions...</td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-      </div>
-
       <div id="teacher-section" style="display: none;">
         <!-- Dashboard Overview with Recent Attendance Records -->
         <div id="dashboard-overview" class="dashboard-section">
@@ -121,6 +98,32 @@
 
         <!-- QR Code Section -->
         <div id="qr-section" class="dashboard-section" style="display: none;">
+          <!-- Moved Active Sessions Here -->
+          <div id="active-sessions-section" class="dashboard-section" style="display: none; margin-bottom: var(--spacing-xl); border: none; box-shadow: none; padding: 0;"> 
+            <h2>Active QR Sessions</h2>
+            <div class="table-responsive"> 
+              <table id="active-sessions-table">
+                <thead>
+                  <tr>
+                    <th>Class Name</th>
+                    <th>Section</th>
+                    <th>Expires At</th>
+                    <th>Status</th>
+                    <th>Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <!-- Active sessions will be populated here by JS -->
+                  <tr>
+                    <td colspan="5" style="text-align: center;">Loading active sessions...</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+             <hr style="margin: var(--spacing-lg) 0;"> <!-- Add a separator -->
+          </div>
+          <!-- End Moved Active Sessions -->
+
           <h3>Generate QR Code for Attendance</h3>
           <div class="form-group">
             <label for="class-select">Select Class:</label>
