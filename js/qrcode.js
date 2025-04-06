@@ -343,6 +343,14 @@ async function generateQRCode() {
             console.log('[generateQRCode] Returned from window.displayQrCodeDetails.');
             console.log('[generateQRCode] qrCodeDiv outerHTML AFTER displayQrCodeDetails:', currentQrCodeDiv.outerHTML);
 
+            // 📌 Refresh the active sessions list
+            if (typeof window.loadActiveQrSessions === 'function') {
+                console.log('[generateQRCode] Refreshing active sessions list...');
+                window.loadActiveQrSessions();
+            } else {
+                console.warn('[generateQRCode] loadActiveQrSessions function not found on window.');
+            }
+
             // Release blob URL after iframe loads (Re-added)
             iframe.onload = () => { setTimeout(() => URL.revokeObjectURL(iframe.src), 100); };
         };
@@ -367,6 +375,13 @@ async function generateQRCode() {
 
             // Still call display details to show status, timer, and *proper* direct link
             window.displayQrCodeDetails(sessionId, qrCodeUrl, expiresAtIso, section);
+            // 📌 Refresh the active sessions list even on image error
+            if (typeof window.loadActiveQrSessions === 'function') {
+                console.log('[generateQRCode] Refreshing active sessions list after image error...');
+                window.loadActiveQrSessions();
+            } else {
+                console.warn('[generateQRCode] loadActiveQrSessions function not found on window.');
+            }
         };
 
         img.src = `https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=${encodeURIComponent(qrCodeUrl)}`;
@@ -376,7 +391,14 @@ async function generateQRCode() {
         console.error("Error setting up QR code display:", qrError);
         currentQrCodeDiv.innerHTML = `<div class="error-message">Error displaying QR code.</div>`;
          // Call display details even on error to show status/link
-         displayQrCodeDetails(sessionId, qrCodeUrl, expiresAtIso, section);
+         window.displayQrCodeDetails(sessionId, qrCodeUrl, expiresAtIso, section);
+         // 📌 Refresh the active sessions list even on QR setup error
+         if (typeof window.loadActiveQrSessions === 'function') {
+             console.log('[generateQRCode] Refreshing active sessions list after setup error...');
+             window.loadActiveQrSessions();
+         } else {
+             console.warn('[generateQRCode] loadActiveQrSessions function not found on window.');
+         }
       }
 
     } else { // if (!data.success)

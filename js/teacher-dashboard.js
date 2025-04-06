@@ -1153,7 +1153,8 @@ function displayAttendanceRecords(records) {
 }
 
 // 📌 NEW: Function to fetch and display active QR sessions
-async function loadActiveQrSessions() {
+// Make it globally accessible
+window.loadActiveQrSessions = async function() {
     const activeSessionsSection = document.getElementById('active-sessions-section');
     const tableBody = document.querySelector('#active-sessions-table tbody');
     if (!tableBody || !activeSessionsSection) return;
