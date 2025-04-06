@@ -283,25 +283,29 @@ async function generateQRCode() {
             if (loadingMsg && loadingMsg.parentNode) {
                 qrCodeDiv.removeChild(loadingMsg);
             }
-            // Create an iframe to display the image (or just append img)
+            // Create an iframe using srcdoc
             const iframe = document.createElement('iframe');
-            const imgHTML = `<html><body style="margin:0; display:flex; justify-content:center; align-items:center; height:100%;"><img src="${img.src}" alt="QR Code" style="max-width:100%; max-height:100%;"></body></html>`;
-            const blob = new Blob([imgHTML], {type: 'text/html'});
-            iframe.src = URL.createObjectURL(blob);
-            iframe.id = 'qr-code-iframe'; // Add ID for styling
-            iframe.width = '280'; // Slightly smaller to fit padding/border
+            iframe.id = 'qr-code-iframe';
+            iframe.width = '280'; 
             iframe.height = '280';
             iframe.style.border = 'none';
             iframe.style.display = 'block';
             iframe.style.margin = '0 auto';
+            // Embed the image directly using srcdoc
+            iframe.srcdoc = `
+              <!DOCTYPE html>
+              <html>
+              <head><style>body{margin:0; display:flex; justify-content:center; align-items:center; height:100%;}</style></head>
+              <body><img src="${img.src}" alt="QR Code" style="max-width:100%; max-height:100%;"></body>
+              </html>
+            `;
             qrCodeDiv.appendChild(iframe);
-            console.log("QR code rendered via blob URL iframe");
+            console.log("QR code rendered via srcdoc iframe");
             
-            // Now call the display function AFTER image is loaded and iframe appended
-            displayQrCodeDetails(sessionId, qrCodeUrl, expiresAtIso, section);
+            // Now call the display function AFTER iframe is appended
+            window.displayQrCodeDetails(sessionId, qrCodeUrl, expiresAtIso, section); // Use window prefix for clarity
 
-            // Release blob URL after iframe loads (add slight delay)
-            iframe.onload = () => { setTimeout(() => URL.revokeObjectURL(iframe.src), 100); };
+            // No need to revoke Blob URL
         };
 
         img.onerror = function() {
