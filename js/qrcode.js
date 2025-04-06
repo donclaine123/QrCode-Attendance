@@ -215,6 +215,63 @@ async function generateQRCode() {
   }
 }
 
+// Global variable to hold the timer interval ID
+let qrTimerInterval = null;
+
+// Function to start the expiry countdown timer
+function startExpiryTimer(expiresAtIsoString) {
+    console.log(`Starting expiry timer for: ${expiresAtIsoString}`);
+    const timerSpan = document.getElementById('qr-timer');
+    if (!timerSpan) {
+        console.error("QR timer element (#qr-timer) not found.");
+        return;
+    }
+
+    // Clear any existing timer interval
+    if (qrTimerInterval) {
+        clearInterval(qrTimerInterval);
+        qrTimerInterval = null;
+        console.log("Cleared previous QR timer interval.");
+    }
+
+    try {
+        const expiresAt = new Date(expiresAtIsoString);
+        if (isNaN(expiresAt.getTime())) {
+            throw new Error("Invalid expiration date format");
+        }
+
+        qrTimerInterval = setInterval(() => {
+            const now = new Date();
+            const timeLeft = Math.max(0, Math.floor((expiresAt - now) / 1000)); // Time left in seconds
+
+            if (timeLeft <= 0) {
+                clearInterval(qrTimerInterval);
+                qrTimerInterval = null;
+                timerSpan.textContent = "Expired";
+                timerSpan.style.color = "red";
+                console.log("QR timer expired.");
+                // Optionally disable related buttons or clear QR code visual
+                const qrCodeDiv = document.getElementById('qr-code-container') || document.getElementById('qrcode');
+                if(qrCodeDiv) {
+                    // Maybe add an expired overlay or message
+                    // qrCodeDiv.querySelector('img')?.style.opacity = '0.5'; 
+                }
+            } else {
+                // Format minutes:seconds
+                const minutes = Math.floor(timeLeft / 60);
+                const seconds = timeLeft % 60;
+                timerSpan.textContent = `${minutes}:${seconds.toString().padStart(2, '0')}`;
+                timerSpan.style.color = timeLeft < 60 ? "red" : "inherit"; // Turn red in the last minute
+            }
+        }, 1000); // Update every second
+
+    } catch (error) {
+        console.error("Error starting expiry timer:", error);
+        timerSpan.textContent = "Error";
+        timerSpan.style.color = "red";
+    }
+}
+
 // Function to populate class dropdown
 async function populateClassDropdown() {
   const classSelect = document.getElementById('class-select');
