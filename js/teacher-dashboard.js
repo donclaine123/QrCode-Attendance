@@ -19,6 +19,12 @@
 })();
 // --- End Role Check --- 
 
+// Remove specific DOMContentLoaded logs if too noisy
+// document.addEventListener('DOMContentLoaded', function() {
+//     console.log('[TeacherDashboard] DOMContentLoaded - Attaching listeners...');
+// ...
+// });
+
 document.addEventListener('DOMContentLoaded', function() {
     // REMOVED: Don't skip the whole setup anymore. Allow listeners to attach.
     // if (window.dashboardInitialized) {
@@ -1162,16 +1168,16 @@ window.loadActiveQrSessions = async function() {
     tableBody.innerHTML = '<tr><td colspan="5" style="text-align: center;">Loading active sessions...</td></tr>'; // Show loading state
 
     try {
-        console.log(`[loadActiveQrSessions] Fetching from /auth/active-sessions...`);
-        const response = await fetchWithAuth(`/auth/active-sessions`); // Use /auth prefix
-        console.log(`[loadActiveQrSessions] Response status: ${response.status}`);
+        // console.log(`[loadActiveQrSessions] Fetching from /auth/active-sessions...`);
+        const response = await fetchWithAuth(`/auth/active-sessions`); 
+        // console.log(`[loadActiveQrSessions] Response status: ${response.status}`);
         
         const data = await response.json();
-        console.log('[loadActiveQrSessions] Response data:', data);
+        // console.log('[loadActiveQrSessions] Response data:', data);
 
         if (data.success && data.sessions && data.sessions.length > 0) {
-            console.log(`[loadActiveQrSessions] Found ${data.sessions.length} active sessions. Displaying section.`);
-            activeSessionsSection.style.display = 'block'; // Show the section if there are sessions
+            // console.log(`[loadActiveQrSessions] Found ${data.sessions.length} active sessions. Displaying section.`);
+            activeSessionsSection.style.display = 'block';
             tableBody.innerHTML = ''; // Clear loading state
 
             data.sessions.forEach(session => {
@@ -1215,8 +1221,7 @@ window.loadActiveQrSessions = async function() {
                 }
             });
         } else if (data.success) {
-             console.log('[loadActiveQrSessions] No active sessions found. Displaying message.');
-             // Ensure the section is visible even if there are no sessions
+             // console.log('[loadActiveQrSessions] No active sessions found. Displaying message.');
              activeSessionsSection.style.display = 'block'; 
              // Update the table body to show a message
              tableBody.innerHTML = '<tr><td colspan="5" style="text-align: center;">No active sessions found.</td></tr>';
@@ -1237,12 +1242,10 @@ function handleShowActiveQr(event) {
     const button = event.target;
     const { sessionId, qrCodeUrl, expiresAtIso, section, subject } = button.dataset;
 
-    console.log(`Showing QR for active session: ${sessionId}`);
-
-    // 📌 Ensure the target section is visible FIRST
+    // console.log(`Showing QR for active session: ${sessionId}`);
     const qrSection = document.getElementById('qr-section');
     if (qrSection) {
-        console.log('[handleShowActiveQr] Ensuring #qr-section is visible.');
+        // console.log('[handleShowActiveQr] Ensuring #qr-section is visible.');
         qrSection.style.display = 'block'; 
     } else {
         console.error('[handleShowActiveQr] Cannot find #qr-section to make visible.');
@@ -1306,7 +1309,7 @@ function handleShowActiveQr(event) {
         iframe.style.display = 'block';
         iframe.style.margin = '0 auto';
         qrCodeDiv.appendChild(iframe);
-        console.log("Active session QR code rendered via blob URL iframe");
+        // console.log("Active session QR code rendered via blob URL iframe");
 
         // Call the display function AFTER image iframe is appended
         if (typeof displayQrCodeDetails === 'function') {
@@ -1371,7 +1374,7 @@ async function handleDeleteActiveSession(event) {
         return;
     }
 
-    console.log(`Deleting active session: ${sessionId}`);
+    // console.log(`Deleting active session: ${sessionId}`);
     button.textContent = 'Deleting...';
     button.disabled = true;
 

@@ -5,13 +5,13 @@ let currentCountdownInterval = null; // Added: Store interval ID globally
 // 📌 NEW: Reusable function to display QR Code details and start timer
 // Make it globally accessible
 window.displayQrCodeDetails = function(sessionId, qrCodeUrl, expiresAtIso, section) {
-    console.log("displayQrCodeDetails called for session:", sessionId);
+    // console.log("displayQrCodeDetails called for session:", sessionId);
     
     const qrCodeDiv = document.getElementById('qr-code-container') || document.getElementById('qrcode');
     const statusDiv = document.getElementById('status-message') || document.getElementById('status') || document.getElementById('qr-code-container'); // Find status message div
 
     // 📌 Add log to verify target
-    console.log('[displayQrCodeDetails] Target element for status message: ', statusDiv ? statusDiv.id || statusDiv.tagName : 'Not Found');
+    // console.log('[displayQrCodeDetails] Target element for status message: ', statusDiv ? statusDiv.id || statusDiv.tagName : 'Not Found');
 
     if (!qrCodeDiv || !statusDiv || statusDiv === qrCodeDiv) { // Add check: ensure statusDiv is NOT the main container
         console.error("Cannot display QR details: Container or status element not found, or status resolved to main container.");
@@ -22,7 +22,7 @@ window.displayQrCodeDetails = function(sessionId, qrCodeUrl, expiresAtIso, secti
     if (currentCountdownInterval) {
         clearInterval(currentCountdownInterval);
         currentCountdownInterval = null;
-        console.log("Cleared previous countdown interval.");
+        // console.log("Cleared previous countdown interval.");
     }
 
     // Display success message and timer placeholder
@@ -51,7 +51,7 @@ window.displayQrCodeDetails = function(sessionId, qrCodeUrl, expiresAtIso, secti
     linkContainer.innerHTML = `<a href="${qrCodeUrl}" id="direct-link" target="_blank">Direct QR Code Link</a>`; // Use ID for styling
     // Restore appending the link
     qrCodeDiv.appendChild(linkContainer); 
-    console.log("[displayQrCodeDetails] Direct link container appended.");
+    // console.log("[displayQrCodeDetails] Direct link container appended.");
 
     // Set up the countdown timer
     const countdownEl = document.getElementById('countdown');
@@ -62,7 +62,7 @@ window.displayQrCodeDetails = function(sessionId, qrCodeUrl, expiresAtIso, secti
                 const expiresAt = new Date(expiresAtIso);
                 const now = new Date();
                 timeLeft = Math.max(0, Math.floor((expiresAt.getTime() - now.getTime()) / 1000));
-                console.log(`Countdown starting: ${timeLeft} seconds remaining.`);
+                // console.log(`Countdown starting: ${timeLeft} seconds remaining.`);
             } catch (dateError) {
                 console.error("Error parsing expiration date:", expiresAtIso, dateError);
                 timeLeft = 0; // Default to expired if parsing fails
@@ -117,7 +117,7 @@ window.displayQrCodeDetails = function(sessionId, qrCodeUrl, expiresAtIso, secti
 
     // Save the current session ID for attendance tracking
     sessionStorage.setItem('currentQrSessionId', sessionId);
-    console.log("Set currentQrSessionId:", sessionId);
+    // console.log("Set currentQrSessionId:", sessionId);
 
     // Note: Enabling/Disabling attendance button might be better handled elsewhere
     // based on whether *any* active session is displayed, not just this one.
@@ -125,7 +125,7 @@ window.displayQrCodeDetails = function(sessionId, qrCodeUrl, expiresAtIso, secti
 
 // Function to generate the QR code for a class session
 async function generateQRCode() {
-  console.log("generateQRCode called");
+  // console.log("generateQRCode called");
   
   const classSelect = document.getElementById('class-select');
   const sectionInput = document.getElementById('qr-section-input');
@@ -145,8 +145,8 @@ async function generateQRCode() {
   const selectedClassId = classSelect.value;
   const sectionValue = sectionInput ? sectionInput.value.trim() : '';
   
-  console.log("Selected class ID:", selectedClassId);
-  console.log("Section:", sectionValue);
+  // console.log("Selected class ID:", selectedClassId);
+  // console.log("Section:", sectionValue);
   
   // Check if we have a place to show the QR code and status
   if (!qrCodeDiv) {
@@ -189,7 +189,7 @@ async function generateQRCode() {
   try {
     // Get teacher ID from sessionStorage
     const teacherId = sessionStorage.getItem('userId');
-    console.log("Teacher ID:", teacherId);
+    // console.log("Teacher ID:", teacherId);
     
     if (!teacherId) {
       console.error("No teacher ID found in storage");
@@ -209,7 +209,7 @@ async function generateQRCode() {
     }
     
     // Create a session for the selected class
-    console.log("Fetching from:", `${API_URL}/auth/generate-qr`);
+    // console.log("Fetching from:", `${API_URL}/auth/generate-qr`);
     
     // Build auth headers from session data
     const headers = {
@@ -225,8 +225,8 @@ async function generateQRCode() {
       headers['X-User-Role'] = userRole;
     }
     
-    console.log("Request headers:", headers);
-    console.log("Cookies:", document.cookie);
+    // console.log("Request headers:", headers);
+    // console.log("Cookies:", document.cookie);
     
     // First try with credentials and headers
     let response = await fetch(`${API_URL}/auth/generate-qr`, {
@@ -241,7 +241,7 @@ async function generateQRCode() {
       })
     });
     
-    console.log("First attempt status:", response.status);
+    // console.log("First attempt status:", response.status);
     
     // If unauthorized, try with a more direct approach for Netlify deployment
     if (response.status === 401) {
@@ -249,7 +249,7 @@ async function generateQRCode() {
       
       // For Netlify, we need to try a different endpoint pattern
       const netlifyURL = `/api/auth/generate-qr`;
-      console.log("Retrying with URL:", netlifyURL);
+      // console.log("Retrying with URL:", netlifyURL);
       
       response = await fetch(netlifyURL, {
         method: 'POST',
@@ -263,12 +263,12 @@ async function generateQRCode() {
         })
       });
       
-      console.log("Second attempt status:", response.status);
+      // console.log("Second attempt status:", response.status);
     }
 
-    console.log("Response status:", response.status);
+    // console.log("Response status:", response.status);
     const data = await response.json();
-    console.log("Response data:", data);
+    // console.log("Response data:", data);
 
     if (data.success) {
       // Session created successfully, now generate QR code
@@ -277,7 +277,7 @@ async function generateQRCode() {
       const expiresAtIso = data.expiresAt; // Assuming backend sends ISO string
       const section = data.section;
 
-      console.log("QR Code URL:", qrCodeUrl);
+      // console.log("QR Code URL:", qrCodeUrl);
       
       // Ensure elements are still valid
       const currentQrCodeDiv = document.getElementById('qr-code-container');
@@ -335,17 +335,16 @@ async function generateQRCode() {
             iframe.style.margin = '0 auto';
             // iframe.srcdoc = `...`; // Removed srcdoc line
             currentQrCodeDiv.appendChild(iframe);
-            console.log("QR code rendered via blob URL iframe"); // Updated log message
+            // console.log("QR code rendered via blob URL iframe"); 
             
-            // Now call the display function AFTER iframe is appended
-            console.log('[generateQRCode] Calling window.displayQrCodeDetails...');
+            // console.log('[generateQRCode] Calling window.displayQrCodeDetails...');
             window.displayQrCodeDetails(sessionId, qrCodeUrl, expiresAtIso, section); 
-            console.log('[generateQRCode] Returned from window.displayQrCodeDetails.');
-            console.log('[generateQRCode] qrCodeDiv outerHTML AFTER displayQrCodeDetails:', currentQrCodeDiv.outerHTML);
+            // console.log('[generateQRCode] Returned from window.displayQrCodeDetails.');
+            // console.log('[generateQRCode] qrCodeDiv outerHTML AFTER displayQrCodeDetails:', currentQrCodeDiv.outerHTML);
 
             // 📌 Refresh the active sessions list
             if (typeof window.loadActiveQrSessions === 'function') {
-                console.log('[generateQRCode] Refreshing active sessions list...');
+                // console.log('[generateQRCode] Refreshing active sessions list...');
                 window.loadActiveQrSessions();
             } else {
                 console.warn('[generateQRCode] loadActiveQrSessions function not found on window.');
@@ -356,7 +355,7 @@ async function generateQRCode() {
         };
 
         img.onerror = function() {
-            console.error("Failed to load QR code image from API.");
+            // console.error("Failed to load QR code image from API.");
              if (loadingMsg && loadingMsg.parentNode) {
                  currentQrCodeDiv.removeChild(loadingMsg);
              }
@@ -377,7 +376,7 @@ async function generateQRCode() {
             window.displayQrCodeDetails(sessionId, qrCodeUrl, expiresAtIso, section);
             // 📌 Refresh the active sessions list even on image error
             if (typeof window.loadActiveQrSessions === 'function') {
-                console.log('[generateQRCode] Refreshing active sessions list after image error...');
+                // console.log('[generateQRCode] Refreshing active sessions list after image error...');
                 window.loadActiveQrSessions();
             } else {
                 console.warn('[generateQRCode] loadActiveQrSessions function not found on window.');
@@ -385,7 +384,7 @@ async function generateQRCode() {
         };
 
         img.src = `https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=${encodeURIComponent(qrCodeUrl)}`;
-        console.log("QR image loading:", img.src);
+        // console.log("QR image loading:", img.src);
 
       } catch (qrError) {
         console.error("Error setting up QR code display:", qrError);
@@ -394,7 +393,7 @@ async function generateQRCode() {
          window.displayQrCodeDetails(sessionId, qrCodeUrl, expiresAtIso, section);
          // 📌 Refresh the active sessions list even on QR setup error
          if (typeof window.loadActiveQrSessions === 'function') {
-             console.log('[generateQRCode] Refreshing active sessions list after setup error...');
+             // console.log('[generateQRCode] Refreshing active sessions list after setup error...');
              window.loadActiveQrSessions();
          } else {
              console.warn('[generateQRCode] loadActiveQrSessions function not found on window.');
