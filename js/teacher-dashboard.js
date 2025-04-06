@@ -1161,11 +1161,15 @@ async function loadActiveQrSessions() {
     tableBody.innerHTML = '<tr><td colspan="5" style="text-align: center;">Loading active sessions...</td></tr>'; // Show loading state
 
     try {
-        // CORRECTED FETCH URL again based on server.js routing
+        console.log(`[loadActiveQrSessions] Fetching from /auth/active-sessions...`);
         const response = await fetchWithAuth(`/auth/active-sessions`); // Use /auth prefix
+        console.log(`[loadActiveQrSessions] Response status: ${response.status}`);
+        
         const data = await response.json();
+        console.log('[loadActiveQrSessions] Response data:', data);
 
-        if (data.success && data.sessions.length > 0) {
+        if (data.success && data.sessions && data.sessions.length > 0) {
+            console.log(`[loadActiveQrSessions] Found ${data.sessions.length} active sessions. Displaying section.`);
             activeSessionsSection.style.display = 'block'; // Show the section if there are sessions
             tableBody.innerHTML = ''; // Clear loading state
 
@@ -1210,11 +1214,13 @@ async function loadActiveQrSessions() {
                 }
             });
         } else if (data.success) {
+             console.log('[loadActiveQrSessions] No active sessions found. Hiding section.');
              activeSessionsSection.style.display = 'none'; // Hide if no active sessions
             // Optional: Keep the section visible and show "No active sessions"
             // tableBody.innerHTML = '<tr><td colspan="5" style="text-align: center;">No active sessions found.</td></tr>';
             // activeSessionsSection.style.display = 'block';
-        } else {
+        } else { // if !data.success
+            console.error(`[loadActiveQrSessions] API call failed: ${data.message}`);
             tableBody.innerHTML = `<tr><td colspan="5" style="text-align: center; color: red;">Error loading sessions: ${data.message}</td></tr>`;
             activeSessionsSection.style.display = 'block'; // Show section to display error
         }
@@ -1232,7 +1238,82 @@ function handleShowActiveQr(event) {
 
     console.log(`Showing QR for active session: ${sessionId}`);
 
-    // Check if the display function from qrcode.js is available
+    const qrCodeDiv = document.getElementById('qr-code-container');
+    if (!qrCodeDiv) {
+        console.error("QR Code container not found!");
+        alert("Error: Cannot find QR code display area.");
+        return;
+    }
+
+    // --- Start: Add QR Code Image/Iframe Rendering --- 
+    qrCodeDiv.innerHTML = ''; // Clear previous content
+
+    const loadingMsg = document.createElement('div');
+    loadingMsg.style.textAlign = 'center';
+    loadingMsg.style.padding = '20px';
+    loadingMsg.innerHTML = 'Loading QR code...';
+    qrCodeDiv.appendChild(loadingMsg);
+
+    const img = new Image();
+    img.crossOrigin = 'Anonymous';
+
+    img.onload = function() {
+        if (loadingMsg.parentNode === qrCodeDiv) { // Check if still attached
+            qrCodeDiv.removeChild(loadingMsg);
+        }
+        // Create iframe to display the image
+        const iframe = document.createElement('iframe');
+        const imgHTML = `<html><body style="margin:0; display:flex; justify-content:center; align-items:center; height:100%;"><img src="${img.src}" alt="QR Code" style="max-width:100%; max-height:100%;"></body></html>`;
+        const blob = new Blob([imgHTML], {type: 'text/html'});
+        iframe.src = URL.createObjectURL(blob);
+        iframe.id = 'qr-code-iframe'; // Add ID for styling
+        iframe.width = '280'; // Match styling
+        iframe.height = '280';
+        iframe.style.border = 'none';
+        iframe.style.display = 'block';
+        iframe.style.margin = '0 auto';
+        qrCodeDiv.appendChild(iframe);
+        console.log("Active session QR code rendered via blob URL iframe");
+
+        // Call the display function AFTER image iframe is appended
+        if (typeof displayQrCodeDetails === 'function') {
+             displayQrCodeDetails(sessionId, qrCodeUrl, expiresAtIso, section);
+        } else {
+             console.error('displayQrCodeDetails function is not available.');
+             alert('Error: Could not display QR code details.');
+        }
+
+        // Release blob URL after iframe loads
+        iframe.onload = () => { setTimeout(() => URL.revokeObjectURL(iframe.src), 100); };
+    };
+
+    img.onerror = function() {
+        console.error("Failed to load QR code image from API for active session.");
+         if (loadingMsg.parentNode === qrCodeDiv) { 
+             qrCodeDiv.removeChild(loadingMsg);
+         }
+         // Show fallback link if image fails
+         qrCodeDiv.innerHTML = `
+            <div style="text-align: center; padding: 20px; border: 1px solid #ff6b6b; border-radius: 8px; margin: 20px 0; background-color: #fff9f9;">
+              <p style="margin-bottom: 10px; color: #d63031; font-weight: bold;">QR Code image failed to load. Please use this link:</p>
+              <a href="${qrCodeUrl}" target="_blank" style="color: #0984e3; font-weight: bold;">${qrCodeUrl}</a>
+          </div>
+        `;
+        // Still call display details to show status, timer, and *proper* direct link
+        if (typeof displayQrCodeDetails === 'function') {
+             displayQrCodeDetails(sessionId, qrCodeUrl, expiresAtIso, section);
+        } else {
+             console.error('displayQrCodeDetails function is not available.');
+             alert('Error: Could not display QR code details.');
+        }
+    };
+    
+    // Use the same QR server API source
+    img.src = `https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=${encodeURIComponent(qrCodeUrl)}`;
+    // --- End: Add QR Code Image/Iframe Rendering --- 
+
+    // Check if the display function from qrcode.js is available (MOVED INSIDE img.onload/onerror)
+    /*
     if (typeof displayQrCodeDetails === 'function') {
          displayQrCodeDetails(sessionId, qrCodeUrl, expiresAtIso, section);
 
@@ -1245,6 +1326,7 @@ function handleShowActiveQr(event) {
         console.error('displayQrCodeDetails function is not available. Make sure qrcode.js exposes it.');
         alert('Error: Could not display QR code. Function unavailable.');
     }
+    */
 }
 
 // 📌 NEW: Handler for "Delete" button click
