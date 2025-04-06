@@ -270,3 +270,53 @@ label {
   white-space: nowrap;
   border-width: 0;
 }
+
+/* Verification Section Styles */
+#verification-section {
+    /* Start hidden, JS will show */
+    opacity: 0;
+    max-height: 0;
+    overflow: hidden;
+    transition: opacity 0.5s ease-in-out, max-height 0.5s ease-in-out; /* Transition */
+}
+
+#verification-section.visible {
+    opacity: 1;
+    max-height: 500px; /* Adjust as needed, large enough to contain content */
+}
+
+#verification-section h2 {
+    margin-bottom: var(--spacing-md);
+    color: var(--color-success); /* Green color for success */
+    text-align: center;
+    font-size: 1.4rem;
+}
+
+#verification-section .verification-instructions,
+#verification-section .verification-note {
+    text-align: center;
+    margin-bottom: var(--spacing-lg);
+    line-height: 1.6;
+    color: var(--color-text-light);
+    font-size: 1rem;
+}
+
+#verification-section .verification-instructions strong {
+    color: var(--color-primary-dark);
+    font-weight: 600;
+}
+
+#verification-section .auth-footer {
+    margin-top: var(--spacing-lg);
+    padding-top: var(--spacing-md);
+    border-top: 1px solid var(--color-border);
+    text-align: center;
+}
+
+/* Style the proceed button */
+#proceed-to-login-btn {
+    /* Inherits general .btn styles, add specifics if needed */
+    display: inline-block; 
+    width: auto; /* Override potential full-width styles if .btn sets it */
+    padding: var(--spacing-sm) var(--spacing-lg);
+}

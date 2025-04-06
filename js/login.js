@@ -6,8 +6,12 @@ document.addEventListener('DOMContentLoaded', function() {
   const loginForm = document.getElementById('login-form');
   const registerForm = document.getElementById('register-form');
   const showRegisterBtn = document.getElementById('show-register');
+  const showLoginBtn = document.getElementById('show-login');
   const loginSection = document.getElementById('login-section');
   const registerSection = document.getElementById('register-section');
+  const verificationSection = document.getElementById('verification-section');
+  const verificationEmailElement = document.getElementById('verification-email');
+  const proceedToLoginBtn = document.getElementById('proceed-to-login-btn');
   const roleSelect = document.getElementById('role');
   const studentIdField = document.getElementById('student-id-field');
   const errorMsgElement = document.getElementById('errorMsg');
@@ -105,10 +109,11 @@ document.addEventListener('DOMContentLoaded', function() {
   }
 
   // Show login form (using the "Log in" link in the register form)
-  const showLoginBtn = document.getElementById('show-login');
   if (showLoginBtn) {
     showLoginBtn.addEventListener('click', function() {
       registerSection.style.display = 'none';
+      verificationSection.classList.remove('visible');
+      verificationSection.style.display = 'none';
       loginSection.style.display = 'block';
     });
   }
@@ -205,10 +210,24 @@ document.addEventListener('DOMContentLoaded', function() {
         const data = await response.json();
 
         if (data.success) {
-          showSuccess('Registration successful! Proceed to Email to verify your account.');
-          // Switch back to login form
-          registerSection.style.display = 'none';
-          loginSection.style.display = 'block';
+          // Check if verification is required based on backend response
+          if (data.requiresVerification) {
+            // Display the verification prompt
+            if (verificationEmailElement && data.email) {
+              verificationEmailElement.textContent = data.email;
+            }
+            registerSection.style.display = 'none';
+            loginSection.style.display = 'none';
+            verificationSection.style.display = 'block';
+            setTimeout(() => {
+                verificationSection.classList.add('visible');
+            }, 10); 
+          } else {
+            // Original behavior: Registration successful, no verification needed (or backend not updated)
+            showSuccess('Registration successful! You can now log in.'); 
+            registerSection.style.display = 'none';
+            loginSection.style.display = 'block';
+          }
         } else {
           showError(data.message || 'Registration failed');
         }
@@ -222,6 +241,17 @@ document.addEventListener('DOMContentLoaded', function() {
         submitButton.disabled = false;
       }
     });
+  }
+
+  // Add listener for the 'Proceed to Login' button in the verification section
+  if (proceedToLoginBtn) {
+      proceedToLoginBtn.addEventListener('click', () => {
+          verificationSection.classList.remove('visible');
+          setTimeout(() => {
+              verificationSection.style.display = 'none';
+              loginSection.style.display = 'block'; 
+          }, 500);
+      });
   }
 
   // Logout function
