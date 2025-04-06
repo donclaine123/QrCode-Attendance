@@ -154,6 +154,20 @@
       </div>
     </div>
 
+    <!-- Verification Prompt Section (Initially Hidden) -->
+    <div id="verification-prompt" style="display: none; text-align: center;">
+      <div class="auth-header">
+        <div class="logo-icon">📧</div> <!-- Email icon -->
+        <div class="app-name">AttendEase</div>
+      </div>
+      <h2>Check Your Email!</h2>
+      <p id="verification-message" style="margin-bottom: 20px;">
+        Registration successful! We've sent a verification link to your email address. Please click the link to activate your account.
+      </p>
+      <button id="go-to-login-btn" class="btn">Proceed to Login</button>
+      <!-- Optional: Add a resend verification link if needed later -->
+    </div>
+
     <!-- Load config.js first to define API_URL -->
     <script src="../js/config.js"></script>
     <!-- Then load login.js which uses API_URL -->
