@@ -1258,9 +1258,28 @@ function handleShowActiveQr(event) {
         return;
     }
 
-    // --- Start: Add QR Code Image/Iframe Rendering --- 
-    qrCodeDiv.innerHTML = ''; // Clear previous content
+    // --- Start: Modified Clearing Logic --- 
+    // Remove only previous QR-specific elements, not the status div
+    const existingIframe = qrCodeDiv.querySelector('#qr-code-iframe');
+    if(existingIframe) qrCodeDiv.removeChild(existingIframe);
+    const existingLinkContainer = qrCodeDiv.querySelector('.direct-link-container');
+    if(existingLinkContainer) qrCodeDiv.removeChild(existingLinkContainer);
+    const existingFallback = qrCodeDiv.querySelector('.qr-fallback'); 
+    if(existingFallback) qrCodeDiv.removeChild(existingFallback);
+    
+    // Ensure status div exists and clear its text content if needed
+    const statusDiv = document.getElementById('status-message');
+    if (statusDiv) {
+        statusDiv.innerHTML = ''; // Clear any previous status text
+        statusDiv.className = ''; // Reset class
+    } else {
+        console.error("[handleShowActiveQr] #status-message div not found within #qr-code-container!");
+        // Cannot proceed without status div, maybe add it dynamically? For now, return.
+        return; 
+    }
+    // --- End: Modified Clearing Logic --- 
 
+    // --- Start: Add QR Code Image/Iframe Rendering --- 
     const loadingMsg = document.createElement('div');
     loadingMsg.style.textAlign = 'center';
     loadingMsg.style.padding = '20px';
