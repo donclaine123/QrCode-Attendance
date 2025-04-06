@@ -262,7 +262,6 @@ button:hover {
   padding: var(--spacing-lg);
   border: 1px dashed var(--color-secondary-dark);
   border-radius: var(--border-radius-md);
-  min-height: 300px;
 }
 
 /* Classes List */
@@ -334,12 +333,15 @@ button:hover {
 }
 
 #recent-attendance-table thead {
+
 }
 
 #recent-attendance-table tbody {
+
 }
 
 #recent-attendance-table tr {
+  
 }
 
 #recent-attendance-table th,
@@ -582,27 +584,26 @@ button:hover {
 }
 
 /* QR Code Section Enhancement */
-#qr-code-display {
+#qr-code-container {
     text-align: center;
     padding: var(--spacing-lg);
     background-color: var(--color-secondary);
     border-radius: var(--border-radius-md);
     margin-top: var(--spacing-lg);
-    border: 1px solid var(--color-secondary-dark);
 }
 
-#status-message {
+#qr-code-container #status-message {
     margin-bottom: var(--spacing-md);
     font-size: 1rem;
     color: var(--color-text);
     line-height: 1.6;
 }
 
-#status-message > p {
+#qr-code-container #status-message > p {
     margin-bottom: var(--spacing-sm);
 }
 
-#expiration-timer {
+#qr-code-container #expiration-timer {
     display: block;
     margin-top: var(--spacing-md);
     font-size: 0.9rem;
@@ -610,7 +611,7 @@ button:hover {
     font-weight: 500;
 }
 
-#qr-code-iframe {
+#qr-code-container #qr-code-iframe {
     display: block;
     margin: var(--spacing-md) auto;
     max-width: 100%;
@@ -622,8 +623,8 @@ button:hover {
     box-shadow: var(--shadow-sm);
 }
 
-#qr-code-display small,
-#qr-code-display .scan-prompt {
+#qr-code-container small,
+#qr-code-container .scan-prompt {
     display: block;
     margin-top: var(--spacing-sm);
     margin-bottom: var(--spacing-md);
@@ -631,7 +632,7 @@ button:hover {
     color: var(--color-text-light);
 }
 
-#direct-link {
+#qr-code-container #direct-link {
     display: inline-block;
     margin-top: var(--spacing-md);
     padding: var(--spacing-sm) var(--spacing-md);
@@ -644,17 +645,17 @@ button:hover {
     font-size: 0.9rem;
 }
 
-#direct-link:hover {
+#qr-code-container #direct-link:hover {
     background-color: var(--color-primary-dark);
     text-decoration: none;
 }
 
-#status-message.error {
+#qr-code-container #status-message.error {
     color: var(--color-danger);
     font-weight: 500;
 }
 
-#status-message.success {
+#qr-code-container #status-message.success {
     color: var(--color-success);
     font-weight: 500;
 }
