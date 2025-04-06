@@ -151,40 +151,36 @@ async function generateQRCode() {
       qrCodeDiv.appendChild(infoDiv);
       startExpiryTimer(data.expiresAt); // Start countdown
       
-      // Generate QR code image
-      const qrImage = document.createElement('img');
-      qrImage.alt = "Attendance QR Code";
-      qrImage.style.maxWidth = '250px'; // Ensure image fits container
-      qrImage.style.height = 'auto';
-      qrImage.style.marginTop = '10px';
-      qrCodeDiv.appendChild(qrImage);
-      
-      // Use the qrcode.js library to generate the QR code directly into the img tag's src
+      // Create a dedicated container for the QR code image itself
+      const qrImageContainer = document.createElement('div');
+      qrImageContainer.id = 'qr-code-image'; // Assign an ID for potential styling
+      qrImageContainer.style.marginTop = '10px'; // Add some space
+      qrImageContainer.style.display = 'inline-block'; // Ensure it behaves like an image block
+      qrCodeDiv.appendChild(qrImageContainer);
+
+      // Use the qrcode.js library to generate the QR code directly into the container
       // NOTE: This relies on the qrcode.min.js library being included in the HTML
       if (typeof QRCode !== 'undefined') {
-          const qr = new QRCode(document.createElement('div'), { // Temporary div
-              text: qrCodeUrl,
-              width: 250,
-              height: 250,
-              colorDark : "#000000",
-              colorLight : "#ffffff",
-              correctLevel : QRCode.CorrectLevel.H
-          });
-          // Access the generated image data URL from the library's canvas/img
-          // This might vary slightly depending on the library version, check its internals if needed
-          const qrCanvas = qr._el.querySelector('canvas');
-          const qrImgElement = qr._el.querySelector('img');
-          if (qrCanvas) {
-              qrImage.src = qrCanvas.toDataURL();
-          } else if (qrImgElement) {
-              qrImage.src = qrImgElement.src;
-          } else {
-             console.error("Could not extract QR code image from QRCode.js library.");
-             qrImage.alt = "Error generating QR Code image.";
+          try {
+              new QRCode(qrImageContainer, { // Target the dedicated container
+                  text: qrCodeUrl,
+                  width: 250,
+                  height: 250,
+                  colorDark : "#000000",
+                  colorLight : "#ffffff",
+                  correctLevel : QRCode.CorrectLevel.H
+              });
+              console.log("QR Code generated directly into container.");
+          } catch (qrError) {
+              console.error("Error generating QR Code with library:", qrError);
+              qrImageContainer.textContent = "Error generating QR Code image.";
+              qrImageContainer.style.color = 'red';
           }
       } else {
           console.error("QRCode library is not loaded. Cannot generate QR code image.");
-          qrImage.alt = "QRCode library missing.";
+          // Display fallback or error message in the container
+          qrImageContainer.textContent = "QR Code library missing.";
+          qrImageContainer.style.color = 'red';
       }
       
       // Add Direct Link Button
