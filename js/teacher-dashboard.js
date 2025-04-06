@@ -1161,8 +1161,8 @@ async function loadActiveQrSessions() {
     tableBody.innerHTML = '<tr><td colspan="5" style="text-align: center;">Loading active sessions...</td></tr>'; // Show loading state
 
     try {
-        // CORRECTED FETCH URL for Netlify proxy
-        const response = await fetchWithAuth(`/api/qr/active-sessions`); // Use absolute path for Netlify
+        // CORRECTED FETCH URL again based on server.js routing
+        const response = await fetchWithAuth(`/auth/active-sessions`); // Use /auth prefix
         const data = await response.json();
 
         if (data.success && data.sessions.length > 0) {
