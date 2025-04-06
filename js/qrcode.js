@@ -46,7 +46,9 @@ window.displayQrCodeDetails = function(sessionId, qrCodeUrl, expiresAtIso, secti
     linkContainer.style.textAlign = 'center';
     linkContainer.style.marginTop = '10px';
     linkContainer.innerHTML = `<a href="${qrCodeUrl}" id="direct-link" target="_blank">Direct QR Code Link</a>`; // Use ID for styling
-    qrCodeDiv.appendChild(linkContainer);
+    // TEMPORARILY COMMENT OUT TO TEST INTERFERENCE
+    // qrCodeDiv.appendChild(linkContainer); 
+    console.log("[displayQrCodeDetails] Direct link container prepared, but NOT appended (for testing).");
 
     // Set up the countdown timer
     const countdownEl = document.getElementById('countdown');
