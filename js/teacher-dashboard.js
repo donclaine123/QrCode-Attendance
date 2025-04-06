@@ -1214,11 +1214,10 @@ async function loadActiveQrSessions() {
                 }
             });
         } else if (data.success) {
-             console.log('[loadActiveQrSessions] No active sessions found. Hiding section.');
-             activeSessionsSection.style.display = 'none'; // Hide if no active sessions
-            // Optional: Keep the section visible and show "No active sessions"
-            // tableBody.innerHTML = '<tr><td colspan="5" style="text-align: center;">No active sessions found.</td></tr>';
-            // activeSessionsSection.style.display = 'block';
+             console.log('[loadActiveQrSessions] No active sessions found. Displaying message.');
+             // activeSessionsSection.style.display = 'none'; // Don't hide the section
+             // Instead, update the table body to show a message
+             tableBody.innerHTML = '<tr><td colspan="5" style="text-align: center;">No active sessions found.</td></tr>';
         } else { // if !data.success
             console.error(`[loadActiveQrSessions] API call failed: ${data.message}`);
             tableBody.innerHTML = `<tr><td colspan="5" style="text-align: center; color: red;">Error loading sessions: ${data.message}</td></tr>`;
