@@ -164,41 +164,12 @@ document.addEventListener('DOMContentLoaded', function() {
          console.log('[TeacherDashboard] CHANGE listener already attached to #session-select.');
     }
 
-    // Initialize the dashboard logic (fetches user data, classes, etc.) if not already done
-    if (!window.dashboardInitialized) { 
-        console.log('[TeacherDashboard] Initializing dashboard logic (initDashboard)...');
-        initDashboard(); // This function internally shows #teacher-section on success
-        window.dashboardInitialized = true; 
-    } else {
-        console.log ('[TeacherDashboard] Dashboard logic already initialized by another script.');
-        // Manually show the main container if initDashboard was skipped but we have user info
-        // This ensures the container is visible even if qrcode.js initialized first.
-        if (sessionStorage.getItem('userId') && sessionStorage.getItem('userRole') === 'teacher') {
-             const teacherSection = document.getElementById('teacher-section');
-             if(teacherSection) {
-                 console.log('[TeacherDashboard] Manually showing #teacher-section because initDashboard was skipped.');
-                 teacherSection.style.display = 'block';
-             } else {
-                 console.error('[TeacherDashboard] Cannot manually show #teacher-section, element not found.');
-             }
-             // Also ensure welcome message is updated if initDashboard was skipped
-             const userName = sessionStorage.getItem('userName');
-             const welcomeMsg = document.getElementById('welcome-message');
-             if(welcomeMsg && userName) {
-                welcomeMsg.textContent = `Welcome, ${userName}!`;
-             }
-             // We might also need to trigger loadClasses and loadRecentAttendanceRecords here
-             // if they weren't called by qrcode.js's initialization.
-             // Let's add them just in case, guarded by checks.
-             if (document.getElementById('class-select')) loadClasses();
-             if (document.getElementById('recent-attendance-table')) loadRecentAttendanceRecords();
-        } else {
-             console.log('[TeacherDashboard] Skipping manual show of #teacher-section, user info not in session storage.');
-             // Optional: redirect to login if no user info is found here either?
-             // window.location.href = getBasePath() + '/pages/login.html';
-        }
-    }
-    
+    // Initialize the dashboard logic (fetches user data, classes, etc.)
+    // REMOVED the check for window.dashboardInitialized to ensure it runs for this page
+    console.log('[TeacherDashboard] Running initDashboard unconditionally on DOMContentLoaded...');
+    initDashboard(); 
+    // REMOVED setting window.dashboardInitialized = true; here, as it's handled inside initDashboard
+
     // Ensure initial view is correct (Dashboard overview) - Runs Unconditionally
     console.log('[TeacherDashboard] Setting initial section visibility within #teacher-section.');
     const overview = document.getElementById('dashboard-overview');
@@ -505,48 +476,51 @@ function setupDebugListeners() {
 
 // Initialize dashboard
 async function initDashboard() {
-    if (window.dashboardInitialized) return; // Prevent double initialization
-    window.dashboardInitialized = true;
+  // Use a flag specific to this function to prevent internal re-entry if called twice somehow
+  if (initDashboard.called) return;
+  initDashboard.called = true;
+  
+  // REMOVED: window.dashboardInitialized checks - this function handles its own entry
 
-    console.log("Initializing teacher dashboard...");
-    try {
-        // Get user info from sessionStorage
-        const userId = sessionStorage.getItem('userId');
-        const userName = sessionStorage.getItem('userName');
-        const userRole = sessionStorage.getItem('userRole'); // Added role retrieval
+  console.log("Initializing teacher dashboard (internal check passed)...");
+  try {
+    // Get user info from sessionStorage
+    const userId = sessionStorage.getItem('userId');
+    const userName = sessionStorage.getItem('userName');
+    const userRole = sessionStorage.getItem('userRole'); // Added role retrieval
 
-        if (!userId || !userName || userRole !== 'teacher') {
-            console.warn("Teacher info missing or incorrect role, redirecting...");
-            window.location.href = getBasePath() + '/pages/login.html';
-            return;
-        }
-
-        // Update welcome message
-        const welcomeMessage = document.getElementById('welcome-message');
-        if (welcomeMessage) {
-            welcomeMessage.textContent = `Welcome, ${userName}!`;
-        }
-
-        // Load initial data
-        await loadActiveSessions();
-        await loadRecentAttendanceRecords();
-        await loadClassesForManagement(); // Function for the Manage Classes section
-        await loadClassesForAttendanceView(); // **** NEW: Load classes for the attendance view dropdown ****
-
-        // Show main content
-        const mainContent = document.querySelector('.main-content');
-        if (mainContent) {
-            mainContent.style.display = 'block'; // Or remove a hidden class
-        }
-        
-        // Set initial view (e.g., show overview)
-        showSection('dashboard-overview'); 
-        setActiveNav('nav-overview');
-
-    } catch (error) {
-        console.error("Error initializing dashboard:", error);
-        showError("Failed to initialize dashboard. Please check connection and reload.");
+    if (!userId || !userName || userRole !== 'teacher') {
+        console.warn("Teacher info missing or incorrect role, redirecting...");
+        window.location.href = getBasePath() + '/pages/login.html';
+        return;
     }
+
+    // Update welcome message
+    const welcomeMessage = document.getElementById('welcome-message');
+    if (welcomeMessage) {
+        welcomeMessage.textContent = `Welcome, ${userName}!`;
+    }
+
+    // Load initial data
+    await loadActiveSessions();
+    await loadRecentAttendanceRecords();
+    await loadClassesForManagement(); // Function for the Manage Classes section
+    await loadClassesForAttendanceView(); // **** NEW: Load classes for the attendance view dropdown ****
+
+    // Show main content
+    const mainContent = document.querySelector('.main-content');
+    if (mainContent) {
+        mainContent.style.display = 'block'; // Or remove a hidden class
+    }
+    
+    // Set initial view (e.g., show overview)
+    showSection('dashboard-overview'); 
+    setActiveNav('nav-overview');
+
+  } catch (error) {
+    console.error("Error initializing dashboard:", error);
+    showError("Failed to initialize dashboard. Please check connection and reload.");
+  }
 }
 
 // Load classes for the teacher
@@ -1414,13 +1388,6 @@ function formatDate(dateString) {
     if (!dateString) return 'N/A';
     const date = new Date(dateString);
     return date.toLocaleDateString() + ' ' + date.toLocaleTimeString();
-}
-
-// Ensure initDashboard is called on page load
-// Make sure this isn't called twice if qrcode.js also calls it
-if (!window.dashboardInitialized) {
-    document.addEventListener('DOMContentLoaded', initDashboard);
-    window.dashboardInitialized = true; 
 }
 
 // Helper function to show error messages (if not already defined)
