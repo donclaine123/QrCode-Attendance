@@ -503,7 +503,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     }
     
     try {
-        const response = await fetch(`${API_URL}/record-attendance`, { // Corrected endpoint
+        const response = await fetch(`${API_URL}/auth/record-attendance`, { // Corrected endpoint with /auth prefix
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             credentials: 'include',
