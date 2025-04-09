@@ -1169,8 +1169,8 @@ window.loadActiveQrSessions = async function() {
     tableBody.innerHTML = '<tr><td colspan="5" style="text-align: center;">Loading active sessions...</td></tr>'; // Show loading state
 
     try {
-        // --- Corrected URL Prefix --- 
-        const response = await fetchWithAuth(`${API_URL}/qr/active-sessions`);
+        // --- Corrected URL Prefix AND Route Name --- 
+        const response = await fetchWithAuth(`${API_URL}/qr/sessions`); // Changed active-sessions to sessions
         // --- End Correction ---
 
         if (!response.ok) {
