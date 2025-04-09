@@ -517,12 +517,15 @@ document.addEventListener("DOMContentLoaded", async () => {
         // Use the global modal function for feedback
         if (typeof showFeedbackModal === 'function') {
             if (data.success) {
-                const details = `Subject: <strong>${data.subject || 'N/A'}</strong><br>Time: <strong>${formatDateToUTC8(new Date())}</strong>`;
+                // Use the timestamp from the backend response (data.timestamp)
+                // Ensure data.timestamp exists and is valid before formatting
+                const timestampString = data.timestamp ? formatISOTimestampForDisplay(data.timestamp) : 'Time not available';
+                const details = `Subject: <strong>${data.subject || 'N/A'}</strong><br>Time: <strong>${timestampString}</strong>`;
                 showFeedbackModal(true, 'Attendance Recorded!', details);
                 
-                // Dispatch event for history update
+                // Dispatch event for history update (using the same timestamp)
                 document.dispatchEvent(new CustomEvent('attendance-recorded', { 
-                  detail: { success: true, subject: data.subject, timestamp: new Date().toISOString() }
+                  detail: { success: true, subject: data.subject, timestamp: data.timestamp || new Date().toISOString() }
                 }));
             } else {
                 showFeedbackModal(false, 'Recording Failed', data.message || 'Error recording attendance');
@@ -547,12 +550,21 @@ document.addEventListener("DOMContentLoaded", async () => {
   }
 });
 
-// Helper function needed by modal display (copy from student-dashboard.js or ensure it's global)
-function formatDateToUTC8(date) {
+// Helper function to format ISO timestamp string for display
+function formatISOTimestampForDisplay(isoString) {
+    if (!isoString) return 'Unknown Time';
     try {
-        // Convert to UTC+8
-        const utc8Date = new Date(date.getTime() + (8 * 60 * 60 * 1000));
-        return utc8Date.toLocaleString('en-US', {
+        // Create a Date object directly from the ISO string
+        const dateObject = new Date(isoString);
+        
+        // Check if the date is valid
+        if (isNaN(dateObject.getTime())) {
+            console.error('Invalid timestamp received from backend:', isoString);
+            return 'Invalid Time';
+        }
+        
+        // Format using the user's local settings, which should interpret the date correctly
+        return dateObject.toLocaleString('en-US', { 
             year: 'numeric',
             month: 'short',
             day: 'numeric',
@@ -560,9 +572,10 @@ function formatDateToUTC8(date) {
             minute: '2-digit',
             second: '2-digit',
             hour12: true
+            // timeZoneName: 'short' // Optional: uncomment to show timezone abbreviation
         });
     } catch (error) {
         console.error('Date formatting error:', error);
-        return 'Unknown Date';
+        return 'Formatting Error';
     }
 }
