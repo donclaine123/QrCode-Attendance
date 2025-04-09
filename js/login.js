@@ -359,6 +359,8 @@ async function login(email, password) {
     // Store user data in sessionStorage
     sessionStorage.setItem('userId', data.user.id);
     sessionStorage.setItem('userRole', data.role);
+    sessionStorage.setItem('firstName', data.user.firstName);
+    sessionStorage.setItem('lastName', data.user.lastName);
     sessionStorage.setItem('userName', `${data.user.firstName} ${data.user.lastName}`);
     sessionStorage.setItem('userEmail', email);
     sessionStorage.setItem('loginTime', convertToUTC8(new Date()));
@@ -401,6 +403,8 @@ async function checkAuthentication() {
       // Store user data in sessionStorage
       sessionStorage.setItem('userId', data.user.id);
       sessionStorage.setItem('userRole', data.user.role);
+      sessionStorage.setItem('firstName', data.user.firstName);
+      sessionStorage.setItem('lastName', data.user.lastName);
       sessionStorage.setItem('userName', `${data.user.firstName} ${data.user.lastName}`);
       
       const basePath = getBasePath();
