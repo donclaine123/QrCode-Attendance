@@ -119,14 +119,19 @@ document.addEventListener('DOMContentLoaded', function() {
             
             // Clear previous attendance and section choices
             if (attendanceRecordsDiv) attendanceRecordsDiv.innerHTML = '';
-            if (sectionButtonsContainer) sectionButtonsContainer.innerHTML = '';
-            if (sectionChoicesDiv) sectionChoicesDiv.style.display = 'none';
+            
+            // --- Show Loading State for Sections --- 
+            if (sectionButtonsContainer) {
+                 sectionButtonsContainer.innerHTML = '<p class="loading-indicator">Loading sections...</p>';
+            }
+            if (sectionChoicesDiv) sectionChoicesDiv.style.display = 'block'; // Show the container
+            // --- End Loading State ---
 
             const selectedOption = this.options[this.selectedIndex];
             const classId = document.getElementById('attendance-class-select').value;
             const sessionDate = selectedOption.getAttribute('data-session-date');
 
-            if (this.value && classId && sessionDate) { // Only proceed if we have class, session, and date
+            if (this.value && classId && sessionDate) { 
                 console.log(`Session selected. Fetching sections for Class ${classId} on Date ${sessionDate}`);
                 try {
                     const response = await fetch(`${API_URL}/auth/sessions-on-date?classId=${classId}&date=${sessionDate}`, {
@@ -145,8 +150,9 @@ document.addEventListener('DOMContentLoaded', function() {
                      const data = await response.json();
                      console.log("Sections data:", data);
                      
+                     // --- Populate Sections or Show Message --- 
+                     if (sectionButtonsContainer) sectionButtonsContainer.innerHTML = ''; // Clear loading message
                      if (data.success && data.sections && data.sections.length > 0) {
-                         // Display section choices
                          if (sectionChoicesDiv) sectionChoicesDiv.style.display = 'block';
                          
                          data.sections.forEach(sec => {
@@ -174,18 +180,17 @@ document.addEventListener('DOMContentLoaded', function() {
                          });
                          
                      } else {
-                         // Clear the records div and show a specific message
-                         console.log('No sections found for this class/date.');
-                         if (attendanceRecordsDiv) {
-                            attendanceRecordsDiv.innerHTML = '<p class="empty-message">No attendance sections found for this date.</p>';
-                         }
-                         // REMOVED: Do not call loadAttendanceRecords() as a fallback here.
-                         // loadAttendanceRecords(); 
+                         if (sectionChoicesDiv) sectionChoicesDiv.style.display = 'block'; // Still show container
+                         if (sectionButtonsContainer) sectionButtonsContainer.innerHTML = '<p class="empty-message">No attendance sections found for this date.</p>';
+                         if (attendanceRecordsDiv) attendanceRecordsDiv.innerHTML = ''; // Clear any previous records
                      }
-                     
                 } catch (error) {
                     console.error('Error fetching sections:', error);
-                    if (attendanceRecordsDiv) attendanceRecordsDiv.innerHTML = `<div class="error-message">Error loading section choices: ${error.message}</div>`;
+                    // --- Show Section Fetch Error --- 
+                    if (sectionButtonsContainer) {
+                        sectionButtonsContainer.innerHTML = `<p class="error-message">Error loading sections: ${error.message}</p>`;
+                    }
+                    if (sectionChoicesDiv) sectionChoicesDiv.style.display = 'block'; // Show container even on error
                 }
             }
         });
@@ -690,12 +695,6 @@ async function loadClasses() {
                     classesContainer.appendChild(classCard);
                 });
                 
-                // --- PRE-LOAD SESSIONS FOR FIRST CLASS --- 
-                const firstClassId = data.classes[0].id;
-                console.log(`Pre-loading session dates for first class: ID ${firstClassId}`);
-                loadSessions(firstClassId); // Auto-load dates for the first class
-                // --- END PRE-LOAD ---
-                
                 // Add event listeners to delete buttons
                 document.querySelectorAll('.delete-class').forEach(button => {
                     button.addEventListener('click', async function() {
@@ -712,8 +711,6 @@ async function loadClasses() {
                         <p>Add your first class using the form below.</p>
                     </div>
                 `;
-                // Ensure session select is cleared/disabled if no classes
-                loadSessions(null); // Call with null to clear/disable date select
             }
         } else {
             classesContainer.innerHTML = `
@@ -722,8 +719,6 @@ async function loadClasses() {
                     <p>Please try again or contact support.</p>
                 </div>
             `;
-            // Ensure session select is cleared/disabled on error
-            loadSessions(null);
         }
     } catch (error) {
         console.error('Error loading classes:', error);
@@ -736,8 +731,6 @@ async function loadClasses() {
             </div>
         `;
         }
-        // Ensure session select is cleared/disabled on error
-        loadSessions(null);
     }
 }
 
@@ -808,18 +801,23 @@ async function deleteClass(classId) {
 }
 
 // Load sessions (now distinct dates) for a class
-async function loadSessions(classId) { // Renaming to loadSessionDates might be clearer later
+async function loadSessions(classId) { 
     const sessionSelect = document.getElementById('session-select');
-    // Also get the section choices div to hide it when class changes
     const sectionChoicesDiv = document.getElementById('section-choices');
     const sectionButtonsContainer = document.getElementById('section-buttons-container');
+    const recordsDiv = document.getElementById('attendance-records');
 
-    sessionSelect.innerHTML = '<option value="">Select date</option>'; // Change placeholder text
-    if (sectionButtonsContainer) sectionButtonsContainer.innerHTML = ''; // Clear section buttons
+    // --- Show Loading State for Dates --- 
+    sessionSelect.innerHTML = '<option value="" disabled selected>Loading dates...</option>';
+    sessionSelect.disabled = true;
+    if (sectionButtonsContainer) sectionButtonsContainer.innerHTML = ''; // Clear previous sections
     if (sectionChoicesDiv) sectionChoicesDiv.style.display = 'none'; // Hide section choices
+    if (recordsDiv) recordsDiv.innerHTML = ''; // Clear previous records
+    // --- End Loading State ---
     
     if (!classId) {
-        sessionSelect.innerHTML = '<option disabled>Please select a class first</option>';
+        sessionSelect.innerHTML = '<option disabled selected>Please select a class first</option>';
+        // Keep disabled
         return;
     }
     
@@ -862,7 +860,8 @@ async function loadSessions(classId) { // Renaming to loadSessionDates might be 
         const data = await response.json();
         console.log('Distinct dates data received:', data);
         
-        // --- UPDATED LOGIC ---
+        // --- Populate Dates or Show No Dates --- 
+        sessionSelect.innerHTML = '<option value="" disabled selected>Select date</option>'; // Reset placeholder
         if (data.success && data.dates && data.dates.length > 0) {
             data.dates.forEach(dateStr => { // Iterate through date strings
                 const option = document.createElement('option');
@@ -894,7 +893,12 @@ async function loadSessions(classId) { // Renaming to loadSessionDates might be 
         }
     } catch (error) {
         console.error('Error loading distinct session dates:', error);
-        sessionSelect.innerHTML += `<option disabled>Error loading dates: ${error.message}</option>`;
+        sessionSelect.innerHTML = '<option value="" disabled selected>Error loading dates</option>'; // Show error state
+        sessionSelect.innerHTML += `<option disabled>Error: ${error.message}</option>`;
+    } finally {
+        // --- Re-enable Dropdown --- 
+        sessionSelect.disabled = false;
+        // --- End Re-enable ---
     }
 }
 
@@ -912,17 +916,20 @@ async function loadAttendanceRecords(specificSessionId = null) {
     const sessionId = specificSessionId; 
     const recordsDiv = document.getElementById('attendance-records');
     
+    // --- Show Loading State for Records --- 
+    // Clear previous content and show loading message immediately
+    if (recordsDiv) {
+        recordsDiv.innerHTML = '<p class="loading-indicator">Loading attendance records...</p>'; 
+    } else {
+        console.error("Attendance records div not found!");
+        return; // Cannot proceed without the container
+    }
+    // --- End Loading State ---
+    
     if (!sessionId) {
-        // Don't start polling if no session ID
         recordsDiv.innerHTML = '<div class="error-message">Please select a class, date, and section.</div>';
         return;
     }
-    
-    // Only show initial loading message, not on subsequent polls
-    if (!recordsDiv.querySelector('.attendance-table')) { 
-        recordsDiv.innerHTML = '<p>Loading attendance records...</p>';
-    }
-    // console.log(`Loading attendance for session ID: ${sessionId}`); // Can be noisy during polling
     
     try {
         // Include both cookie-based and header-based auth
