@@ -690,6 +690,12 @@ async function loadClasses() {
                     classesContainer.appendChild(classCard);
                 });
                 
+                // --- PRE-LOAD SESSIONS FOR FIRST CLASS --- 
+                const firstClassId = data.classes[0].id;
+                console.log(`Pre-loading session dates for first class: ID ${firstClassId}`);
+                loadSessions(firstClassId); // Auto-load dates for the first class
+                // --- END PRE-LOAD ---
+                
                 // Add event listeners to delete buttons
                 document.querySelectorAll('.delete-class').forEach(button => {
                     button.addEventListener('click', async function() {
@@ -706,6 +712,8 @@ async function loadClasses() {
                         <p>Add your first class using the form below.</p>
                     </div>
                 `;
+                // Ensure session select is cleared/disabled if no classes
+                loadSessions(null); // Call with null to clear/disable date select
             }
         } else {
             classesContainer.innerHTML = `
@@ -714,6 +722,8 @@ async function loadClasses() {
                     <p>Please try again or contact support.</p>
                 </div>
             `;
+            // Ensure session select is cleared/disabled on error
+            loadSessions(null);
         }
     } catch (error) {
         console.error('Error loading classes:', error);
@@ -726,6 +736,8 @@ async function loadClasses() {
             </div>
         `;
         }
+        // Ensure session select is cleared/disabled on error
+        loadSessions(null);
     }
 }
 
