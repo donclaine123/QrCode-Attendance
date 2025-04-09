@@ -169,7 +169,7 @@ async function generateQRCode() {
   
   // Update status text content directly
   if (statusDiv) {
-      statusDiv.textContent = 'Generating QR code...';
+  statusDiv.textContent = 'Generating QR code...';
       statusDiv.className = ''; // Reset class from potential previous error/success
   } else {
       console.error("Status message element (#status-message) not found at start");
@@ -240,7 +240,7 @@ async function generateQRCode() {
         section: sectionValue
       })
     });
-    
+
     // console.log("First attempt status:", response.status);
     
     // If unauthorized, try with a more direct approach for Netlify deployment
@@ -378,7 +378,7 @@ async function generateQRCode() {
             if (typeof window.loadActiveQrSessions === 'function') {
                 // console.log('[generateQRCode] Refreshing active sessions list after image error...');
                 window.loadActiveQrSessions();
-            } else {
+          } else {
                 console.warn('[generateQRCode] loadActiveQrSessions function not found on window.');
             }
         };
