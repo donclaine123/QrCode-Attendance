@@ -505,47 +505,47 @@ function setupDebugListeners() {
 
 // Initialize dashboard
 async function initDashboard() {
-    console.log("Initializing Teacher Dashboard...");
-    // ... (existing code to get userId, userRole, welcome message) ...
-    const userId = sessionStorage.getItem('userId');
-    const userRole = sessionStorage.getItem('userRole');
-    const userName = sessionStorage.getItem('userName'); // Get userName
-    const welcomeMessage = document.getElementById('welcome-message');
-    const teacherSection = document.getElementById('teacher-section');
+    if (window.dashboardInitialized) return; // Prevent double initialization
+    window.dashboardInitialized = true;
 
-    if (welcomeMessage && userRole === 'teacher') {
-        welcomeMessage.textContent = `Welcome, ${userName || 'Teacher'}! Manage your classes and attendance here.`;
-    }
+    console.log("Initializing teacher dashboard...");
+    try {
+        // Get user info from sessionStorage
+        const userId = sessionStorage.getItem('userId');
+        const userName = sessionStorage.getItem('userName');
+        const userRole = sessionStorage.getItem('userRole'); // Added role retrieval
 
-    if (teacherSection && userRole === 'teacher') {
-        teacherSection.style.display = 'block';
-        console.log("Teacher section displayed");
-
-        try {
-            console.log("Loading classes...");
-            await loadClasses(); 
-            console.log("Loading recent attendance...");
-            await loadRecentAttendanceRecords(); 
-            console.log("Loading active QR sessions...");
-            await loadActiveQrSessions(); // 📌 Call the new function here
-            console.log("Setting up navigation...");
-            // setupDashboardNavigation(); // 📌 Commented out - Function not defined and logic handled by listeners
-            console.log("Dashboard initialization complete.");
-        } catch (error) {
-            console.error("Error during dashboard initialization:", error);
-            if (welcomeMessage) {
-                 welcomeMessage.textContent = 'Error loading dashboard components. Please refresh.';
-            }
+        if (!userId || !userName || userRole !== 'teacher') {
+            console.warn("Teacher info missing or incorrect role, redirecting...");
+            window.location.href = getBasePath() + '/pages/login.html';
+            return;
         }
 
-    } else if (userRole !== 'teacher') {
-        console.warn('User is not a teacher, hiding teacher section.');
+        // Update welcome message
+        const welcomeMessage = document.getElementById('welcome-message');
         if (welcomeMessage) {
-             welcomeMessage.textContent = 'Access denied. Teacher role required.';
+            welcomeMessage.textContent = `Welcome, ${userName}!`;
         }
-        // Optionally redirect or disable features
-    } else {
-        console.error('Teacher section element not found.');
+
+        // Load initial data
+        await loadActiveSessions();
+        await loadRecentAttendanceRecords();
+        await loadClassesForManagement(); // Function for the Manage Classes section
+        await loadClassesForAttendanceView(); // **** NEW: Load classes for the attendance view dropdown ****
+
+        // Show main content
+        const mainContent = document.querySelector('.main-content');
+        if (mainContent) {
+            mainContent.style.display = 'block'; // Or remove a hidden class
+        }
+        
+        // Set initial view (e.g., show overview)
+        showSection('dashboard-overview'); 
+        setActiveNav('nav-overview');
+
+    } catch (error) {
+        console.error("Error initializing dashboard:", error);
+        showError("Failed to initialize dashboard. Please check connection and reload.");
     }
 }
 
@@ -1429,6 +1429,53 @@ function showError(message) {
     // You might want to display this in a dedicated error area on the page
     // const errorDiv = document.getElementById('dashboard-error-message');
     // if (errorDiv) { errorDiv.textContent = message; errorDiv.style.display = 'block'; }
+}
+
+// **** NEW Function: Load classes specifically for the attendance view dropdown ****
+async function loadClassesForAttendanceView() {
+    const classSelect = document.getElementById('attendance-class-select');
+    if (!classSelect) {
+        console.error('Attendance class select dropdown not found.');
+        return;
+    }
+
+    const teacherId = sessionStorage.getItem('userId');
+    if (!teacherId) {
+        console.error("Teacher ID not found in session storage for loading classes.");
+        return;
+    }
+
+    try {
+        console.log(`Fetching classes for attendance view dropdown for teacher ${teacherId}...`);
+        const response = await fetchWithAuth(`${API_URL}/auth/teacher-classes/${teacherId}`);
+        const data = await response.json();
+
+        if (data.success && data.classes) {
+            console.log(`Found ${data.classes.length} classes for dropdown.`);
+            // Clear existing options except the first default one
+            classSelect.innerHTML = '<option value="">-- Select a Class --</option>'; 
+            
+            if (data.classes.length > 0) {
+              data.classes.forEach(cls => {
+                  const option = document.createElement('option');
+                  option.value = cls.id; // Use class ID as the value
+                  option.textContent = cls.class_name; // Display class name
+                  // Optionally store subject on the option if needed later
+                  // option.dataset.subject = cls.subject; 
+                  classSelect.appendChild(option);
+              });
+            } else {
+              // Handle case where teacher has no classes yet
+              classSelect.innerHTML = '<option value="">-- No classes found --</option>'; 
+            }
+        } else {
+            console.error('Failed to load classes for dropdown:', data.message);
+            classSelect.innerHTML = '<option value="">-- Error loading classes --</option>'; 
+        }
+    } catch (error) {
+        console.error('Error fetching classes for dropdown:', error);
+        classSelect.innerHTML = '<option value="">-- Error loading classes --</option>'; 
+    }
 }
 
 // ... rest of the file ...
