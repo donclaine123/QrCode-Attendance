@@ -26,281 +26,114 @@
 // });
 
 document.addEventListener('DOMContentLoaded', function() {
-    // REMOVED: Don't skip the whole setup anymore. Allow listeners to attach.
-    // if (window.dashboardInitialized) {
-    //     console.log('[TeacherDashboard] DOMContentLoaded - Already initialized, skipping listener attachment.');
-    //     return;
-    // }
-    console.log('[TeacherDashboard] DOMContentLoaded - Attaching listeners...');
-
-    // Check if the specific listener *for attendance class select* has already been attached 
-    // (e.g., by qrcode.js if it loaded first and attached it - although it shouldn't anymore)
-    // This is a more granular check than the broad flag.
-    const attendanceClassSelect = document.getElementById('attendance-class-select');
-    if (attendanceClassSelect && !attendanceClassSelect.dataset.listenerAttached) {
-        console.log('[TeacherDashboard] Attaching CHANGE listener to #attendance-class-select');
-        attendanceClassSelect.addEventListener('change', function() {
-            console.log('[TeacherDashboard] #attendance-class-select CHANGE event fired. Value:', this.value);
-            loadSessions(this.value);
-            const attendanceRecordsDiv = document.getElementById('attendance-records');
-            if(attendanceRecordsDiv) attendanceRecordsDiv.innerHTML = ''; 
-        });
-        attendanceClassSelect.dataset.listenerAttached = 'true'; // Mark as attached
-    } else if (attendanceClassSelect) {
-        console.log('[TeacherDashboard] CHANGE listener already attached to #attendance-class-select.');
+    // Check if already initialized by qrcode.js
+    if (window.dashboardInitialized) {
+        console.log("[Teacher Dashboard] Already initialized by qrcode.js, skipping second init.");
+        return;
     }
-
-    // Attach other listeners unconditionally as they are specific to this dashboard
-    const logoutBtn = document.getElementById('logout-btn');
-    if (logoutBtn) {
-        logoutBtn.addEventListener('click', function(e) {
-            e.preventDefault();
-            logout();
-        });
-    }
-    
-    // Attach sidebar navigation listeners
-    console.log('[TeacherDashboard] Attaching listeners to .nav-link elements');
-    const navLinks = document.querySelectorAll('.nav-link');
-    navLinks.forEach(link => {
-        link.addEventListener('click', function(e) {
-            // Prevent default only for dashboard functionality links
-            if (this.getAttribute('href') === '#' || this.id === 'logout-btn') {
-                e.preventDefault();
-            }
-            
-            // Update active state
-            navLinks.forEach(navLink => navLink.classList.remove('active'));
-            this.classList.add('active');
-            
-            // Show/hide sections based on clicked link ID
-            const overview = document.getElementById('dashboard-overview');
-            const qrSection = document.getElementById('qr-section');
-            const classesSection = document.getElementById('classes-section');
-            const attendanceSection = document.getElementById('attendance-section');
-
-            if (overview) overview.style.display = (this.id === 'dashboard-nav') ? 'block' : 'none';
-            if (qrSection) qrSection.style.display = (this.id === 'generate-qr-btn') ? 'block' : 'none';
-            if (classesSection) classesSection.style.display = (this.id === 'manage-classes-btn') ? 'block' : 'none';
-            if (attendanceSection) attendanceSection.style.display = (this.id === 'view-attendance-btn') ? 'block' : 'none';
-        });
-    });
-    
-    // Attach session select listener (now safe to attach here)
-    const sessionSelect = document.getElementById('session-select'); 
-    if (sessionSelect && !sessionSelect.dataset.listenerAttached) {
-        console.log('[TeacherDashboard] Attaching CHANGE listener to #session-select');
-        sessionSelect.addEventListener('change', async function() {
-            const attendanceRecordsDiv = document.getElementById('attendance-records');
-            const sectionChoicesDiv = document.getElementById('section-choices');
-            const sectionButtonsContainer = document.getElementById('section-buttons-container');
-            
-            // Clear previous attendance and section choices
-            if (attendanceRecordsDiv) attendanceRecordsDiv.innerHTML = '';
-            if (sectionButtonsContainer) sectionButtonsContainer.innerHTML = '';
-            if (sectionChoicesDiv) sectionChoicesDiv.style.display = 'none';
-
-            const selectedOption = this.options[this.selectedIndex];
-            const classId = document.getElementById('attendance-class-select').value;
-            const sessionDate = selectedOption.getAttribute('data-session-date');
-
-            if (this.value && classId && sessionDate) { // Only proceed if we have class, session, and date
-                console.log(`Session selected. Fetching sections for Class ${classId} on Date ${sessionDate}`);
-                try {
-                    const response = await fetch(`${API_URL}/auth/sessions-on-date?classId=${classId}&date=${sessionDate}`, {
-                        method: 'GET',
-                        credentials: 'include',
-                        headers: {
-                            'Accept': 'application/json',
-                            'Cache-Control': 'no-cache'
-                        }
-                    });
-                    
-                    if (!response.ok) {
-                         throw new Error(`Failed to fetch sections: ${response.status}`);
-                     }
-                     
-                     const data = await response.json();
-                     console.log("Sections data:", data);
-                     
-                     if (data.success && data.sections && data.sections.length > 0) {
-                         // Display section choices
-                         if (sectionChoicesDiv) sectionChoicesDiv.style.display = 'block';
-                         
-                         data.sections.forEach(sec => {
-                             const button = document.createElement('button');
-                             button.textContent = sec.section || 'No Section';
-                             button.className = 'btn btn-secondary section-choice-btn';
-                             button.setAttribute('data-session-id', sec.session_id);
-                             
-                             button.addEventListener('click', function() {
-                                 const specificSessionId = this.getAttribute('data-session-id');
-                                 console.log(`Loading attendance for selected section's session ID: ${specificSessionId}`);
-                                 // Pass the specific session ID directly to the function
-                                 loadAttendanceRecords(specificSessionId); 
-                             });
-                             
-                             if (sectionButtonsContainer) sectionButtonsContainer.appendChild(button);
-                         });
-                         
-                     } else {
-                         // Clear the records div and show a specific message
-                         console.log('No sections found for this class/date.');
-                         if (attendanceRecordsDiv) {
-                            attendanceRecordsDiv.innerHTML = '<p class="empty-message">No attendance sections found for this date.</p>';
-                         }
-                         // REMOVED: Do not call loadAttendanceRecords() as a fallback here.
-                         // loadAttendanceRecords(); 
-                     }
-                     
-                } catch (error) {
-                    console.error('Error fetching sections:', error);
-                    if (attendanceRecordsDiv) attendanceRecordsDiv.innerHTML = `<div class="error-message">Error loading section choices: ${error.message}</div>`;
-                }
-            }
-        });
-        sessionSelect.dataset.listenerAttached = 'true';
-    } else if (sessionSelect) {
-         console.log('[TeacherDashboard] CHANGE listener already attached to #session-select.');
-    }
-
-    // Initialize the dashboard logic (fetches user data, classes, etc.) if not already done
-    if (!window.dashboardInitialized) { 
-        console.log('[TeacherDashboard] Initializing dashboard logic (initDashboard)...');
-        initDashboard(); // This function internally shows #teacher-section on success
-        window.dashboardInitialized = true; 
-    } else {
-        console.log ('[TeacherDashboard] Dashboard logic already initialized by another script.');
-        // Manually show the main container if initDashboard was skipped but we have user info
-        // This ensures the container is visible even if qrcode.js initialized first.
-        if (sessionStorage.getItem('userId') && sessionStorage.getItem('userRole') === 'teacher') {
-             const teacherSection = document.getElementById('teacher-section');
-             if(teacherSection) {
-                 console.log('[TeacherDashboard] Manually showing #teacher-section because initDashboard was skipped.');
-                 teacherSection.style.display = 'block';
-             } else {
-                 console.error('[TeacherDashboard] Cannot manually show #teacher-section, element not found.');
-             }
-             // Also ensure welcome message is updated if initDashboard was skipped
-             const userName = sessionStorage.getItem('userName');
-             const welcomeMsg = document.getElementById('welcome-message');
-             if(welcomeMsg && userName) {
-                welcomeMsg.textContent = `Welcome, ${userName}!`;
-             }
-             // We might also need to trigger loadClasses and loadRecentAttendanceRecords here
-             // if they weren't called by qrcode.js's initialization.
-             // Let's add them just in case, guarded by checks.
-             if (document.getElementById('class-select')) loadClasses();
-             if (document.getElementById('recent-attendance-table')) loadRecentAttendanceRecords();
-        } else {
-             console.log('[TeacherDashboard] Skipping manual show of #teacher-section, user info not in session storage.');
-             // Optional: redirect to login if no user info is found here either?
-             // window.location.href = getBasePath() + '/pages/login.html';
-        }
-    }
-    
-    // Ensure initial view is correct (Dashboard overview) - Runs Unconditionally
-    console.log('[TeacherDashboard] Setting initial section visibility within #teacher-section.');
-    const overview = document.getElementById('dashboard-overview');
-    const qrSection = document.getElementById('qr-section');
-    const classesSection = document.getElementById('classes-section');
-    const attendanceSection = document.getElementById('attendance-section');
-    if (overview) overview.style.display = 'block';
-    if (qrSection) qrSection.style.display = 'none';
-    if (classesSection) classesSection.style.display = 'none';
-    if (attendanceSection) attendanceSection.style.display = 'none';
-    // Set initial active nav link
-    document.querySelectorAll('.nav-link').forEach(link => link.classList.remove('active'));
-    document.getElementById('dashboard-nav')?.classList.add('active');
-
-    // Set up event listeners for dashboard actions
-    const generateQrBtn = document.getElementById('generate-qr-btn');
-    const manageClassesBtn = document.getElementById('manage-classes-btn');
-    const viewAttendanceBtn = document.getElementById('view-attendance-btn');
-    const dashboardNav = document.getElementById('dashboard-nav');
-    
-    if (dashboardNav) {
-        dashboardNav.addEventListener('click', function() {
-            // Show dashboard overview, hide other sections
-            document.getElementById('dashboard-overview').style.display = 'block';
-            document.getElementById('qr-section').style.display = 'none';
-            document.getElementById('classes-section').style.display = 'none';
-            document.getElementById('attendance-section').style.display = 'none';
-        });
-    }
-    
-    if (generateQrBtn) {
-        generateQrBtn.addEventListener('click', function() {
-            document.getElementById('dashboard-overview').style.display = 'none'; // Hide overview
-            document.getElementById('qr-section').style.display = 'block';
-            document.getElementById('classes-section').style.display = 'none';
-            document.getElementById('attendance-section').style.display = 'none';
-        });
-    }
-    
-    if (manageClassesBtn) {
-        manageClassesBtn.addEventListener('click', function() {
-            document.getElementById('dashboard-overview').style.display = 'none'; // Hide overview
-            document.getElementById('qr-section').style.display = 'none';
-            document.getElementById('classes-section').style.display = 'block';
-            document.getElementById('attendance-section').style.display = 'none';
-        });
-    }
-    
-    if (viewAttendanceBtn) {
-        viewAttendanceBtn.addEventListener('click', function() {
-            document.getElementById('dashboard-overview').style.display = 'none'; // Hide overview
-            document.getElementById('qr-section').style.display = 'none';
-            document.getElementById('classes-section').style.display = 'none';
-            document.getElementById('attendance-section').style.display = 'block';
-        });
-    }
-    
-    // Set up event listeners for QR code generation
-    const generateQrCodeBtn = document.getElementById('generate-qr-code-btn');
-    const viewCurrentAttendanceBtn = document.getElementById('view-current-attendance-btn');
-    
-    if (generateQrCodeBtn) {
-        generateQrCodeBtn.addEventListener('click', generateQRCode);
-    }
-    
-    if (viewCurrentAttendanceBtn) {
-        viewCurrentAttendanceBtn.addEventListener('click', viewCurrentSessionAttendance);
-    }
-    
-    // Set up event listeners for class management
-    const addClassBtn = document.getElementById('add-class-btn');
-    
-    if (addClassBtn) {
-        addClassBtn.addEventListener('click', addNewClass);
-    }
-    
-    // Set up debug listeners
-    setupDebugListeners();
-    
-    // Log cookies for debugging
-    console.log("Cookies:", document.cookie);
-    
-    // Check headers to debug CORS issues
-    fetch(`${API_URL}/auth/debug-headers`, { 
-        credentials: 'include',
-        headers: {
-            'Cache-Control': 'no-cache'
-        }
-    })
-    .then(response => response.json())
-    .then(data => {
-        console.log("Debug headers response:", data);
-        
-        // Don't check for cookies here - let the authentication flow handle this properly
-        if (document.cookie) {
-            console.log("Cookies found:", document.cookie);
-        }
-    })
-    .catch(error => {
-        console.error("Headers debug error:", error);
-    });
+    window.dashboardInitialized = true; // Mark as initialized
+    console.log('[Teacher Dashboard] Initializing...');
+    initDashboard();
+    setupNavigation();
 });
+
+// Initialize dashboard
+async function initDashboard() {
+    console.log("[Teacher Dashboard] Running initDashboard()...");
+    try {
+        const userId = sessionStorage.getItem('userId');
+        const userName = sessionStorage.getItem('userName');
+        const userRole = sessionStorage.getItem('userRole');
+
+        if (!userId || userRole !== 'teacher') {
+            console.warn("[Teacher Dashboard] User not authenticated or not a teacher. Redirecting.");
+            // Maybe redirect or show error
+            window.location.href = getBasePath() + '/index.html'; 
+            return;
+        }
+
+        // Update welcome message
+        const welcomeMessage = document.getElementById('welcome-message');
+        if (welcomeMessage) {
+            welcomeMessage.textContent = `Welcome, ${userName}!`;
+        }
+        
+        // Show the main teacher section
+        const teacherSection = document.getElementById('teacher-section');
+        if (teacherSection) {
+            teacherSection.style.display = 'block';
+        }
+        
+        // Load data needed for the dashboard
+        await loadRecentAttendanceRecords(); // Load overview data
+        await loadClasses(); // Load classes for QR generation
+        await loadClassesForAttendanceView(); // **NEW: Load classes for View Attendance section**
+        await loadActiveSessions(); // Load active sessions for QR section
+
+    } catch (error) {
+        console.error("[Teacher Dashboard] Error initializing dashboard:", error);
+        showError("Failed to initialize dashboard components.");
+    }
+}
+
+// **NEW FUNCTION: Load classes specifically for the View Attendance dropdown**
+async function loadClassesForAttendanceView() {
+    console.log("Loading classes for View Attendance section...");
+    const teacherId = sessionStorage.getItem('userId');
+    if (!teacherId) {
+        console.error("Cannot load classes for attendance view: teacherId not found.");
+        return; 
+    }
+
+    try {
+        const response = await fetchWithAuth(`${API_URL}/auth/teacher-classes/${teacherId}`);
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        const data = await response.json();
+
+        if (data.success && data.classes) {
+            console.log("Successfully fetched classes for attendance view:", data.classes);
+            populateAttendanceClassSelect(data.classes);
+        } else {
+            console.error("Failed to fetch classes for attendance view:", data.message);
+            populateAttendanceClassSelect([]); // Populate with empty to show failure
+        }
+    } catch (error) {
+        console.error('Error fetching classes for attendance view:', error);
+        showError("Could not load class list for viewing attendance.");
+        populateAttendanceClassSelect([]); // Populate with empty on error
+    }
+}
+
+// **NEW FUNCTION: Populate the #attendance-class-select dropdown**
+function populateAttendanceClassSelect(classes) {
+    const selectElement = document.getElementById('attendance-class-select');
+    if (!selectElement) {
+        console.error("Attendance class select dropdown not found!");
+        return;
+    }
+
+    selectElement.innerHTML = '<option value="">-- Select a Class --</option>'; // Clear existing options and add default
+
+    if (classes && classes.length > 0) {
+        classes.forEach(cls => {
+            const option = document.createElement('option');
+            option.value = cls.id; // Use class ID as the value
+            // Display name and subject for clarity
+            option.textContent = `${cls.class_name} (${cls.subject || 'No Subject'})`; 
+            selectElement.appendChild(option);
+        });
+        selectElement.disabled = false; // Enable dropdown
+    } else {
+        // Add an option indicating no classes found or error
+        const option = document.createElement('option');
+        option.textContent = 'No classes found or error loading';
+        option.disabled = true;
+        selectElement.appendChild(option);
+        selectElement.disabled = true; // Keep disabled
+    }
+}
 
 // Function to check authentication status
 async function checkAuthStatus() {
@@ -503,199 +336,51 @@ function setupDebugListeners() {
     }
 }
 
-// Initialize dashboard
-async function initDashboard() {
-    console.log("Initializing Teacher Dashboard...");
-    // ... (existing code to get userId, userRole, welcome message) ...
-    const userId = sessionStorage.getItem('userId');
-    const userRole = sessionStorage.getItem('userRole');
-    const userName = sessionStorage.getItem('userName'); // Get userName
-    const welcomeMessage = document.getElementById('welcome-message');
-    const teacherSection = document.getElementById('teacher-section');
-
-    if (welcomeMessage && userRole === 'teacher') {
-        welcomeMessage.textContent = `Welcome, ${userName || 'Teacher'}! Manage your classes and attendance here.`;
-    }
-
-    if (teacherSection && userRole === 'teacher') {
-        teacherSection.style.display = 'block';
-        console.log("Teacher section displayed");
-
-        try {
-            console.log("Loading classes...");
-            await loadClasses(); 
-            console.log("Loading recent attendance...");
-            await loadRecentAttendanceRecords(); 
-            console.log("Loading active QR sessions...");
-            await loadActiveQrSessions(); // 📌 Call the new function here
-            console.log("Setting up navigation...");
-            // setupDashboardNavigation(); // 📌 Commented out - Function not defined and logic handled by listeners
-            console.log("Dashboard initialization complete.");
-        } catch (error) {
-            console.error("Error during dashboard initialization:", error);
-            if (welcomeMessage) {
-                 welcomeMessage.textContent = 'Error loading dashboard components. Please refresh.';
-            }
-        }
-
-    } else if (userRole !== 'teacher') {
-        console.warn('User is not a teacher, hiding teacher section.');
-        if (welcomeMessage) {
-             welcomeMessage.textContent = 'Access denied. Teacher role required.';
-        }
-        // Optionally redirect or disable features
-    } else {
-        console.error('Teacher section element not found.');
-    }
-}
-
 // Load classes for the teacher
 async function loadClasses() {
+    console.log("Loading classes for QR Generation section...");
+    const classSelect = document.getElementById('class-select');
+    if (!classSelect) { 
+        console.warn("Class select dropdown (#class-select) not found for QR generation.");
+        return; 
+    }
+    
+    classSelect.innerHTML = '<option value="">Loading classes...</option>'; // Placeholder
+    classSelect.disabled = true;
+    
+    const teacherId = sessionStorage.getItem('userId');
+    if (!teacherId) { 
+        console.error("Cannot load classes: teacherId not found.");
+        classSelect.innerHTML = '<option value="">Error: Not logged in</option>';
+        return; 
+    }
+
     try {
-        const classSelect = document.getElementById('class-select');
-        const attendanceClassSelect = document.getElementById('attendance-class-select');
-        const classesContainer = document.getElementById('classes-container');
-        
-        if (!classSelect || !attendanceClassSelect || !classesContainer) {
-            console.error("Required elements for class loading not found");
-            return;
-        }
-        
-        const userId = sessionStorage.getItem('userId');
-        console.log(`Fetching classes for user ID: ${userId}`);
-        console.log(`Session cookies: ${document.cookie}`);
-        
-        // Prepare headers with auth information
-        const headers = {
-            'Accept': 'application/json',
-            'Cache-Control': 'no-cache'
-        };
-        
-        // Only add header auth if no valid cookie exists
-        if (!document.cookie.includes('qr_attendance_sid')) {
-            const userId = sessionStorage.getItem('userId');
-            const userRole = sessionStorage.getItem('userRole');
-            if (userId && userRole) {
-                headers['X-User-ID'] = userId;
-                headers['X-User-Role'] = userRole;
-            }
-        }
-        
-        // Try the authenticated endpoint with headers
-        let response = await fetch(`${API_URL}/auth/teacher-classes/${userId}`, {
-            credentials: 'include',
-            headers: headers
-        });
-        
-        console.log(`Classes response status: ${response.status}`);
-        
-        // If unauthorized or error, retry with explicit header-based auth only
-        if (response.status === 401 || response.status >= 500) {
-            console.log('Using fallback method to fetch classes via header auth');
-            
-            // Try again with explicit content type
-            response = await fetch(`${API_URL}/auth/teacher-classes/${userId}`, {
-                credentials: 'include',
-                headers: {
-                    'Accept': 'application/json',
-                    'Cache-Control': 'no-cache',
-                    'X-User-ID': userId,
-                    'X-User-Role': userRole
-                }
-            });
-            
-            console.log(`Fallback response status: ${response.status}`);
-            
-            if (response.status === 401 || response.status >= 500) {
-                console.error('Both authenticated and direct methods failed');
-                classesContainer.innerHTML = `
-                    <div class="empty-state error">
-                        <p>Authentication failed. Please try logging in again.</p>
-                        <button class="btn" id="reloginBtn">Login Again</button>
-                    </div>
-                `;
-                
-                document.getElementById('reloginBtn')?.addEventListener('click', () => {
-                    logout();
-                });
-                
-                return;
-            }
-        }
-        
+        const response = await fetchWithAuth(`${API_URL}/auth/teacher-classes/${teacherId}`);
         const data = await response.json();
         
-        // Clear existing options
-        classSelect.innerHTML = '<option value="">Select a class</option>';
-        attendanceClassSelect.innerHTML = '<option value="">Select a class</option>';
-        
-        if (data.success) {
-            // Clear existing class list
-            classesContainer.innerHTML = '';
-            
-            if (data.classes && data.classes.length > 0) {
-                // Add classes to selects and class list
-                data.classes.forEach(cls => {
-                    // Add to class select for QR generation
-                    const option = document.createElement('option');
-                    option.value = cls.id;
-                    option.textContent = cls.class_name || cls.name;
-                    classSelect.appendChild(option);
-                    
-                    // Add to attendance class select
-                    const attOption = document.createElement('option');
-                    attOption.value = cls.id;
-                    attOption.textContent = cls.class_name || cls.name;
-                    attendanceClassSelect.appendChild(attOption);
-                    
-                    // Add to class list
-                    const classCard = document.createElement('div');
-                    classCard.className = 'class-card';
-                    classCard.innerHTML = `
-                        <h3>${cls.class_name || cls.name}</h3>
-                        <p>${cls.subject || 'No subject'}</p>
-                        <p class="description">${cls.description || 'No description'}</p>
-                        <button class="btn btn-sm btn-danger delete-class" data-id="${cls.id}">Delete</button>
-                    `;
-                    classesContainer.appendChild(classCard);
-                });
-                
-                // Add event listeners to delete buttons
-                document.querySelectorAll('.delete-class').forEach(button => {
-                    button.addEventListener('click', async function() {
-                        const classId = this.getAttribute('data-id');
-                        if (confirm('Are you sure you want to delete this class?')) {
-                            await deleteClass(classId);
-                        }
-                    });
-                });
-            } else {
-                classesContainer.innerHTML = `
-                    <div class="empty-state">
-                        <p>You haven't created any classes yet.</p>
-                        <p>Add your first class using the form below.</p>
-                    </div>
-                `;
-            }
+        classSelect.innerHTML = '<option value="">-- Select a Class --</option>'; // Reset placeholder
+
+        if (data.success && data.classes.length > 0) {
+            data.classes.forEach(cls => {
+                const option = document.createElement('option');
+                option.value = cls.id;
+                option.textContent = `${cls.class_name} (${cls.subject || 'No Subject'})`;
+                 // Store subject/name directly on the option for easy retrieval later
+                option.dataset.subject = cls.subject || cls.class_name; 
+                option.dataset.className = cls.class_name;
+                classSelect.appendChild(option);
+            });
+            classSelect.disabled = false;
+        } else if (data.success) {
+            classSelect.innerHTML = '<option value="">-- No classes found --</option>';
         } else {
-            classesContainer.innerHTML = `
-                <div class="empty-state error">
-                    <p>Failed to load classes: ${data.message || 'Unknown error'}</p>
-                    <p>Please try again or contact support.</p>
-                </div>
-            `;
+            throw new Error(data.message || "Failed to fetch classes");
         }
     } catch (error) {
         console.error('Error loading classes:', error);
-        const classesContainer = document.getElementById('classes-container');
-        if (classesContainer) {
-            classesContainer.innerHTML = `
-            <div class="empty-state error">
-                <p>Error loading classes: ${error.message}</p>
-                <p>Please check your connection and try again.</p>
-            </div>
-        `;
-        }
+        classSelect.innerHTML = '<option value="">Error loading classes</option>';
+        showError(`Failed to load classes: ${error.message}`);
     }
 }
 
