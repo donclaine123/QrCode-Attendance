@@ -25,6 +25,51 @@
 // Get modal elements (define globally within the script or within DOMContentLoaded)
 let modalOverlay, feedbackModal, modalCloseBtn, modalIcon, modalMessage, modalDetails;
 
+// Function to show the feedback modal (NOW GLOBAL)
+function showFeedbackModal(success, message, details = '') {
+    if (!modalOverlay || !feedbackModal || !modalIcon || !modalMessage || !modalDetails) {
+        console.error("Modal elements not found! Attempting to find them...");
+        // Try finding elements again just in case initialization was missed
+        modalOverlay = document.getElementById('modal-overlay');
+        feedbackModal = document.getElementById('feedback-modal');
+        modalIcon = document.getElementById('modal-icon');
+        modalMessage = document.getElementById('modal-message');
+        modalDetails = document.getElementById('modal-details');
+        
+        if (!modalOverlay || !feedbackModal) { // If still not found, fallback
+          alert(`${message}\n${details}`); 
+          return;
+        }
+    }
+
+    // Clear previous classes
+    modalIcon.className = 'modal-icon'; 
+
+    if (success) {
+        modalIcon.textContent = '✅'; // Success icon
+        modalIcon.classList.add('success');
+        modalMessage.textContent = message || 'Success!';
+    } else {
+        modalIcon.textContent = '❌'; // Error icon
+        modalIcon.classList.add('error');
+        modalMessage.textContent = message || 'An error occurred.';
+    }
+    
+    modalDetails.innerHTML = details; // Use innerHTML to allow basic formatting like <strong>
+
+    // Show the modal
+    modalOverlay.classList.add('visible');
+    feedbackModal.classList.add('visible');
+}
+
+// Function to hide the feedback modal (NOW GLOBAL)
+function hideFeedbackModal() {
+    if (modalOverlay && feedbackModal) {
+        modalOverlay.classList.remove('visible');
+        feedbackModal.classList.remove('visible');
+    }
+}
+
 document.addEventListener('DOMContentLoaded', function() {
     console.log('Student dashboard loaded');
     // Initialize dashboard
@@ -69,7 +114,7 @@ document.addEventListener('DOMContentLoaded', function() {
     // Set up debug listeners
     setupDebugListeners();
 
-    // Initialize modal elements
+    // Initialize modal elements (variables declared outside)
     modalOverlay = document.getElementById('modal-overlay');
     feedbackModal = document.getElementById('feedback-modal');
     modalCloseBtn = document.getElementById('modal-close-btn');
@@ -79,10 +124,10 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // Add listeners to close the modal
     if (modalCloseBtn) {
-        modalCloseBtn.addEventListener('click', hideFeedbackModal);
+        modalCloseBtn.addEventListener('click', hideFeedbackModal); // Calls global function
     }
     if (modalOverlay) {
-        modalOverlay.addEventListener('click', hideFeedbackModal);
+        modalOverlay.addEventListener('click', hideFeedbackModal); // Calls global function
     }
 });
 
@@ -276,43 +321,6 @@ async function loadAttendanceHistory() {
                 </div>
             `;
         }
-    }
-}
-
-// Function to show the feedback modal
-function showFeedbackModal(success, message, details = '') {
-    if (!modalOverlay || !feedbackModal || !modalIcon || !modalMessage || !modalDetails) {
-        console.error("Modal elements not found!");
-        // Fallback to alert if modal isn't available
-        alert(`${message}\\n${details}`); 
-        return;
-    }
-
-    // Clear previous classes
-    modalIcon.className = 'modal-icon'; 
-
-    if (success) {
-        modalIcon.textContent = '✅'; // Success icon
-        modalIcon.classList.add('success');
-        modalMessage.textContent = message || 'Success!';
-    } else {
-        modalIcon.textContent = '❌'; // Error icon
-        modalIcon.classList.add('error');
-        modalMessage.textContent = message || 'An error occurred.';
-    }
-    
-    modalDetails.innerHTML = details; // Use innerHTML to allow basic formatting like <strong>
-
-    // Show the modal
-    modalOverlay.classList.add('visible');
-    feedbackModal.classList.add('visible');
-}
-
-// Function to hide the feedback modal
-function hideFeedbackModal() {
-    if (modalOverlay && feedbackModal) {
-        modalOverlay.classList.remove('visible');
-        feedbackModal.classList.remove('visible');
     }
 }
 

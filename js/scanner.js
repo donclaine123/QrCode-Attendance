@@ -487,74 +487,81 @@ document.addEventListener("DOMContentLoaded", async () => {
     }
   }
 
-  // Function to show attendance popup
+  // Function to show attendance popup (NOW USES GLOBAL MODAL)
   async function showAttendancePopup(sessionId, teacherId, subject) {
-    console.log("Processing attendance automatically");
+    console.log("Processing attendance automatically via global modal...");
     
-    // Create status display
-    const statusElement = document.createElement('div');
-    statusElement.className = 'attendance-status';
-    statusElement.innerHTML = '<p class="processing">Recording your attendance...</p>';
-    document.body.appendChild(statusElement);
+    // Optional: Show a subtle processing indicator if needed
+    // document.getElementById('some-indicator').style.display = 'block';
+
+    // Reference the global modal function (ensure student-dashboard.js is loaded first)
+    if (typeof showFeedbackModal !== 'function') {
+        console.error("showFeedbackModal function not found! Cannot display feedback.");
+        // Fallback to alert if modal function isn't available
+        alert("Processing attendance... Check console for details.");
+        // Still attempt to record attendance
+    }
     
     try {
-      const response = await fetch(`${API_URL}/auth/record-attendance`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        credentials: 'include',
-        body: JSON.stringify({
-          session_id: sessionId
-        })
-      });
-      
-      const data = await response.json();
-      console.log('Attendance recording response:', data);
-      
-      if (data.success) {
-        statusElement.innerHTML = `
-          <div class="success-message">
-            <p>Attendance recorded successfully!</p>
-            <p>Subject: ${data.subject || 'N/A'}</p>
-            <p>Time: ${new Date().toLocaleString()}</p>
-          </div>
-        `;
+        const response = await fetch(`${API_URL}/record-attendance`, { // Corrected endpoint
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            credentials: 'include',
+            body: JSON.stringify({ session_id: sessionId })
+        });
         
-        // Clear session data after successful recording
-        sessionStorage.removeItem('currentSessionId');
-        sessionStorage.removeItem('currentTeacherId');
+        const data = await response.json();
+        console.log('Attendance recording response:', data);
         
-        // Dispatch an event so student-dashboard.js can refresh attendance history
-        document.dispatchEvent(new CustomEvent('attendance-recorded', { 
-          detail: { 
-            success: true,
-            subject: data.subject,
-            timestamp: new Date().toISOString()
-          }
-        }));
-        console.log("Dispatched attendance-recorded event for student-dashboard.js to handle");
-        
-        // Remove the status element after success with a delay
-        setTimeout(() => {
-          document.body.removeChild(statusElement);
-        }, 3000);
-      } else {
-        statusElement.innerHTML = `<div class="error-message">${data.message || 'Error recording attendance'}</div>`;
-        
-        // Remove the status element after error with a delay
-        setTimeout(() => {
-          document.body.removeChild(statusElement);
-        }, 3000);
-      }
+        // Use the global modal function for feedback
+        if (typeof showFeedbackModal === 'function') {
+            if (data.success) {
+                const details = `Subject: <strong>${data.subject || 'N/A'}</strong><br>Time: <strong>${formatDateToUTC8(new Date())}</strong>`;
+                showFeedbackModal(true, 'Attendance Recorded!', details);
+                
+                // Dispatch event for history update
+                document.dispatchEvent(new CustomEvent('attendance-recorded', { 
+                  detail: { success: true, subject: data.subject, timestamp: new Date().toISOString() }
+                }));
+            } else {
+                showFeedbackModal(false, 'Recording Failed', data.message || 'Error recording attendance');
+            }
+        } else {
+            // Fallback alert if modal function wasn't found
+            alert(data.success ? `Success: ${data.message}` : `Error: ${data.message}`);
+        }
+
     } catch (error) {
-      console.error('Attendance recording error:', error);
-      statusElement.innerHTML = `<div class="error-message">Server error: ${error.message}. Please try again.</div>`;
-      
-      // Remove the status element after error with a delay
-      setTimeout(() => {
-        document.body.removeChild(statusElement);
-      }, 3000);
+        console.error('Attendance recording error:', error);
+        // Use the global modal function for error feedback
+        if (typeof showFeedbackModal === 'function') {
+            showFeedbackModal(false, 'Server Error', `Could not connect or process request: ${error.message}. Please try again.`);
+        } else {
+            alert(`Server Error: ${error.message}`); // Fallback
+        }
+    } finally {
+        // Optional: Hide processing indicator if shown
+        // document.getElementById('some-indicator').style.display = 'none';
     }
   }
 });
+
+// Helper function needed by modal display (copy from student-dashboard.js or ensure it's global)
+function formatDateToUTC8(date) {
+    try {
+        // Convert to UTC+8
+        const utc8Date = new Date(date.getTime() + (8 * 60 * 60 * 1000));
+        return utc8Date.toLocaleString('en-US', {
+            year: 'numeric',
+            month: 'short',
+            day: 'numeric',
+            hour: '2-digit',
+            minute: '2-digit',
+            second: '2-digit',
+            hour12: true
+        });
+    } catch (error) {
+        console.error('Date formatting error:', error);
+        return 'Unknown Date';
+    }
+}
