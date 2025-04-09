@@ -22,6 +22,9 @@
 })();
 // --- End Role Check --- 
 
+// Get modal elements (define globally within the script or within DOMContentLoaded)
+let modalOverlay, feedbackModal, modalCloseBtn, modalIcon, modalMessage, modalDetails;
+
 document.addEventListener('DOMContentLoaded', function() {
     console.log('Student dashboard loaded');
     // Initialize dashboard
@@ -65,6 +68,22 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Set up debug listeners
     setupDebugListeners();
+
+    // Initialize modal elements
+    modalOverlay = document.getElementById('modal-overlay');
+    feedbackModal = document.getElementById('feedback-modal');
+    modalCloseBtn = document.getElementById('modal-close-btn');
+    modalIcon = document.getElementById('modal-icon');
+    modalMessage = document.getElementById('modal-message');
+    modalDetails = document.getElementById('modal-details');
+
+    // Add listeners to close the modal
+    if (modalCloseBtn) {
+        modalCloseBtn.addEventListener('click', hideFeedbackModal);
+    }
+    if (modalOverlay) {
+        modalOverlay.addEventListener('click', hideFeedbackModal);
+    }
 });
 
 // Set up navigation menu
@@ -260,51 +279,83 @@ async function loadAttendanceHistory() {
     }
 }
 
+// Function to show the feedback modal
+function showFeedbackModal(success, message, details = '') {
+    if (!modalOverlay || !feedbackModal || !modalIcon || !modalMessage || !modalDetails) {
+        console.error("Modal elements not found!");
+        // Fallback to alert if modal isn't available
+        alert(`${message}\\n${details}`); 
+        return;
+    }
+
+    // Clear previous classes
+    modalIcon.className = 'modal-icon'; 
+
+    if (success) {
+        modalIcon.textContent = '✅'; // Success icon
+        modalIcon.classList.add('success');
+        modalMessage.textContent = message || 'Success!';
+    } else {
+        modalIcon.textContent = '❌'; // Error icon
+        modalIcon.classList.add('error');
+        modalMessage.textContent = message || 'An error occurred.';
+    }
+    
+    modalDetails.innerHTML = details; // Use innerHTML to allow basic formatting like <strong>
+
+    // Show the modal
+    modalOverlay.classList.add('visible');
+    feedbackModal.classList.add('visible');
+}
+
+// Function to hide the feedback modal
+function hideFeedbackModal() {
+    if (modalOverlay && feedbackModal) {
+        modalOverlay.classList.remove('visible');
+        feedbackModal.classList.remove('visible');
+    }
+}
+
 // Record attendance from QR code
 async function recordAttendance() {
+    // --- Get session ID (keep existing logic) ---
+    const sessionId = sessionStorage.getItem('currentSessionId');
+    if (!sessionId) {
+        // Use the modal for this feedback too
+        showFeedbackModal(false, 'Error', 'No QR session found. Please scan a valid QR code.');
+        return;
+    }
+    
+    // --- Get Button Element (keep existing logic) ---
+    const btnElement = document.getElementById('record-attendance-btn');
+    if (!btnElement) {
+        console.error("Record attendance button not found");
+        showFeedbackModal(false, 'Error', 'UI element missing. Cannot record attendance.');
+        return;
+    }
+        
+    // --- Disable button and show processing (optional: add a processing modal/indicator) ---
+    btnElement.disabled = true;
+    btnElement.textContent = 'Processing...';
+    // Consider adding a subtle processing indicator if needed
+    
     try {
-        const sessionId = sessionStorage.getItem('currentSessionId');
-        
-        if (!sessionId) {
-            alert('No QR session found. Please scan a valid QR code.');
-            return;
-        }
-        
-        const btnElement = document.getElementById('record-attendance-btn');
-        const statusElement = document.getElementById('attendance-status');
-        
-        if (!btnElement || !statusElement) {
-            console.error("Required elements for attendance recording not found");
-            return;
-        }
-        
-        // Disable button and show processing
-        btnElement.disabled = true;
-        btnElement.textContent = 'Processing...';
-        statusElement.innerHTML = '<p class="processing">Recording your attendance...</p>';
-        
+        // --- Fetch Request (keep existing logic) ---
         const response = await fetch(`${API_URL}/record-attendance`, {
             method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
+            headers: { 'Content-Type': 'application/json' },
             credentials: 'include',
-            body: JSON.stringify({
-                session_id: sessionId
-            })
+            body: JSON.stringify({ session_id: sessionId })
         });
         
         const data = await response.json();
         console.log('Attendance recording response:', data);
         
+        // --- Handle Response using Modal ---
         if (data.success) {
-            statusElement.innerHTML = `
-                <div class="success-message">
-                    <p>Attendance recorded successfully!</p>
-                    <p>Subject: ${data.subject || 'N/A'}</p>
-                    <p>Time: ${formatDateToUTC8(new Date())}</p>
-                </div>
-            `;
+            // Format details for the modal
+            const details = `Subject: <strong>${data.subject || 'N/A'}</strong><br>Time: <strong>${formatDateToUTC8(new Date())}</strong>`;
+            showFeedbackModal(true, 'Attendance Recorded!', details);
             
             // Clear session data after successful recording
             sessionStorage.removeItem('currentSessionId');
@@ -312,28 +363,22 @@ async function recordAttendance() {
             
             // Reload attendance history
             loadAttendanceHistory();
-            
-            // No longer need to hide the attendance section
         } else {
-            statusElement.innerHTML = `<div class="error-message">${data.message || 'Error recording attendance'}</div>`;
+            // Show error in modal
+            showFeedbackModal(false, 'Recording Failed', data.message || 'Error recording attendance');
         }
-        
-        // Re-enable button
-        btnElement.disabled = false;
-        btnElement.textContent = 'Record Attendance';
+        // --- End Modal Handling ---
         
     } catch (error) {
         console.error('Attendance recording error:', error);
-        const statusElement = document.getElementById('attendance-status');
-        if (statusElement) {
-            statusElement.innerHTML = `<div class="error-message">Server error: ${error.message}. Please try again.</div>`;
-        }
-        
-        // Re-enable button
-        const btnElement = document.getElementById('record-attendance-btn');
+        // --- Show Catch Error in Modal ---
+        showFeedbackModal(false, 'Server Error', `Could not connect or process request: ${error.message}. Please try again.`);
+        // --- End Modal Handling ---
+    } finally {
+        // --- Re-enable button (always run) ---
         if (btnElement) {
             btnElement.disabled = false;
-            btnElement.textContent = 'Record Attendance';
+            btnElement.textContent = 'Record Attendance'; // Or whatever the original text was
         }
     }
 }
