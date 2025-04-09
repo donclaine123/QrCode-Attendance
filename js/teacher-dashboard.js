@@ -25,13 +25,19 @@
 // ...
 // });
 
+let recentAttendanceIntervalId = null; // Variable to hold the interval ID
+
 document.addEventListener('DOMContentLoaded', function() {
-    // REMOVED: Don't skip the whole setup anymore. Allow listeners to attach.
-    // if (window.dashboardInitialized) {
-    //     console.log('[TeacherDashboard] DOMContentLoaded - Already initialized, skipping listener attachment.');
-    //     return;
-    // }
-    console.log('[TeacherDashboard] DOMContentLoaded - Attaching listeners...');
+    console.log('Teacher dashboard initializing...');
+    initDashboard();
+
+    // Start polling for recent attendance records every 10 seconds
+    // Clear any existing interval first (safety measure)
+    if (recentAttendanceIntervalId) {
+        clearInterval(recentAttendanceIntervalId);
+    }
+    recentAttendanceIntervalId = setInterval(loadRecentAttendanceRecords, 10000); // 10000 ms = 10 seconds
+    console.log(`Polling for recent attendance started (Interval ID: ${recentAttendanceIntervalId})`);
 
     // Check if the specific listener *for attendance class select* has already been attached 
     // (e.g., by qrcode.js if it loaded first and attached it - although it shouldn't anymore)
@@ -1030,8 +1036,15 @@ async function viewCurrentSessionAttendance() {
 
 // Logout function
 async function logout() {
+    console.log("Logging out and stopping polling...");
+    if (recentAttendanceIntervalId) {
+        clearInterval(recentAttendanceIntervalId);
+        console.log(`Polling stopped (Interval ID: ${recentAttendanceIntervalId})`);
+        recentAttendanceIntervalId = null;
+    }
+    
     try {
-    // Call the logout endpoint
+        // Call the logout endpoint
         const response = await fetch(`${API_URL}/auth/logout`, {
             method: 'POST',
       credentials: 'include',
