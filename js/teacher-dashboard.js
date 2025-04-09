@@ -1069,8 +1069,7 @@ function getBasePath() {
 
 // Function to load recent attendance records
 async function loadRecentAttendanceRecords() {
-    console.log("Fetching recent attendance records...");
-    const tableBody = document.getElementById('recent-attendance-table-body');
+    const tableBody = document.querySelector('#recent-attendance-table tbody');
     if (!tableBody) return;
     
     // Show loading state
@@ -1098,7 +1097,7 @@ async function loadRecentAttendanceRecords() {
         }
         
         // Updated endpoint to match the backend route pattern
-        const response = await fetch(`${API_URL}/qr/recent-attendance-summary`, {
+        const response = await fetch(`${API_URL}/auth/recent-attendance-summary`, {
             method: 'GET',
             credentials: 'include',
             headers: headers
@@ -1113,7 +1112,7 @@ async function loadRecentAttendanceRecords() {
         if (data.success && data.records && data.records.length > 0) {
             displayAttendanceRecords(data.records);
         } else {
-            tableBody.innerHTML = '<tr><td colspan="3" class="text-align: center;">No attendance records found</td></tr>';
+            tableBody.innerHTML = '<tr><td colspan="3" class="text-center">No attendance records found</td></tr>';
         }
     } catch (error) {
         console.error('Error fetching recent attendance records:', error);
@@ -1169,17 +1168,15 @@ window.loadActiveQrSessions = async function() {
     tableBody.innerHTML = '<tr><td colspan="5" style="text-align: center;">Loading active sessions...</td></tr>'; // Show loading state
 
     try {
-        // --- Corrected URL Prefix AND Route Name --- 
-        const response = await fetchWithAuth(`${API_URL}/qr/sessions`); // Changed active-sessions to sessions
-        // --- End Correction ---
-
-        if (!response.ok) {
-            throw new Error(`Server returned ${response.status}: ${response.statusText}`);
-        }
+        // console.log(`[loadActiveQrSessions] Fetching from /auth/active-sessions...`);
+        const response = await fetchWithAuth(`/auth/active-sessions`); 
+        // console.log(`[loadActiveQrSessions] Response status: ${response.status}`);
         
         const data = await response.json();
+        // console.log('[loadActiveQrSessions] Response data:', data);
 
         if (data.success && data.sessions && data.sessions.length > 0) {
+            // console.log(`[loadActiveQrSessions] Found ${data.sessions.length} active sessions. Displaying section.`);
             activeSessionsSection.style.display = 'block';
             tableBody.innerHTML = ''; // Clear loading state
 
@@ -1224,6 +1221,7 @@ window.loadActiveQrSessions = async function() {
                 }
             });
         } else if (data.success) {
+             // console.log('[loadActiveQrSessions] No active sessions found. Displaying message.');
              activeSessionsSection.style.display = 'block'; 
              // Update the table body to show a message
              tableBody.innerHTML = '<tr><td colspan="5" style="text-align: center;">No active sessions found.</td></tr>';
