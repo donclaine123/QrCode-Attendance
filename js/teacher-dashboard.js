@@ -26,6 +26,7 @@
 // });
 
 let recentAttendanceIntervalId = null; // Variable to hold the interval ID
+let viewAttendanceIntervalId = null; // NEW: Interval ID for specific session view
 
 document.addEventListener('DOMContentLoaded', function() {
     console.log('Teacher dashboard initializing...');
@@ -47,6 +48,13 @@ document.addEventListener('DOMContentLoaded', function() {
         console.log('[TeacherDashboard] Attaching CHANGE listener to #attendance-class-select');
         attendanceClassSelect.addEventListener('change', function() {
             console.log('[TeacherDashboard] #attendance-class-select CHANGE event fired. Value:', this.value);
+            // --- STOP POLLING VIEW ATTENDANCE --- 
+            if (viewAttendanceIntervalId) {
+                clearInterval(viewAttendanceIntervalId);
+                viewAttendanceIntervalId = null;
+                console.log('[TeacherDashboard] Stopped specific session polling due to class change.');
+            }
+            // --- END STOP POLLING ---
             loadSessions(this.value);
             const attendanceRecordsDiv = document.getElementById('attendance-records');
             if(attendanceRecordsDiv) attendanceRecordsDiv.innerHTML = ''; 
@@ -97,6 +105,14 @@ document.addEventListener('DOMContentLoaded', function() {
     if (sessionSelect && !sessionSelect.dataset.listenerAttached) {
         console.log('[TeacherDashboard] Attaching CHANGE listener to #session-select');
         sessionSelect.addEventListener('change', async function() {
+            // --- STOP POLLING VIEW ATTENDANCE --- 
+            if (viewAttendanceIntervalId) {
+                clearInterval(viewAttendanceIntervalId);
+                viewAttendanceIntervalId = null;
+                console.log('[TeacherDashboard] Stopped specific session polling due to date change.');
+            }
+            // --- END STOP POLLING ---
+            
             const attendanceRecordsDiv = document.getElementById('attendance-records');
             const sectionChoicesDiv = document.getElementById('section-choices');
             const sectionButtonsContainer = document.getElementById('section-buttons-container');
@@ -139,10 +155,18 @@ document.addEventListener('DOMContentLoaded', function() {
                              button.className = 'btn btn-secondary section-choice-btn';
                              button.setAttribute('data-session-id', sec.session_id);
                              
+                             // --- MODIFIED: Clear view attendance interval on SECTION button click ---
                              button.addEventListener('click', function() {
+                                 // --- STOP POLLING VIEW ATTENDANCE --- 
+                                 if (viewAttendanceIntervalId) {
+                                     clearInterval(viewAttendanceIntervalId);
+                                     viewAttendanceIntervalId = null;
+                                     console.log('[TeacherDashboard] Stopped specific session polling due to section button click.');
+                                 }
+                                 // --- END STOP POLLING ---
+                                 
                                  const specificSessionId = this.getAttribute('data-session-id');
                                  console.log(`Loading attendance for selected section's session ID: ${specificSessionId}`);
-                                 // Pass the specific session ID directly to the function
                                  loadAttendanceRecords(specificSessionId); 
                              });
                              
@@ -864,20 +888,31 @@ async function loadSessions(classId) { // Renaming to loadSessionDates might be 
 
 // Load attendance records for a session
 async function loadAttendanceRecords(specificSessionId = null) {
-    // Use the provided sessionId if available, otherwise get it from the dropdown
-    const sessionId = specificSessionId || document.getElementById('session-select').value;
+    // --- STOP PREVIOUS POLLING for this specific view --- 
+    if (viewAttendanceIntervalId) {
+        clearInterval(viewAttendanceIntervalId);
+        viewAttendanceIntervalId = null;
+        console.log('[loadAttendanceRecords] Cleared previous specific session polling interval.');
+    }
+    // --- END STOP POLLING ---
+    
+    // Use the provided sessionId if available, otherwise try to get from button/context if needed
+    const sessionId = specificSessionId; 
     const recordsDiv = document.getElementById('attendance-records');
     
     if (!sessionId) {
-        // Updated error message to reflect the initial selection is by date
-        recordsDiv.innerHTML = '<div class="error-message">Please select a date and then a section.</div>';
+        // Don't start polling if no session ID
+        recordsDiv.innerHTML = '<div class="error-message">Please select a class, date, and section.</div>';
         return;
     }
     
-    try {
+    // Only show initial loading message, not on subsequent polls
+    if (!recordsDiv.querySelector('.attendance-table')) { 
         recordsDiv.innerHTML = '<p>Loading attendance records...</p>';
-        console.log(`Loading attendance for session ID: ${sessionId}`);
-        
+    }
+    // console.log(`Loading attendance for session ID: ${sessionId}`); // Can be noisy during polling
+    
+    try {
         // Include both cookie-based and header-based auth
         const headers = { 
             'Accept': 'application/json',
@@ -978,12 +1013,36 @@ async function loadAttendanceRecords(specificSessionId = null) {
             `;
             
             recordsDiv.innerHTML = tableHTML;
+            
+            // --- START POLLING for this specific view AFTER successful load --- 
+            if (!viewAttendanceIntervalId) { // Start only if not already polling for this exact session
+                console.log(`[loadAttendanceRecords] Starting polling for session ${sessionId}`);
+                viewAttendanceIntervalId = setInterval(() => { 
+                    // console.log(`Polling attendance for session: ${sessionId}`); // Debug log for polling
+                    loadAttendanceRecords(sessionId); 
+                }, 10000); // Poll every 10 seconds
+                 console.log(`[loadAttendanceRecords] Polling started (Interval ID: ${viewAttendanceIntervalId}) for session ${sessionId}`);
+            }
+            // --- END START POLLING ---
+            
         } else {
             recordsDiv.innerHTML = `<div class="error-message">Error: ${data.message || 'Failed to load attendance records'}</div>`;
+            // Stop polling if there was an API error
+            if (viewAttendanceIntervalId) {
+                clearInterval(viewAttendanceIntervalId);
+                viewAttendanceIntervalId = null;
+                console.log('[loadAttendanceRecords] Stopped polling due to API error.');
+            }
         }
     } catch (error) {
         console.error('Error loading attendance records:', error);
         recordsDiv.innerHTML = `<div class="error-message">Server error: ${error.message}. Please try again.</div>`;
+        // Stop polling if there was a network/fetch error
+        if (viewAttendanceIntervalId) {
+            clearInterval(viewAttendanceIntervalId);
+            viewAttendanceIntervalId = null;
+            console.log('[loadAttendanceRecords] Stopped polling due to fetch error.');
+        }
     }
 }
 
@@ -1037,10 +1096,17 @@ async function viewCurrentSessionAttendance() {
 // Logout function
 async function logout() {
     console.log("Logging out and stopping polling...");
+    // Stop recent attendance polling
     if (recentAttendanceIntervalId) {
         clearInterval(recentAttendanceIntervalId);
         console.log(`Polling stopped (Interval ID: ${recentAttendanceIntervalId})`);
         recentAttendanceIntervalId = null;
+    }
+    // Stop specific view attendance polling
+    if (viewAttendanceIntervalId) {
+        clearInterval(viewAttendanceIntervalId);
+        console.log(`Polling stopped (Interval ID: ${viewAttendanceIntervalId})`);
+        viewAttendanceIntervalId = null;
     }
     
     try {
