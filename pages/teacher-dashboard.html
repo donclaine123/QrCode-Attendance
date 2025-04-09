@@ -134,6 +134,20 @@
             <label for="qr-section-input">Section:</label>
             <input type="text" id="qr-section-input" placeholder="e.g. A, B, Morning, Afternoon, etc." class="form-control">
           </div>
+          
+          <!-- NEW: Duration Selection -->
+          <div class="form-group">
+            <label for="duration-select">Session Duration (Minutes):</label>
+            <select id="duration-select" class="form-control">
+              <option value="5">5</option>
+              <option value="10" selected>10</option> <!-- Default to 10 mins -->
+              <option value="15">15</option>
+              <option value="30">30</option>
+              <option value="60">60</option> 
+            </select>
+          </div>
+          <!-- End Duration Selection -->
+          
           <div class="form-actions">
             <button id="generate-qr-code-btn">Generate QR Code</button>
             <button id="view-current-attendance-btn">View Attendance for Current Session</button>

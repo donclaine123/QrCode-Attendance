@@ -1529,4 +1529,238 @@ function showError(message) {
     // if (errorDiv) { errorDiv.textContent = message; errorDiv.style.display = 'block'; }
 }
 
-// ... rest of the file ...
+// Generate QR Code
+async function generateQRCode() {
+    const classSelect = document.getElementById('class-select');
+    const sectionInput = document.getElementById('qr-section-input'); // Get section input
+    const durationSelect = document.getElementById('duration-select'); // NEW: Get duration select
+    const qrCodeDiv = document.getElementById('qr-code-container');
+    const statusDiv = document.getElementById('status-message'); // Use dedicated status div
+    
+    if (!qrCodeDiv || !statusDiv) {
+        console.error("QR Code container or status message div not found!");
+        alert("Error: Cannot display QR code. UI elements missing.");
+        return;
+    }
+
+    // --- Clear previous QR/Status --- 
+    // Remove only previous QR-specific elements, keep statusDiv
+    const existingIframe = qrCodeDiv.querySelector('#qr-code-iframe');
+    if(existingIframe) qrCodeDiv.removeChild(existingIframe);
+    const existingLinkContainer = qrCodeDiv.querySelector('.direct-link-container');
+    if(existingLinkContainer) qrCodeDiv.removeChild(existingLinkContainer);
+    const existingFallback = qrCodeDiv.querySelector('.qr-fallback');
+    if(existingFallback) qrCodeDiv.removeChild(existingFallback);
+    statusDiv.innerHTML = ''; // Clear status text
+    statusDiv.className = ''; // Reset status class
+    // --- End Clearing ---
+    
+    const classId = classSelect.value;
+    const className = classSelect.options[classSelect.selectedIndex]?.text;
+    const section = sectionInput.value.trim();
+    const durationMinutes = durationSelect.value; // NEW: Get selected duration
+    const teacherId = sessionStorage.getItem('userId');
+
+    if (!classId) {
+        statusDiv.innerHTML = '<p class="error-message">Please select a class.</p>';
+        return;
+    }
+    if (!teacherId) {
+         statusDiv.innerHTML = '<p class="error-message">Teacher ID not found. Please log in again.</p>';
+         return;
+    }
+    
+    statusDiv.innerHTML = '<p class="processing-status">Generating QR Code...</p>';
+    
+    try {
+        // Prepare headers with auth information
+        const headers = {
+            'Content-Type': 'application/json',
+            'Accept': 'application/json' // Expect JSON back
+        };
+        
+        // Fallback header auth (if needed)
+        if (!document.cookie.includes('qr_attendance_sid')) {
+            const userId = sessionStorage.getItem('userId');
+            const userRole = sessionStorage.getItem('userRole');
+            if (userId && userRole) {
+                headers['X-User-ID'] = userId;
+                headers['X-User-Role'] = userRole;
+            }
+        }
+        
+        const response = await fetch(`${API_URL}/auth/generate-qr`, {
+            method: 'POST',
+            credentials: 'include',
+            headers: headers,
+            body: JSON.stringify({
+                class_id: classId,
+                subject: className, // Send class name as subject
+                teacher_id: teacherId,
+                section: section || null, // Send section or null
+                duration: parseInt(durationMinutes) // NEW: Send duration as integer
+            })
+        });
+        
+        const data = await response.json();
+        
+        if (data.success) {
+             console.log("QR Code Generated:", data);
+             // Store current session ID for viewing attendance
+             sessionStorage.setItem('currentQrSessionId', data.sessionId);
+
+             // Render QR code using the same method as handleShowActiveQr
+             renderQrCodeIframe(data.qrCodeUrl, data.sessionId, data.expiresAt, data.section);
+             
+             // Refresh the active sessions list immediately
+             if (typeof loadActiveQrSessions === 'function') {
+                 loadActiveQrSessions();
+             }
+             
+        } else {
+            console.error("QR Code generation failed:", data.message);
+            statusDiv.innerHTML = `<p class="error-message">Failed to generate QR code: ${data.message}</p>`;
+        }
+    } catch (error) {
+        console.error('Error generating QR code:', error);
+        statusDiv.innerHTML = `<p class="error-message">Error generating QR code: ${error.message}. Please check the connection.</p>`;
+    }
+}
+
+// NEW: Helper function to render QR code iframe (extracted from handleShowActiveQr)
+function renderQrCodeIframe(qrCodeUrl, sessionId, expiresAtIso, section) {
+    const qrCodeDiv = document.getElementById('qr-code-container');
+    const statusDiv = document.getElementById('status-message');
+
+    if (!qrCodeDiv || !statusDiv) {
+        console.error("QR Code container or status message div not found in renderQrCodeIframe!");
+        return;
+    }
+    
+    // --- Clear previous QR/Status (similar to generateQRCode) --- 
+    const existingIframe = qrCodeDiv.querySelector('#qr-code-iframe');
+    if(existingIframe) qrCodeDiv.removeChild(existingIframe);
+    const existingLinkContainer = qrCodeDiv.querySelector('.direct-link-container');
+    if(existingLinkContainer) qrCodeDiv.removeChild(existingLinkContainer);
+    const existingFallback = qrCodeDiv.querySelector('.qr-fallback');
+    if(existingFallback) qrCodeDiv.removeChild(existingFallback);
+    statusDiv.innerHTML = ''; 
+    statusDiv.className = '';
+    // --- End Clearing ---
+
+    const loadingMsg = document.createElement('div');
+    loadingMsg.style.textAlign = 'center';
+    loadingMsg.style.padding = '20px';
+    loadingMsg.innerHTML = 'Loading QR code...';
+    qrCodeDiv.appendChild(loadingMsg);
+
+    const img = new Image();
+    img.crossOrigin = 'Anonymous';
+
+    img.onload = function() {
+        if (loadingMsg.parentNode === qrCodeDiv) {
+            qrCodeDiv.removeChild(loadingMsg);
+        }
+        const iframe = document.createElement('iframe');
+        const imgHTML = `<html><body style="margin:0; display:flex; justify-content:center; align-items:center; height:100%;"><img src="${img.src}" alt="QR Code" style="max-width:100%; max-height:100%;"></body></html>`;
+        const blob = new Blob([imgHTML], {type: 'text/html'});
+        iframe.src = URL.createObjectURL(blob);
+        iframe.id = 'qr-code-iframe';
+        iframe.width = '280';
+        iframe.height = '280';
+        iframe.style.border = 'none';
+        iframe.style.display = 'block';
+        iframe.style.margin = '0 auto';
+        qrCodeDiv.appendChild(iframe);
+
+        if (typeof displayQrCodeDetails === 'function') {
+            displayQrCodeDetails(sessionId, qrCodeUrl, expiresAtIso, section);
+        } else {
+            console.error('displayQrCodeDetails function is not available.');
+            statusDiv.innerHTML = '<p class="error-message">Error: Could not display QR code details.</p>';
+        }
+        iframe.onload = () => { setTimeout(() => URL.revokeObjectURL(iframe.src), 100); };
+    };
+
+    img.onerror = function() {
+        console.error("Failed to load QR code image from API.");
+        if (loadingMsg.parentNode === qrCodeDiv) {
+            qrCodeDiv.removeChild(loadingMsg);
+        }
+        qrCodeDiv.innerHTML += ` 
+           <div style="text-align: center; padding: 20px; border: 1px solid #ff6b6b; border-radius: 8px; margin: 20px 0; background-color: #fff9f9;" class="qr-fallback"> 
+             <p style="margin-bottom: 10px; color: #d63031; font-weight: bold;">QR Code image failed to load. Please use this link:</p>
+             <a href="${qrCodeUrl}" target="_blank" style="color: #0984e3; font-weight: bold;">${qrCodeUrl}</a>
+           </div>
+        `;
+        if (typeof displayQrCodeDetails === 'function') {
+            displayQrCodeDetails(sessionId, qrCodeUrl, expiresAtIso, section);
+        } else {
+            console.error('displayQrCodeDetails function is not available.');
+             statusDiv.innerHTML = '<p class="error-message">Error: Could not display QR code details.</p>';
+        }
+    };
+
+    img.src = `https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=${encodeURIComponent(qrCodeUrl)}`;
+}
+
+// 📌 NEW: Function to display QR Code details (timer, link, etc.)
+// This should be globally accessible if called from different handlers
+let qrCodeTimerIntervalId = null; // Hold timer ID
+
+window.displayQrCodeDetails = function(sessionId, qrCodeUrl, expiresAtIso, section) {
+    const statusDiv = document.getElementById('status-message');
+    const qrCodeDiv = document.getElementById('qr-code-container'); // Needed for appending link
+    if (!statusDiv || !qrCodeDiv) {
+        console.error("Status message div or QR Code container not found for details!");
+        return;
+    }
+
+    // Clear previous timer if any
+    if (qrCodeTimerIntervalId) {
+        clearInterval(qrCodeTimerIntervalId);
+        qrCodeTimerIntervalId = null;
+    }
+
+    const expires = new Date(expiresAtIso);
+    const sectionText = section ? `, Section ${section}` : '';
+    
+    // Initial status message
+    statusDiv.innerHTML = `<p class="success-message">QR Code for session ${sessionId}${sectionText} generated. It expires in: <span id="timer">Calculating...</span></p>`;
+    const timerSpan = document.getElementById('timer');
+
+    function updateTimer() {
+        const now = new Date();
+        const diff = expires.getTime() - now.getTime();
+
+        if (diff <= 0) {
+            clearInterval(qrCodeTimerIntervalId);
+            qrCodeTimerIntervalId = null;
+            if(timerSpan) timerSpan.textContent = "Expired";
+            statusDiv.querySelector('.success-message')?.classList.add('expired'); // Add class for styling
+            // Refresh active sessions list when timer expires
+            if (typeof loadActiveQrSessions === 'function') {
+                loadActiveQrSessions(); 
+            }
+            return;
+        }
+
+        const minutes = Math.floor(diff / (1000 * 60));
+        const seconds = Math.floor((diff % (1000 * 60)) / 1000);
+        if (timerSpan) {
+             timerSpan.textContent = `${minutes}m ${seconds}s`;
+        }
+    }
+
+    updateTimer(); // Call immediately
+    qrCodeTimerIntervalId = setInterval(updateTimer, 1000); // Update every second
+
+    // Add direct link below the status/timer
+    const linkContainer = document.createElement('div');
+    linkContainer.className = 'direct-link-container';
+    linkContainer.innerHTML = `
+        <p>Direct QR Code Link:</p>
+        <a href="${qrCodeUrl}" target="_blank" class="direct-link">${qrCodeUrl}</a>
+    `;
+    qrCodeDiv.appendChild(linkContainer);
+}
