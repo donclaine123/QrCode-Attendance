@@ -359,11 +359,18 @@ async function login(email, password) {
     // Store user data in sessionStorage
     sessionStorage.setItem('userId', data.user.id);
     sessionStorage.setItem('userRole', data.role);
-    sessionStorage.setItem('firstName', data.user.firstName);
-    sessionStorage.setItem('lastName', data.user.lastName);
-    sessionStorage.setItem('userName', `${data.user.firstName} ${data.user.lastName}`);
-    sessionStorage.setItem('userEmail', email);
     sessionStorage.setItem('loginTime', convertToUTC8(new Date()));
+    
+    // 📌 ONLY update name fields if provided by check-auth response
+    if (data.user.firstName && data.user.lastName) {
+        console.log('Updating names from check-auth response');
+        sessionStorage.setItem('firstName', data.user.firstName);
+        sessionStorage.setItem('lastName', data.user.lastName);
+        sessionStorage.setItem('userName', `${data.user.firstName} ${data.user.lastName}`);
+    } else {
+        // Otherwise, keep the existing name values from initial login
+        console.log('Names not in check-auth response, keeping existing sessionStorage values.');
+    }
     
     return {
       success: true,
@@ -400,12 +407,20 @@ async function checkAuthentication() {
     if (data.authenticated && data.user) {
       console.log('User is authenticated, checking role:', data.user.role);
       
-      // Store user data in sessionStorage
+      // Always store/update ID and Role
       sessionStorage.setItem('userId', data.user.id);
       sessionStorage.setItem('userRole', data.user.role);
-      sessionStorage.setItem('firstName', data.user.firstName);
-      sessionStorage.setItem('lastName', data.user.lastName);
-      sessionStorage.setItem('userName', `${data.user.firstName} ${data.user.lastName}`);
+      
+      // 📌 ONLY update name fields if provided by check-auth response
+      if (data.user.firstName && data.user.lastName) {
+          console.log('Updating names from check-auth response');
+          sessionStorage.setItem('firstName', data.user.firstName);
+          sessionStorage.setItem('lastName', data.user.lastName);
+          sessionStorage.setItem('userName', `${data.user.firstName} ${data.user.lastName}`);
+      } else {
+          // Otherwise, keep the existing name values from initial login
+          console.log('Names not in check-auth response, keeping existing sessionStorage values.');
+      }
       
       const basePath = getBasePath();
       
