@@ -801,7 +801,7 @@ async function deleteClass(classId) {
 }
 
 // Load sessions (now distinct dates) for a class
-async function loadSessions(classId) { 
+async function loadSessions(classId) {
     const sessionSelect = document.getElementById('session-select');
     const sectionChoicesDiv = document.getElementById('section-choices');
     const sectionButtonsContainer = document.getElementById('section-buttons-container');
@@ -1482,7 +1482,7 @@ async function handleDeleteActiveSession(event) {
             method: 'DELETE'
         });
         const data = await response.json();
-
+        
         if (data.success) {
             // Remove the row from the table
             button.closest('tr').remove();

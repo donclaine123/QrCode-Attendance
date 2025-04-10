@@ -206,15 +206,24 @@ document.addEventListener('DOMContentLoaded', function() {
           }),
           credentials: 'include'
         });
-
+        
         const data = await response.json();
 
-        if (data.success) {
-          // Check if verification is required based on backend response
-          if (data.requiresVerification) {
+        // Check if the response was not ok (status code 4xx or 5xx)
+        if (!response.ok) {
+            // Use the specific message from the backend JSON response if available
+            showError(data.message || `Registration failed with status: ${response.status}`);
+            submitButton.textContent = originalButtonText;
+            submitButton.disabled = false;
+            return; // Stop execution here
+        }
+        
+        // Original success logic (data.success should be true if response.ok)
+        // Check if verification is required based on backend response
+        if (data.requiresVerification) {
             // Display the verification prompt
             if (verificationEmailElement && data.email) {
-              verificationEmailElement.textContent = data.email;
+                verificationEmailElement.textContent = data.email;
             }
             registerSection.style.display = 'none';
             loginSection.style.display = 'none';
@@ -222,21 +231,18 @@ document.addEventListener('DOMContentLoaded', function() {
             setTimeout(() => {
                 verificationSection.classList.add('visible');
             }, 10); 
-          } else {
-            // Original behavior: Registration successful, no verification needed (or backend not updated)
+        } else {
+            // Original behavior: Registration successful, no verification needed
             showSuccess('Registration successful! You can now log in.'); 
             registerSection.style.display = 'none';
             loginSection.style.display = 'block';
-          }
-        } else {
-          showError(data.message || 'Registration failed');
         }
         
         submitButton.textContent = originalButtonText;
         submitButton.disabled = false;
       } catch (error) {
-        console.error('Registration error:', error);
-        showError('Server error. Please try again later.');
+        console.error('Registration error (Network/Fetch): ', error);
+        showError('Network error or could not connect to server. Please try again later.');
         submitButton.textContent = originalButtonText;
         submitButton.disabled = false;
       }
