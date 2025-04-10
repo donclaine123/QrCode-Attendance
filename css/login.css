@@ -100,11 +100,11 @@ label {
 .input-field {
   width: 100%;
   padding: var(--spacing-md);
-  border: 1px solid var(--color-secondary-dark);
+  border: 1px solid var(--color-gray-300);
   border-radius: var(--border-radius-sm);
   font-family: var(--font-family-body);
   font-size: 1rem;
-  transition: border-color 0.3s ease;
+  transition: border-color 0.3s ease, box-shadow 0.3s ease;
   background-color: var(--color-secondary);
 }
 
@@ -112,6 +112,21 @@ label {
   outline: none;
   border-color: var(--color-primary);
   box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1);
+}
+
+/* NEW: Styles for input error state */
+.input-field.input-error {
+  border-color: var(--color-error-dark); /* Red border */
+  box-shadow: 0 0 0 2px var(--color-error-light); /* Subtle red glow */
+}
+
+/* NEW: Styles for specific input error messages */
+.input-error-message {
+  display: block; /* Ensure it takes up its own line */
+  color: var(--color-error-dark); /* Red text */
+  font-size: 0.875rem;
+  margin-top: 0.25rem; /* Small space above */
+  min-height: 1em; /* Reserve space even when empty */
 }
 
 .btn {

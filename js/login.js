@@ -189,6 +189,13 @@ document.addEventListener('DOMContentLoaded', function() {
       submitButton.textContent = 'Registering...';
       submitButton.disabled = true;
       
+      // --- Clear previous email error state --- 
+      const emailInput = document.getElementById('reg-email');
+      const emailErrorMsg = document.getElementById('email-error-message');
+      emailInput?.classList.remove('input-error');
+      if (emailErrorMsg) emailErrorMsg.textContent = '';
+      // --- End Clear Error State ---
+
       try {
         const response = await fetch(`${API_URL}/auth/register`, {
           method: 'POST',
@@ -209,10 +216,18 @@ document.addEventListener('DOMContentLoaded', function() {
         
         const data = await response.json();
 
-        // Check if the response was not ok (status code 4xx or 5xx)
         if (!response.ok) {
-            // Use the specific message from the backend JSON response if available
-            showError(data.message || `Registration failed with status: ${response.status}`);
+            // --- Specific Email Error Handling --- 
+            if (response.status === 400 && data.message && data.message.toLowerCase().includes('email already registered')) {
+                if (emailInput) emailInput.classList.add('input-error');
+                if (emailErrorMsg) emailErrorMsg.textContent = data.message; // Show specific message
+                showError(''); // Clear the general error message or show a generic one
+            } else {
+                 // --- General Error Handling --- 
+                showError(data.message || `Registration failed with status: ${response.status}`);
+            }
+            // --- End Error Handling ---
+
             submitButton.textContent = originalButtonText;
             submitButton.disabled = false;
             return; // Stop execution here
