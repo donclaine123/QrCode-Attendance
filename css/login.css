@@ -10,6 +10,13 @@
   --color-success: #10B981;
   --color-white: #ffffff;
   --color-background: #ffffff;
+  --color-gray-300: #d1d5db; /* Added for consistency */
+  --color-border: var(--color-secondary-dark); /* Alias for consistency */
+  
+  /* NEW: Error Colors */
+  --color-error: #ef4444; /* Red-500 */
+  --color-error-dark: #dc2626; /* Red-600 */
+  --color-error-light: #fecaca; /* Red-200 */
   
   /* Typography */
   --font-family-heading: 'Poppins', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
