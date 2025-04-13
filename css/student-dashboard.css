@@ -93,21 +93,16 @@ body {
   margin-bottom: var(--spacing-lg);
 }
 
-.school-avatar {
-  width: 40px;
-  height: 40px;
-  border-radius: 50%;
-  background-color: var(--color-secondary);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  margin-right: var(--spacing-md);
-  overflow: hidden;
+.sidebar-logo-image {
+  height: 55px;
+  width: auto;
 }
 
-.school-name {
+.sidebar-app-name {
+  font-size: 1.6rem;
   font-weight: 600;
-  font-size: 1rem;
+  color: var(--color-primary-dark);
+  font-family: 'Orbitron', sans-serif;
 }
 
 .nav-menu {
