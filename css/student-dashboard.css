@@ -154,6 +154,7 @@ body {
   font-size: 1.2rem;
   margin-bottom: var(--spacing-md);
   color: var(--color-primary-dark);
+  padding-left: var(--spacing-md);
 }
 
 /* Wrap student section content in borders */
