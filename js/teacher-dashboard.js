@@ -26,7 +26,8 @@
 // });
 
 let recentAttendanceIntervalId = null; // Variable to hold the interval ID
-let viewAttendanceIntervalId = null; // NEW: Interval ID for specific session view
+let viewAttendanceIntervalId = null; // OLD: Interval ID for specific session view (no longer used for polling)
+let currentViewSessionId = null; // NEW: Store the ID of the session being viewed
 
 document.addEventListener('DOMContentLoaded', function() {
     console.log('Teacher dashboard initializing...');
@@ -163,15 +164,16 @@ document.addEventListener('DOMContentLoaded', function() {
                              
                              // --- MODIFIED: Clear view attendance interval on SECTION button click ---
                              button.addEventListener('click', function() {
-                                 // --- STOP POLLING VIEW ATTENDANCE --- 
+                                 // --- STOP POLLING VIEW ATTENDANCE (Keep this for safety) ---
                                  if (viewAttendanceIntervalId) {
                                      clearInterval(viewAttendanceIntervalId);
                                      viewAttendanceIntervalId = null;
-                                     console.log('[TeacherDashboard] Stopped specific session polling due to section button click.');
+                                     // console.log('[TeacherDashboard] Stopped specific session polling due to section button click.'); // Log not needed
                                  }
                                  // --- END STOP POLLING ---
                                  
                                  const specificSessionId = this.getAttribute('data-session-id');
+                                 currentViewSessionId = specificSessionId; // Store the current session ID
                                  console.log(`Loading attendance for selected section's session ID: ${specificSessionId}`);
                                  loadAttendanceRecords(specificSessionId); 
                              });
@@ -335,6 +337,24 @@ document.addEventListener('DOMContentLoaded', function() {
     .catch(error => {
         console.error("Headers debug error:", error);
     });
+
+    // Add event listener for the Refresh Attendance button
+    const refreshBtn = document.getElementById('refresh-attendance-btn');
+    if (refreshBtn) {
+        refreshBtn.addEventListener('click', function() {
+            if (currentViewSessionId) {
+                console.log(`Refreshing attendance for session ID: ${currentViewSessionId}`);
+                loadAttendanceRecords(currentViewSessionId); // Reload using the stored ID
+            } else {
+                console.log('Refresh button clicked, but no session is currently selected/viewed.');
+                // Optional: Show a small message to the user
+                const recordsDiv = document.getElementById('attendance-records');
+                if (recordsDiv && !recordsDiv.querySelector('table')) { // Only show if no records are displayed
+                    recordsDiv.innerHTML = '<p class="info-message">Please select a class, date, and section first.</p>';
+                }
+            }
+        });
+    }
 });
 
 // Function to check authentication status
@@ -1033,20 +1053,11 @@ async function loadAttendanceRecords(specificSessionId = null) {
             
             recordsDiv.innerHTML = tableHTML;
             
-            // --- START POLLING for this specific view AFTER successful load --- 
-            if (!viewAttendanceIntervalId) { // Start only if not already polling for this exact session
-                console.log(`[loadAttendanceRecords] Starting polling for session ${sessionId}`);
-                viewAttendanceIntervalId = setInterval(() => { 
-                    // console.log(`Polling attendance for session: ${sessionId}`); // Debug log for polling
-                    loadAttendanceRecords(sessionId); 
-                }, 10000); // Poll every 10 seconds
-                 console.log(`[loadAttendanceRecords] Polling started (Interval ID: ${viewAttendanceIntervalId}) for session ${sessionId}`);
-            }
-            // --- END START POLLING ---
+     
             
         } else {
             recordsDiv.innerHTML = `<div class="error-message">Error: ${data.message || 'Failed to load attendance records'}</div>`;
-            // Stop polling if there was an API error
+            // Stop polling if there was an API error (Keep this clearInterval)
             if (viewAttendanceIntervalId) {
                 clearInterval(viewAttendanceIntervalId);
                 viewAttendanceIntervalId = null;
@@ -1056,7 +1067,7 @@ async function loadAttendanceRecords(specificSessionId = null) {
     } catch (error) {
         console.error('Error loading attendance records:', error);
         recordsDiv.innerHTML = `<div class="error-message">Server error: ${error.message}. Please try again.</div>`;
-        // Stop polling if there was a network/fetch error
+        // Stop polling if there was a network/fetch error (Keep this clearInterval)
         if (viewAttendanceIntervalId) {
             clearInterval(viewAttendanceIntervalId);
             viewAttendanceIntervalId = null;
