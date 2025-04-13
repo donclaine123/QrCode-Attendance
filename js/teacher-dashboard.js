@@ -38,7 +38,7 @@ document.addEventListener('DOMContentLoaded', function() {
     if (recentAttendanceIntervalId) {
         clearInterval(recentAttendanceIntervalId);
     }
-    recentAttendanceIntervalId = setInterval(loadRecentAttendanceRecords, 10000); // 10000 ms = 10 seconds
+   
     console.log(`Polling for recent attendance started (Interval ID: ${recentAttendanceIntervalId})`);
 
     // Check if the specific listener *for attendance class select* has already been attached 
@@ -353,6 +353,15 @@ document.addEventListener('DOMContentLoaded', function() {
                     recordsDiv.innerHTML = '<p class="info-message">Please select a class, date, and section first.</p>';
                 }
             }
+        });
+    }
+
+    // Add event listener for the Refresh Recent Attendance button
+    const refreshRecentBtn = document.getElementById('refresh-recent-attendance-btn');
+    if (refreshRecentBtn) {
+        refreshRecentBtn.addEventListener('click', function() {
+            console.log('Refreshing recent attendance records...');
+            loadRecentAttendanceRecords();
         });
     }
 });
