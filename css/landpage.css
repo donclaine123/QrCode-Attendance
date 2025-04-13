@@ -1,3 +1,6 @@
+/* Ensure Orbitron font is available */
+@import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@600&display=swap');
+
 :root {
   /* Color scheme */
   --color-primary: #4F46E5;
@@ -105,14 +108,21 @@ header {
 .logo {
   display: flex;
   align-items: center;
-  font-family: var(--font-family-heading);
-  font-weight: 700;
-  font-size: 1.5rem;
-  color: var(--color-text);
+  gap: var(--spacing-sm);
+  text-decoration: none;
+  color: var(--color-text-dark);
 }
 
-.logo-icon {
-  margin-right: var(--spacing-sm);
+.logo-image {
+  height: 55px;
+  width: auto;
+}
+
+.app-name {
+  font-size: 1.6rem;
+  font-weight: 600;
+  color: var(--color-primary-dark);
+  font-family: 'Orbitron', sans-serif;
 }
 
 .nav-links {

@@ -5,14 +5,18 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Email Verification</title>
-  <link rel="stylesheet" href="../css/style.css">
+  <link rel="stylesheet" href="../css/login.css">
 </head>
 
 <body>
-  <div class="container">
+  <div class="auth-container">
+    <div class="auth-header">
+      <img src="../assets/logo.png" alt="Logo" class="logo-image">
+      <div class="app-name">EazyAttend</div>
+    </div>
     <h1>Email Verification</h1>
-    <h2 id="verification-status">Verifying your email...</h2>
-    <p id="message">Please wait...</p>
+    <h2 id="verification-status" style="color: var(--color-primary);">Verifying your email...</h2>
+    <p id="message" style="text-align: center; margin-bottom: var(--spacing-lg);">Please wait...</p>
 
     <script>
       // Define API_URL directly to avoid module import issues
@@ -26,6 +30,7 @@
 
         if (!token) {
           document.getElementById("verification-status").textContent = "Invalid Link";
+          document.getElementById("verification-status").style.color = "var(--color-error)";
           document.getElementById("message").textContent = "Invalid verification link. Please request a new verification email.";
           document.getElementById("message").className = "error-message";
           return;
@@ -41,6 +46,7 @@
 
           if (data.success) {
             document.getElementById("verification-status").textContent = "Verification Successful";
+            document.getElementById("verification-status").style.color = "var(--color-success)";
             document.getElementById("message").textContent = "✅ Email verified! You can now log in.";
             document.getElementById("message").className = "success-message";
             setTimeout(() => {
@@ -48,12 +54,14 @@
             }, 3000);
           } else {
             document.getElementById("verification-status").textContent = "Verification Failed";
+            document.getElementById("verification-status").style.color = "var(--color-error)";
             document.getElementById("message").textContent = "❌ Verification failed or token expired.";
             document.getElementById("message").className = "error-message";
           }
         } catch (error) {
           console.error("Verification error:", error);
           document.getElementById("verification-status").textContent = "Server Error";
+          document.getElementById("verification-status").style.color = "var(--color-error)";
           document.getElementById("message").textContent = "⚠️ Server error. Please try again or contact support.";
           document.getElementById("message").className = "error-message";
         }
@@ -63,8 +71,8 @@
       verifyEmail();
     </script>
     
-    <div class="actions">
-      <button onclick="window.location.href='../index.html'">Back to Login</button>
+    <div class="auth-footer">
+      <button class="btn" onclick="window.location.href='../index.html'">Back to Login</button>
     </div>
   </div>
 </body>

@@ -1,3 +1,5 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Orbitron:wght@600&family=Poppins:wght@600&display=swap');
+
 :root {
   /* Color scheme */
   --color-primary: #4F46E5;
@@ -66,25 +68,30 @@ body {
 .auth-header {
   display: flex;
   align-items: center;
-  margin-bottom: var(--spacing-lg);
+  justify-content: center;
+  gap: var(--spacing-sm);
+  margin-bottom: var(--spacing-xl);
+}
+
+.logo-image {
+  height: 55px; /* Larger logo */
+  width: auto;
 }
 
 .logo-icon {
-  width: 32px;
-  height: 32px;
-  background-color: var(--color-primary);
-  border-radius: var(--border-radius-sm);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: var(--color-white);
-  margin-right: var(--spacing-sm);
+  font-size: 2.5rem;
+  font-weight: bold;
+  color: var(--color-primary);
+  background-color: var(--color-background-light);
+  padding: var(--spacing-sm) var(--spacing-md);
+  border-radius: var(--border-radius-md);
 }
 
 .app-name {
-  font-family: var(--font-family-heading);
-  font-weight: 700;
-  font-size: 1.2rem;
+  font-size: 1.6rem; /* Smaller title */
+  font-weight: 600;
+  color: var(--color-primary-dark); /* Make it match primary color */
+  font-family: 'Orbitron', sans-serif; /* Use the incredible font */
 }
 
 h1, h2 {
