@@ -82,22 +82,34 @@ document.addEventListener('DOMContentLoaded', function() {
         roleSelect.dispatchEvent(event);
         
         // Show/hide student ID field if needed
-        if (studentIdField) {
-          studentIdField.style.display = this.dataset.value === 'student' ? 'block' : 'none';
+        const studentIdInput = document.getElementById('student-id');
+        if (studentIdField && studentIdInput) {
+          if (this.dataset.value === 'student') {
+            studentIdField.style.display = 'block';
+            studentIdInput.disabled = false;
+            studentIdInput.setAttribute('required', 'required');
+          } else {
+            studentIdField.style.display = 'none';
+            studentIdInput.disabled = true;
+            studentIdInput.removeAttribute('required');
+          }
         }
       });
     });
   }
 
-  // Show/hide student ID field based on role selection
+  // Optional: Ensure initial state is correct on load
   if (roleSelect && studentIdField) {
-    roleSelect.addEventListener('change', function() {
-      if (this.value === 'student') {
-        studentIdField.style.display = 'block';
-      } else {
-        studentIdField.style.display = 'none';
-      }
-    });
+    const studentIdInput = document.getElementById('student-id');
+    if (roleSelect.value === 'student') {
+      studentIdField.style.display = 'block';
+      studentIdInput.disabled = false;
+      studentIdInput.setAttribute('required', 'required');
+    } else {
+      studentIdField.style.display = 'none';
+      studentIdInput.disabled = true;
+      studentIdInput.removeAttribute('required');
+    }
   }
 
   // Show registration form
