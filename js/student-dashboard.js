@@ -137,8 +137,9 @@ function setupNavigation() {
     const sections = {
         'nav-scan': document.getElementById('qr-scanner-section'),
         'nav-attendance': document.getElementById('attendance-section'),
-        'nav-profile': document.getElementById('profile-section') // Add profile section
+        'nav-profile': document.getElementById('profile-section')
     };
+    const dashboardActions = document.querySelector('.dashboard-actions'); // Get the button container
 
     navLinks.forEach(link => {
         link.addEventListener('click', function(e) {
@@ -152,6 +153,10 @@ function setupNavigation() {
                 // Show the target section
                 if (sections[this.id]) {
                     sections[this.id].style.display = 'block';
+                    // Show/hide the main scan button based on the active section
+                    if (dashboardActions) {
+                        dashboardActions.style.display = (this.id === 'nav-scan') ? 'block' : 'none';
+                    }
                     // Load data if profile section is shown
                     if (this.id === 'nav-profile') {
                         loadProfileData();
