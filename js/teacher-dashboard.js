@@ -1458,27 +1458,17 @@ async function generateQRCode() {
     const qrDisplayArea = document.getElementById('qr-display-area');
     const qrPlaceholder = document.getElementById('qr-placeholder');
     const generatedQrDetails = document.getElementById('generated-qr-details');
-    // const qrCodeDiv = document.getElementById('qr-code-container'); // Old container reference
-    // const statusDiv = document.getElementById('status-message'); // Use dedicated status div
 
     if (!qrDisplayArea || !qrPlaceholder || !generatedQrDetails) {
-        console.error("Required QR display elements not found!");
+        console.error("generateQRCode: Required QR display elements not found!"); // Error source clarified
         alert("Error: Cannot display QR code. UI elements missing.");
         return;
     }
 
-    // --- Clear previous QR/Status --- 
-    // Remove only previous QR-specific elements, keep statusDiv
-    const existingIframe = qrDisplayArea.querySelector('#qr-code-iframe');
-    if(existingIframe) qrDisplayArea.removeChild(existingIframe);
-    const existingLinkContainer = qrDisplayArea.querySelector('.direct-link-container');
-    if(existingLinkContainer) qrDisplayArea.removeChild(existingLinkContainer);
-    const existingFallback = qrDisplayArea.querySelector('.qr-fallback');
-    if(existingFallback) qrDisplayArea.removeChild(existingFallback);
-    qrPlaceholder.innerHTML = ''; // Clear status text
-    qrPlaceholder.className = ''; // Reset status class
-    // --- End Clearing ---
-    
+    // Clear previous error messages if any
+    const existingError = qrDisplayArea.querySelector('.error-message');
+    if (existingError) qrDisplayArea.removeChild(existingError);
+
     const classId = classSelect.value;
     const className = classSelect.options[classSelect.selectedIndex]?.text;
     const section = sectionInput.value.trim();
@@ -1487,22 +1477,26 @@ async function generateQRCode() {
 
     if (!classId) {
         // Show error in the new display area
-        qrDisplayArea.innerHTML = '<div class="error-message centered-text"><p>Please select a class.</p></div>';
         qrPlaceholder.style.display = 'none';
         generatedQrDetails.style.display = 'none';
+        qrDisplayArea.insertAdjacentHTML('afterbegin', '<div class="error-message centered-text"><p>Please select a class.</p></div>');
         return;
     }
     if (!teacherId) {
-        qrDisplayArea.innerHTML = '<div class="error-message centered-text"><p>Teacher ID not found. Please log in again.</p></div>';
         qrPlaceholder.style.display = 'none';
         generatedQrDetails.style.display = 'none';
+        qrDisplayArea.insertAdjacentHTML('afterbegin', '<div class="error-message centered-text"><p>Teacher ID not found. Please log in again.</p></div>');
         return;
     }
     
     // --- Show Loading State --- 
     qrPlaceholder.style.display = 'none';
     generatedQrDetails.style.display = 'none';
-    qrDisplayArea.innerHTML = '<div class="loading-state centered-text"><div class="spinner"></div><p>Generating QR Code...</p></div>';
+    // Remove previous loading state if exists
+    const existingLoading = qrDisplayArea.querySelector('.loading-state');
+    if (existingLoading) qrDisplayArea.removeChild(existingLoading);
+    // Add new loading state
+    qrDisplayArea.insertAdjacentHTML('afterbegin', '<div class="loading-state centered-text"><div class="spinner"></div><p>Generating QR Code...</p></div>');
     // --- End Loading State --- 
     
     try {
@@ -1536,7 +1530,12 @@ async function generateQRCode() {
         });
         
         const data = await response.json();
-        
+         
+        // --- Remove Loading State --- 
+        const currentLoading = qrDisplayArea.querySelector('.loading-state');
+        if (currentLoading) qrDisplayArea.removeChild(currentLoading);
+        // --- End Remove Loading State --- 
+
         if (data.success) {
              console.log("QR Code Generated:", data);
              // Store current session ID for viewing attendance
@@ -1552,16 +1551,20 @@ async function generateQRCode() {
               
         } else {
              console.error("QR Code generation failed:", data.message);
-             // Show error in display area
-             qrDisplayArea.innerHTML = `<div class="error-message centered-text"><p>Failed to generate QR code: ${data.message}</p></div>`;
-             qrPlaceholder.style.display = 'none';
-             generatedQrDetails.style.display = 'none';
+              // Show error in display area
+              qrPlaceholder.style.display = 'none'; // Keep placeholder hidden
+              generatedQrDetails.style.display = 'none'; // Keep details hidden
+              qrDisplayArea.insertAdjacentHTML('afterbegin', `<div class="error-message centered-text"><p>Failed to generate QR code: ${data.message}</p></div>`);
         }
     } catch (error) {
         console.error('Error generating QR code:', error);
-        qrDisplayArea.innerHTML = `<div class="error-message centered-text"><p>Error generating QR code: ${error.message}. Please check the connection.</p></div>`;
-        qrPlaceholder.style.display = 'none';
-        generatedQrDetails.style.display = 'none';
+        // --- Remove Loading State on Error --- 
+        const currentLoadingOnError = qrDisplayArea.querySelector('.loading-state');
+        if (currentLoadingOnError) qrDisplayArea.removeChild(currentLoadingOnError);
+        // --- End Remove Loading State --- 
+        qrPlaceholder.style.display = 'none'; // Keep placeholder hidden
+        generatedQrDetails.style.display = 'none'; // Keep details hidden
+        qrDisplayArea.insertAdjacentHTML('afterbegin', `<div class="error-message centered-text"><p>Error generating QR code: ${error.message}. Please check the connection.</p></div>`);
     }
 }
 
@@ -1575,8 +1578,9 @@ function displayGeneratedQr(qrCodeUrl, sessionId, expiresAtIso, section, classNa
     // *** Added check for the main containers first ***
     if (!qrDisplayArea || !qrPlaceholder || !generatedQrDetails) {
         console.error("displayGeneratedQr: Main display area, placeholder, or details container not found!");
-        // Attempt to show a basic error if possible
-        if(qrDisplayArea) qrDisplayArea.innerHTML = '<div class="error-message centered-text"><p>Error: Display containers missing.</p></div>';
+        // Attempt to show a basic error directly on the main content if possible, as qrDisplayArea might be the issue
+        const mainContent = document.querySelector('.main-content');
+        if (mainContent) mainContent.insertAdjacentHTML('afterbegin', '<div class="error-message centered-text" style="padding: 20px; border: 1px solid red;">Error: Core display containers missing.</div>');
         return;
     }
 
@@ -1592,17 +1596,19 @@ function displayGeneratedQr(qrCodeUrl, sessionId, expiresAtIso, section, classNa
     // *** Updated check to include ALL required inner elements ***
     if (!qrCodeWrapper || !qrInfoDiv || !expiresTextSpan || !progressBar || !downloadBtn || !shareBtn || !refreshBtn) {
         console.error("displayGeneratedQr: One or more INNER elements (wrapper, info, timer, progress, buttons) not found!");
-        qrDisplayArea.innerHTML = '<div class="error-message centered-text"><p>Error displaying QR details. UI elements missing.</p></div>';
-        // Ensure placeholder is hidden if error occurs after loading state
-        if(qrPlaceholder) qrPlaceholder.style.display = 'none';
-        if(generatedQrDetails) generatedQrDetails.style.display = 'none';
+        // Show error within the display area, ensuring other elements are hidden
+        qrPlaceholder.style.display = 'none';
+        generatedQrDetails.style.display = 'none';
+        // Clear previous errors/content before adding new one
+        const existingContent = qrDisplayArea.querySelector('.error-message, .loading-state');
+        if(existingContent) qrDisplayArea.removeChild(existingContent);
+        qrDisplayArea.insertAdjacentHTML('afterbegin', '<div class="error-message centered-text"><p>Error displaying QR details. Inner UI elements missing.</p></div>');
         return;
     }
 
-    // Clear display area content (remove loading state)
-    qrDisplayArea.innerHTML = ''; 
-    // Append the hidden details container back (it was cleared)
-    qrDisplayArea.appendChild(generatedQrDetails); 
+    // Clear display area content (remove loading state or previous error)
+    const existingLoadingOrError = qrDisplayArea.querySelector('.loading-state, .error-message');
+    if (existingLoadingOrError) qrDisplayArea.removeChild(existingLoadingOrError);
     
     // --- Render QR Code --- 
     qrCodeWrapper.innerHTML = ''; // Clear previous QR
