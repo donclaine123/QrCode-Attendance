@@ -748,3 +748,112 @@ body {
 .modal.visible {
   animation: fadeInScale 0.3s ease-in-out forwards;
 }
+
+/* --- Profile Section Styles --- */
+#profile-section {
+  background-color: var(--color-white);
+  border-radius: var(--border-radius-md);
+  padding: var(--spacing-xl); /* Increase padding */
+  box-shadow: var(--shadow-md); /* Add subtle shadow */
+  margin-top: var(--spacing-lg);
+  border: 1px solid var(--color-secondary-dark); /* Keep border */
+}
+
+#profile-section h3 {
+  font-size: 1.4rem;
+  margin-bottom: var(--spacing-xl);
+  color: var(--color-primary-dark);
+  text-align: center;
+}
+
+#profile-form .form-group {
+  margin-bottom: var(--spacing-lg);
+  /* Make label and input align better */
+  display: grid;
+  grid-template-columns: 120px 1fr; /* Fixed label width, rest for input */
+  align-items: center;
+  gap: var(--spacing-md);
+}
+
+#profile-form label {
+  font-weight: 600; /* Bolder labels */
+  color: var(--color-text-light);
+  text-align: right; /* Align labels right */
+  margin-bottom: 0; /* Remove default bottom margin */
+}
+
+#profile-form .input-field {
+  background-color: var(--color-white); /* White background for inputs */
+  border: 1px solid var(--color-border); /* Use consistent border */
+  border-radius: var(--border-radius-sm);
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+#profile-form .input-field:focus {
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 2px rgba(79, 70, 229, 0.1);
+}
+
+/* Style for read-only Student ID */
+#profile-form #profile-student-id {
+  background-color: var(--color-secondary); /* Gray background */
+  color: var(--color-text-light); /* Lighter text */
+  cursor: not-allowed;
+  border-color: var(--color-secondary-dark);
+}
+
+#profile-form #profile-student-id + small {
+    grid-column: 2 / 3; /* Align note under the input */
+    font-size: 0.85rem;
+    color: var(--color-text-light);
+    margin-top: var(--spacing-xs);
+}
+
+#profile-form .form-actions {
+  grid-column: 1 / -1; /* Span across both columns */
+  text-align: center; /* Center the button */
+  margin-top: var(--spacing-xl);
+  padding-top: var(--spacing-lg);
+  border-top: 1px solid var(--color-secondary-dark);
+}
+
+#profile-message {
+    grid-column: 1 / -1; /* Span message across grid */
+    text-align: center;
+    padding: var(--spacing-sm) var(--spacing-md);
+    border-radius: var(--border-radius-sm);
+    font-weight: 500;
+    min-height: 1.5em; /* Reserve space */
+}
+
+#profile-message.success-message {
+    background-color: #dcfce7; /* Green-100 */
+    color: #166534; /* Green-800 */
+}
+
+#profile-message.error-message {
+    background-color: #fee2e2; /* Red-100 */
+    color: #991b1b; /* Red-800 */
+}
+
+#profile-message.info-message {
+    background-color: #f3f4f6; /* Gray-100 */
+    color: var(--color-text-light);
+}
+
+/* Responsive adjustments for profile form */
+@media (max-width: 600px) {
+  #profile-form .form-group {
+    grid-template-columns: 1fr; /* Stack label and input */
+    gap: var(--spacing-sm);
+  }
+
+  #profile-form label {
+    text-align: left; /* Align labels left on mobile */
+  }
+  
+  #profile-form #profile-student-id + small {
+      grid-column: 1 / -1; /* Ensure note spans full width */
+  }
+}
+/* --- End Profile Section Styles --- */
