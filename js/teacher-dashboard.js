@@ -1535,7 +1535,7 @@ async function generateQRCode() {
         const currentLoading = qrDisplayArea.querySelector('.loading-state');
         if (currentLoading) qrDisplayArea.removeChild(currentLoading);
         // --- End Remove Loading State --- 
-
+        
         if (data.success) {
              console.log("QR Code Generated:", data);
              // Store current session ID for viewing attendance
@@ -1590,11 +1590,10 @@ function displayGeneratedQr(qrCodeUrl, sessionId, expiresAtIso, section, classNa
     const expiresTextSpan = document.getElementById('expires-text');
     const progressBar = document.getElementById('progress-bar');
     const downloadBtn = document.getElementById('download-qr-btn');
-    const shareBtn = document.getElementById('share-qr-btn');
     const refreshBtn = document.getElementById('refresh-qr-btn');
 
     // *** Updated check to include ALL required inner elements ***
-    if (!qrCodeWrapper || !qrInfoDiv || !expiresTextSpan || !progressBar || !downloadBtn || !shareBtn || !refreshBtn) {
+    if (!qrCodeWrapper || !qrInfoDiv || !expiresTextSpan || !progressBar || !downloadBtn || !refreshBtn) {
         console.error("displayGeneratedQr: One or more INNER elements (wrapper, info, timer, progress, buttons) not found!");
         // Show error within the display area, ensuring other elements are hidden
         qrPlaceholder.style.display = 'none';
@@ -1658,7 +1657,6 @@ function displayGeneratedQr(qrCodeUrl, sessionId, expiresAtIso, section, classNa
             progressBar.classList.add('expired');
             // Disable buttons when expired?
             downloadBtn.disabled = true;
-            shareBtn.disabled = true;
             refreshBtn.disabled = false; // Allow refresh maybe?
             return;
         }
@@ -1672,7 +1670,6 @@ function displayGeneratedQr(qrCodeUrl, sessionId, expiresAtIso, section, classNa
 
         // Re-enable buttons if they were disabled
         downloadBtn.disabled = false;
-        shareBtn.disabled = false;
         refreshBtn.disabled = false;
     }
     updateTimerAndProgress(); // Call immediately
@@ -1689,30 +1686,6 @@ function displayGeneratedQr(qrCodeUrl, sessionId, expiresAtIso, section, classNa
         document.body.appendChild(link);
         link.click();
         document.body.removeChild(link);
-    };
-
-    shareBtn.onclick = async () => {
-        if (navigator.share) {
-            try {
-                await navigator.share({
-                    title: 'QR Attendance Code',
-                    text: `Scan this code for ${className}${sectionDisplay} attendance.`,
-                    url: qrCodeUrl
-                });
-                console.log('QR code shared successfully');
-            } catch (err) {
-                console.error('Error sharing QR code:', err);
-            }
-        } else {
-            // Fallback: Copy link to clipboard
-            navigator.clipboard.writeText(qrCodeUrl).then(() => {
-                // Optional: Show temporary feedback
-                alert('Web Share API not supported. Link copied to clipboard!');
-            }).catch(err => {
-                console.error('Failed to copy link:', err);
-                alert('Failed to copy link.');
-            });
-        }
     };
 
     refreshBtn.onclick = () => {
