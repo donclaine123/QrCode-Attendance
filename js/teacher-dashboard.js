@@ -93,11 +93,18 @@ document.addEventListener('DOMContentLoaded', function() {
             const qrSection = document.getElementById('qr-section');
             const classesSection = document.getElementById('classes-section');
             const attendanceSection = document.getElementById('attendance-section');
+            const pageTitle = document.querySelector('.page-title'); // Get the title element
+            const pageSubtitle = document.querySelector('.page-subtitle'); // Get the subtitle element
 
             if (overview) overview.style.display = (this.id === 'dashboard-nav') ? 'block' : 'none';
             if (qrSection) qrSection.style.display = (this.id === 'generate-qr-btn') ? 'block' : 'none';
             if (classesSection) classesSection.style.display = (this.id === 'manage-classes-btn') ? 'block' : 'none';
             if (attendanceSection) attendanceSection.style.display = (this.id === 'view-attendance-btn') ? 'block' : 'none';
+
+            // Show/hide the title and subtitle based on the active section
+            const isQrSectionActive = this.id === 'generate-qr-btn';
+            if (pageTitle) pageTitle.style.display = isQrSectionActive ? 'block' : 'none';
+            if (pageSubtitle) pageSubtitle.style.display = isQrSectionActive ? 'block' : 'none';
         });
     });
     

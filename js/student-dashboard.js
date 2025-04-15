@@ -220,11 +220,11 @@ async function initDashboard() {
                 
                 // Update welcome message
                 const welcomeMessage = document.getElementById('welcome-message');
-                if (welcomeMessage) {
+            if (welcomeMessage) {
                     welcomeMessage.textContent = `Welcome, ${data.user.firstName} ${data.user.lastName}!`;
-                }
-                
-                // Show student section
+            }
+            
+            // Show student section
                 const studentSection = document.getElementById('student-section');
                 if (studentSection) {
                     studentSection.style.display = 'block';
@@ -330,12 +330,12 @@ async function loadAttendanceHistory() {
         console.error('Error loading attendance history:', error);
         const historyDiv = document.getElementById('attendance-records');
         if (historyDiv) {
-            historyDiv.innerHTML = `
-                <div class="error-state">
-                    <h3>Error Loading History</h3>
-                    <p>There was an error loading your attendance history. Please try again later.</p>
-                </div>
-            `;
+        historyDiv.innerHTML = `
+            <div class="error-state">
+                <h3>Error Loading History</h3>
+                <p>There was an error loading your attendance history. Please try again later.</p>
+            </div>
+        `;
         }
     }
 }
@@ -344,12 +344,12 @@ async function loadAttendanceHistory() {
 async function recordAttendance() {
     // --- Get session ID (keep existing logic) ---
     const sessionId = sessionStorage.getItem('currentSessionId');
-    if (!sessionId) {
+        if (!sessionId) {
         // Use the modal for this feedback too
         showFeedbackModal(false, 'Error', 'No QR session found. Please scan a valid QR code.');
-        return;
-    }
-    
+            return;
+        }
+        
     // --- Get Button Element (keep existing logic) ---
     const btnElement = document.getElementById('record-attendance-btn');
     if (!btnElement) {
@@ -359,10 +359,10 @@ async function recordAttendance() {
     }
         
     // --- Disable button and show processing (optional: add a processing modal/indicator) ---
-    btnElement.disabled = true;
-    btnElement.textContent = 'Processing...';
+        btnElement.disabled = true;
+        btnElement.textContent = 'Processing...';
     // Consider adding a subtle processing indicator if needed
-    
+        
     try {
         // --- Fetch Request (keep existing logic) ---
         const response = await fetch(`${API_URL}/record-attendance`, {
@@ -401,7 +401,7 @@ async function recordAttendance() {
     } finally {
         // --- Re-enable button (always run) ---
         if (btnElement) {
-            btnElement.disabled = false;
+        btnElement.disabled = false;
             btnElement.textContent = 'Record Attendance'; // Or whatever the original text was
         }
     }
@@ -607,9 +607,9 @@ async function handleProfileUpdate(event) {
             },
             body: JSON.stringify(updatedProfile)
         });
-
+        
         const data = await response.json();
-
+        
         if (data.success) {
             profileMessage.textContent = 'Profile updated successfully!';
             profileMessage.className = 'success-message';

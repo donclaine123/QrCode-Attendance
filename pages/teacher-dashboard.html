@@ -156,17 +156,19 @@
               </select>
             </div>
 
+            <!-- Moved form actions inside the card -->
+            <div class="form-actions">
+              <button id="generate-qr-code-btn" class="btn btn-primary">
+                <span class="btn-icon">📱</span> Generate QR Code
+              </button>
+              <button id="view-current-attendance-btn" class="btn btn-secondary">
+                <span class="btn-icon">📊</span> View Attendance
+              </button>
+            </div>
+            <!-- End Moved Form Actions -->
           </div>
           <!-- End Generate QR Card -->
 
-          <div class="form-actions">
-            <button id="generate-qr-code-btn" class="btn btn-primary">
-              <span class="btn-icon">📱</span> Generate QR Code
-            </button>
-            <button id="view-current-attendance-btn" class="btn btn-secondary">
-              <span class="btn-icon">📊</span> View Attendance
-            </button>
-          </div>
           <!-- Container for QR Code Image/Iframe AND Status/Timer -->
           <div id="qr-code-container">
             <!-- Added dedicated element for status message and timer -->

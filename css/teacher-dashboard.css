@@ -157,6 +157,7 @@ body {
 /* Content Header */
 .content-header {
   margin-bottom: var(--spacing-lg);
+  text-align: center;
 }
 
 .page-title {
@@ -164,12 +165,14 @@ body {
   font-weight: 600;
   margin-bottom: var(--spacing-sm);
   color: var(--color-text);
+  display: none;
 }
 
 .page-subtitle {
   font-size: 1rem;
   color: var(--color-text-light);
   margin-bottom: var(--spacing-xl);
+  display: none;
 }
 
 /* Welcome Message */
@@ -249,16 +252,12 @@ body {
 .form-actions {
   display: flex;
   gap: var(--spacing-md);
-  margin-top: var(--spacing-lg);
   justify-content: flex-start;
   background-color: var(--color-white);
   padding: var(--spacing-lg);
   border-top: 1px solid var(--color-secondary-dark);
   border-radius: 0 0 var(--border-radius-lg) var(--border-radius-lg);
   margin-top: 0;
-  margin-left: calc(-1 * var(--spacing-lg));
-  margin-right: calc(-1 * var(--spacing-lg));
-  margin-bottom: calc(-1 * var(--spacing-lg));
 }
 
 /* Button Styles */
