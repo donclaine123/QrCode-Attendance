@@ -1599,16 +1599,22 @@ async function generateQRCode() {
     const teacherId = sessionStorage.getItem('userId');
 
     if (!classId) {
-        statusDiv.innerHTML = '<p class="error-message">Please select a class.</p>';
+        // Display error in the new structure
+        qrImageWrapper.innerHTML = '<p class="error-message">Please select a class.</p>'; 
+        qrCodeContainer.classList.add('visible'); // Ensure container is visible to show error
         return;
     }
     if (!teacherId) {
-         statusDiv.innerHTML = '<p class="error-message">Teacher ID not found. Please log in again.</p>';
-         return;
+        // Display error in the new structure
+        qrImageWrapper.innerHTML = '<p class="error-message">Teacher ID not found. Please log in again.</p>';
+        qrCodeContainer.classList.add('visible'); // Ensure container is visible to show error
+        return;
     }
     
-    statusDiv.innerHTML = '<p class="processing-status">Generating QR Code...</p>';
-    
+    // Show loading message in the correct place
+    qrImageWrapper.innerHTML = '<p>Generating QR Code...</p>';
+    qrCodeContainer.classList.add('visible'); // Ensure container is visible
+
     try {
         // Prepare headers with auth information
         const headers = {
