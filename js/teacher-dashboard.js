@@ -1559,29 +1559,39 @@ function showError(message) {
 // Generate QR Code
 async function generateQRCode() {
     const classSelect = document.getElementById('class-select');
-    const sectionInput = document.getElementById('qr-section-input'); // Get section input
-    const durationSelect = document.getElementById('duration-select'); // NEW: Get duration select
-    const qrCodeDiv = document.getElementById('qr-code-container');
-    const statusDiv = document.getElementById('status-message'); // Use dedicated status div
+    const sectionInput = document.getElementById('qr-section-input');
+    const durationSelect = document.getElementById('duration-select');
+    const generateButton = document.getElementById('generate-qr-code-btn'); // Get button for loading state
     
-    if (!qrCodeDiv || !statusDiv) {
-        console.error("QR Code container or status message div not found!");
-        alert("Error: Cannot display QR code. UI elements missing.");
+    // Get elements for the NEW QR display structure
+    const qrCodeContainer = document.getElementById('qr-code-container');
+    const qrImageWrapper = qrCodeContainer?.querySelector('.qr-image-wrapper');
+    const qrTimerSpan = document.getElementById('qr-timer');
+    const qrSectionDisplay = document.getElementById('qr-section-display');
+    const qrSessionIdDisplay = document.getElementById('qr-session-id-display');
+    const qrOpenBtn = document.getElementById('qr-open-btn');
+    const directLinkContainer = document.getElementById('direct-link-container');
+
+    // More specific check to identify the missing element
+    const missingElements = [];
+    if (!classSelect) missingElements.push('#class-select');
+    if (!generateButton) missingElements.push('#generate-qr-code-btn');
+    if (!qrCodeContainer) missingElements.push('#qr-code-container');
+    // It's safer to check for children *after* confirming the parent exists
+    if (qrCodeContainer && !qrImageWrapper) missingElements.push('.qr-image-wrapper (inside #qr-code-container)'); 
+    if (!qrTimerSpan) missingElements.push('#qr-timer');
+    if (!qrSectionDisplay) missingElements.push('#qr-section-display');
+    if (!qrSessionIdDisplay) missingElements.push('#qr-session-id-display');
+    if (!qrOpenBtn) missingElements.push('#qr-open-btn');
+    if (!directLinkContainer) missingElements.push('#direct-link-container');
+
+    if (missingElements.length > 0) {
+        const errorMsg = `Error: UI is incomplete. Cannot generate QR code. Missing: ${missingElements.join(', ')}`;
+        console.error(errorMsg);
+        alert(errorMsg); // Show detailed alert
         return;
     }
 
-    // --- Clear previous QR/Status --- 
-    // Remove only previous QR-specific elements, keep statusDiv
-    const existingIframe = qrCodeDiv.querySelector('#qr-code-iframe');
-    if(existingIframe) qrCodeDiv.removeChild(existingIframe);
-    const existingLinkContainer = qrCodeDiv.querySelector('.direct-link-container');
-    if(existingLinkContainer) qrCodeDiv.removeChild(existingLinkContainer);
-    const existingFallback = qrCodeDiv.querySelector('.qr-fallback');
-    if(existingFallback) qrCodeDiv.removeChild(existingFallback);
-    statusDiv.innerHTML = ''; // Clear status text
-    statusDiv.className = ''; // Reset status class
-    // --- End Clearing ---
-    
     const classId = classSelect.value;
     const className = classSelect.options[classSelect.selectedIndex]?.text;
     const section = sectionInput.value.trim();
