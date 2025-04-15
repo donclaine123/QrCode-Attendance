@@ -225,17 +225,6 @@ document.addEventListener('DOMContentLoaded', function() {
              } else {
                  console.error('[TeacherDashboard] Cannot manually show #teacher-section, element not found.');
              }
-             // Also ensure welcome message is updated if initDashboard was skipped
-             const userName = sessionStorage.getItem('userName');
-             const welcomeMsg = document.getElementById('welcome-message');
-             if(welcomeMsg && userName) {
-                welcomeMsg.textContent = `Welcome, ${userName}!`;
-             }
-             // We might also need to trigger loadClasses and loadRecentAttendanceRecords here
-             // if they weren't called by qrcode.js's initialization.
-             // Let's add them just in case, guarded by checks.
-             if (document.getElementById('class-select')) loadClasses();
-             if (document.getElementById('recent-attendance-table')) loadRecentAttendanceRecords();
         } else {
              console.log('[TeacherDashboard] Skipping manual show of #teacher-section, user info not in session storage.');
              // Optional: redirect to login if no user info is found here either?
@@ -580,13 +569,7 @@ async function initDashboard() {
     // ... (existing code to get userId, userRole, welcome message) ...
     const userId = sessionStorage.getItem('userId');
     const userRole = sessionStorage.getItem('userRole');
-    const userName = sessionStorage.getItem('userName'); // Get userName
-    const welcomeMessage = document.getElementById('welcome-message');
     const teacherSection = document.getElementById('teacher-section');
-
-    if (welcomeMessage && userRole === 'teacher') {
-        welcomeMessage.textContent = `Welcome, ${userName || 'Teacher'}! Manage your classes and attendance here.`;
-    }
 
     if (teacherSection && userRole === 'teacher') {
         teacherSection.style.display = 'block';
@@ -604,16 +587,10 @@ async function initDashboard() {
             console.log("Dashboard initialization complete.");
         } catch (error) {
             console.error("Error during dashboard initialization:", error);
-            if (welcomeMessage) {
-                 welcomeMessage.textContent = 'Error loading dashboard components. Please refresh.';
-            }
         }
 
     } else if (userRole !== 'teacher') {
         console.warn('User is not a teacher, hiding teacher section.');
-        if (welcomeMessage) {
-             welcomeMessage.textContent = 'Access denied. Teacher role required.';
-        }
         // Optionally redirect or disable features
     } else {
         console.error('Teacher section element not found.');
