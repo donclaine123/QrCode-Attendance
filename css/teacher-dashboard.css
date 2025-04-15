@@ -358,100 +358,9 @@ body {
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  padding: 0;
-  border: 1px solid var(--color-secondary-dark);
-  border-radius: var(--border-radius-md);
-  overflow: hidden;
-  display: none;
-}
-
-#qr-code-container.visible {
-  display: block;
-}
-
-.qr-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  background-color: var(--color-primary);
-  color: var(--color-white);
-  padding: var(--spacing-sm) var(--spacing-lg);
-  font-weight: 600;
-}
-
-.qr-header-title {
-  font-size: 1.1rem;
-}
-
-.qr-header-timer {
-  background-color: rgba(255, 255, 255, 0.2);
-  padding: var(--spacing-xs) var(--spacing-sm);
-  border-radius: var(--border-radius-sm);
-  font-size: 0.9rem;
-}
-
-.qr-session-info {
-  padding: var(--spacing-md);
-  background-color: var(--color-white);
-  border-bottom: 1px solid var(--color-secondary-dark);
-}
-
-.qr-section-name {
-  display: block;
-  font-weight: 500;
-  color: var(--color-text-light);
-  margin-bottom: var(--spacing-xs);
-}
-
-.qr-session-id {
-  display: block;
-  font-size: 0.85rem;
-  color: var(--color-text-light);
-  word-break: break-all;
-}
-
-.qr-image-wrapper {
   padding: var(--spacing-lg);
-  background-color: var(--color-white);
-  display: flex;
-  justify-content: center;
-  align-items: center;
-}
-
-.qr-actions {
-  padding: var(--spacing-md) var(--spacing-lg);
-  background-color: var(--color-secondary);
-  display: flex;
-  justify-content: center;
-  gap: var(--spacing-md);
-  border-top: 1px solid var(--color-secondary-dark);
-}
-
-#qr-open-btn {
-}
-
-.direct-link-container {
-  padding: var(--spacing-md) var(--spacing-lg);
-  background-color: var(--color-white);
-  border-top: 1px solid var(--color-secondary-dark);
-  text-align: left;
-}
-
-.direct-link-container p {
-  font-size: 0.9rem;
-  color: var(--color-text-light);
-  margin-bottom: var(--spacing-xs);
-}
-
-.direct-link-container a {
-  font-size: 0.9rem;
-  color: var(--color-primary);
-  word-break: break-all;
-  text-decoration: none;
-}
-
-.direct-link-container a:hover {
-  text-decoration: underline;
+  border: 1px dashed var(--color-secondary-dark);
+  border-radius: var(--border-radius-md);
 }
 
 /* Classes List */
@@ -773,6 +682,83 @@ body {
   color: var(--color-white);
 }
 
+/* QR Code Section Enhancement */
+#qr-code-container {
+    text-align: center;
+    padding: var(--spacing-lg);
+    background-color: var(--color-secondary);
+    border-radius: var(--border-radius-md);
+    margin-top: var(--spacing-lg);
+}
+
+#qr-code-container #status-message {
+    margin-bottom: var(--spacing-md);
+  font-size: 1rem;
+    color: var(--color-text);
+    line-height: 1.6;
+}
+
+#qr-code-container #status-message > p {
+    margin-bottom: var(--spacing-sm);
+}
+
+#qr-code-container #expiration-timer {
+    display: block;
+    margin-top: var(--spacing-md);
+    font-size: 0.9rem;
+    color: var(--color-warning);
+    font-weight: 500;
+}
+
+#qr-code-container #qr-code-iframe {
+    display: block;
+    margin: var(--spacing-md) auto;
+    max-width: 100%;
+    height: auto;
+    border: none;
+    background-color: var(--color-white);
+    padding: var(--spacing-sm);
+    border-radius: var(--border-radius-sm);
+    box-shadow: var(--shadow-sm);
+}
+
+#qr-code-container small,
+#qr-code-container .scan-prompt {
+    display: block;
+    margin-top: var(--spacing-sm);
+    margin-bottom: var(--spacing-md);
+    font-size: 0.85rem;
+    color: var(--color-text-light);
+}
+
+#qr-code-container #direct-link {
+    display: inline-block;
+    margin-top: var(--spacing-md);
+    padding: var(--spacing-sm) var(--spacing-md);
+    background-color: var(--color-primary);
+    color: var(--color-white) !important;
+    text-decoration: none;
+    border-radius: var(--border-radius-sm);
+    transition: background-color 0.2s ease;
+    font-weight: 500;
+    font-size: 0.9rem;
+}
+
+#qr-code-container #direct-link:hover {
+    background-color: var(--color-primary-dark);
+    text-decoration: none;
+}
+
+#qr-code-container #status-message.error {
+    color: var(--color-danger);
+    font-weight: 500;
+}
+
+#qr-code-container #status-message.success {
+    color: var(--color-success);
+    font-weight: 500;
+}
+
 /* Active Sessions Table */
 #active-sessions-table {
   width: 100%;
@@ -851,3 +837,176 @@ body {
   margin-bottom: var(--spacing-sm);
   color: var(--color-secondary-dark);
 }
+
+/* --- NEW QR Code Display Card Styles --- */
+.qr-display-card {
+  background-color: var(--color-white);
+  border: 1px solid var(--color-secondary-dark);
+  border-radius: var(--border-radius-lg);
+  margin-top: var(--spacing-xl);
+  box-shadow: var(--shadow-md);
+  overflow: hidden; /* Prevent content spill */
+}
+
+.qr-card-header {
+  background-color: var(--color-primary);
+  color: var(--color-white);
+  padding: var(--spacing-md) var(--spacing-lg);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.qr-card-title {
+  font-weight: 600;
+  font-size: 1.1rem;
+}
+
+.qr-card-timer {
+  background-color: rgba(255, 255, 255, 0.2);
+  padding: var(--spacing-xs) var(--spacing-sm);
+  border-radius: var(--border-radius-sm);
+  font-size: 0.9rem;
+  display: inline-flex;
+  align-items: center;
+}
+
+.qr-card-timer .timer-icon {
+  margin-right: var(--spacing-xs);
+  font-size: 1em;
+}
+
+.qr-display-card.expired .qr-card-timer {
+  background-color: rgba(239, 68, 68, 0.7); /* Red background when expired */
+}
+
+.qr-card-body {
+  padding: var(--spacing-lg);
+  background-color: var(--color-background); /* Lighter background for body */
+}
+
+.qr-session-info {
+  background-color: var(--color-white);
+  padding: var(--spacing-md);
+  border-radius: var(--border-radius-md);
+  margin-bottom: var(--spacing-lg);
+  text-align: center;
+  border: 1px solid var(--color-secondary-dark);
+}
+
+.qr-session-info .session-label {
+  display: block;
+  font-size: 1rem;
+  color: var(--color-text);
+  margin-bottom: var(--spacing-xs);
+}
+
+.qr-session-info .session-id {
+  display: block;
+  font-size: 0.8rem;
+  color: var(--color-text-light);
+  font-family: monospace;
+  word-break: break-all;
+}
+
+#qr-code-image-wrapper {
+  background-color: var(--color-white);
+  padding: var(--spacing-md);
+  border-radius: var(--border-radius-md);
+  margin-bottom: var(--spacing-lg);
+  position: relative; /* For potential future decorations */
+  border: 1px solid var(--color-secondary-dark);
+  display: flex; /* Center iframe */
+  justify-content: center;
+  align-items: center;
+  min-height: 280px; /* Ensure space for QR */
+}
+
+#qr-code-iframe {
+  border-radius: var(--border-radius-sm);
+}
+
+.qr-card-actions {
+  display: flex;
+  justify-content: center; /* Center the single 'Open' button */
+  gap: var(--spacing-md);
+  margin-bottom: var(--spacing-lg);
+}
+
+.qr-direct-link-container {
+  margin-top: var(--spacing-md);
+}
+
+.direct-link-label {
+  display: block;
+  font-size: 0.9rem;
+  color: var(--color-text-light);
+  margin-bottom: var(--spacing-xs);
+  font-weight: 500;
+}
+
+.direct-link-wrapper {
+  display: flex;
+  align-items: center;
+  background-color: var(--color-white);
+  border: 1px solid var(--color-secondary-dark);
+  border-radius: var(--border-radius-sm);
+  padding: var(--spacing-sm) var(--spacing-md);
+}
+
+.direct-link-url {
+  flex-grow: 1;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  font-family: monospace;
+  color: var(--color-text);
+  text-decoration: none;
+  font-size: 0.9rem;
+}
+
+.direct-link-url:hover {
+  text-decoration: underline;
+}
+
+.copy-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: var(--spacing-xs);
+  margin-left: var(--spacing-sm);
+  color: var(--color-primary);
+  font-size: 1.1em;
+  line-height: 1;
+}
+
+.copy-btn:hover {
+  color: var(--color-primary-dark);
+}
+
+/* Decorative corners (optional, based on image) */
+#qr-code-image-wrapper::before,
+#qr-code-image-wrapper::after {
+  content: '';
+  position: absolute;
+  width: 15px;
+  height: 15px;
+  border-color: var(--color-primary);
+  border-style: solid;
+}
+
+#qr-code-image-wrapper::before {
+  top: -5px;
+  left: -5px;
+  border-width: 3px 0 0 3px;
+  border-top-left-radius: 5px;
+}
+
+#qr-code-image-wrapper::after {
+  bottom: -5px;
+  right: -5px;
+  border-width: 0 3px 3px 0;
+  border-bottom-right-radius: 5px;
+}
+
+/* --- End QR Code Display Card Styles --- */

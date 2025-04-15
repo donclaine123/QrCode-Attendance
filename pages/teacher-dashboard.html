@@ -170,29 +170,32 @@
           <!-- End Generate QR Card -->
 
           <!-- Container for QR Code Image/Iframe AND Status/Timer -->
-          <div id="qr-code-container">
-            <!-- NEW STRUCTURE START -->
-            <div class="qr-header">
-              <span class="qr-header-title">Active QR Session</span>
-              <span class="qr-header-timer" id="qr-timer">--:--</span>
+          <div id="qr-code-container" class="qr-display-card" style="display: none;"> <!-- Hide initially -->
+            <div class="qr-card-header">
+              <span class="qr-card-title">Active QR Session</span>
+              <span id="qr-timer" class="qr-card-timer">
+                <span class="timer-icon">⏱️</span> <span id="timer-text">--:--</span>
+              </span>
             </div>
-            <div class="qr-session-info">
-              <span class="qr-section-name" id="qr-section-display"></span>
-              <span class="qr-session-id" id="qr-session-id-display"></span>
+            <div class="qr-card-body">
+              <div id="qr-session-info" class="qr-session-info">
+                <!-- Session info like Section, ID will be populated here -->
+              </div>
+              <div id="qr-code-image-wrapper">
+                <!-- QR Code iframe will be inserted here by JS -->
+              </div>
+              <div class="qr-card-actions">
+                <!-- Actions like Copy, Download, Open -->
+                <!-- <button id="copy-qr-link-btn" class="btn btn-secondary"><span class="btn-icon">📋</span> Copy Link</button> -->
+                <!-- <button id="download-qr-btn" class="btn btn-secondary"><span class="btn-icon">💾</span> Download</button> -->
+                <button id="open-qr-link-btn" class="btn btn-primary"><span class="btn-icon">🔗</span> Open</button>
+              </div>
+              <div id="qr-direct-link-container" class="qr-direct-link-container">
+                <!-- Direct link text and copy button will be added here -->
+              </div>
             </div>
-            <div class="qr-image-wrapper">
-              <!-- QR code iframe/image will be placed here by JS -->
-            </div>
-            <div class="qr-actions">
-              <!-- Removed Copy and Download buttons -->
-              <button id="qr-open-btn" class="btn btn-primary">
-                <span class="btn-icon">🔗</span> Open
-              </button>
-            </div>
-            <div class="direct-link-container" id="direct-link-container">
-              <!-- Direct link will be added here by JS -->
-            </div>
-            <!-- NEW STRUCTURE END -->
+            <!-- Status messages can potentially be integrated elsewhere or kept minimal -->
+            <div id="status-message" style="display: none;"></div> 
           </div>
         </div>
 
