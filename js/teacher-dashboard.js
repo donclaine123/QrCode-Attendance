@@ -1652,8 +1652,8 @@ async function generateQRCode() {
              // Store current session ID for viewing attendance
              sessionStorage.setItem('currentQrSessionId', data.sessionId);
 
-             // Render QR code using the same method as handleShowActiveQr
-             renderQrCodeIframe(data.qrCodeUrl, data.sessionId, data.expiresAt, data.section);
+             // Render the new display structure
+             renderQrCodeDisplay(data.qrCodeUrl, data.sessionId, data.expiresAt, data.section);
              
              // Refresh the active sessions list immediately
              if (typeof loadActiveQrSessions === 'function') {
@@ -1671,12 +1671,12 @@ async function generateQRCode() {
 }
 
 // NEW: Helper function to render QR code iframe (extracted from handleShowActiveQr)
-function renderQrCodeIframe(qrCodeUrl, sessionId, expiresAtIso, section) {
+function renderQrCodeDisplay(qrCodeUrl, sessionId, expiresAtIso, section) {
     const qrCodeDiv = document.getElementById('qr-code-container');
     const statusDiv = document.getElementById('status-message');
 
     if (!qrCodeDiv || !statusDiv) {
-        console.error("QR Code container or status message div not found in renderQrCodeIframe!");
+        console.error("QR Code container or status message div not found in renderQrCodeDisplay!");
         return;
     }
     
