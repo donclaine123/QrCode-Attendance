@@ -99,7 +99,12 @@
       </div>
       
       <!-- Profile Section -->
-      <section id="profile-section" class="dashboard-section" style="display: none;">
+      <section id="profile-section" class="dashboard-section profile-container" style="display: none;">
+        <div class="profile-header"></div>
+        <div class="profile-picture">
+          <span class="profile-icon">👤</span> <!-- Placeholder Icon -->
+        </div>
+        
         <h3>Your Profile</h3>
         <form id="profile-form">
           <div id="profile-message" style="margin-bottom: var(--spacing-md);"></div> 
@@ -117,7 +122,10 @@
             <input type="text" id="profile-last-name" name="lastName" class="input-field" required>
           </div>
           <div class="form-actions">
-              <button type="submit" id="save-profile-btn" class="btn btn-primary">Save Changes</button>
+            <button type="submit" id="save-profile-btn" class="btn btn-primary">
+              <span class="btn-icon">💾</span> <!-- Save Icon -->
+              Save Changes
+            </button>
           </div>
         </form>
       </section>
