@@ -107,39 +107,7 @@
            <!-- Container for the two columns -->
            <div class="two-column-layout">
 
-            <!-- Left Column: Generated QR Code Display (Moved Left) -->
-            <div class="qr-display-column card">
-              <h3 class="card-header">Generated QR Code</h3>
-              <div id="qr-display-area" class="card-body qr-display-area">
-                <!-- Initial Placeholder / Loading State -->
-                <div id="qr-placeholder" class="qr-placeholder">
-                  <div class="placeholder-icon">📱</div>
-                  <p>Click "Generate QR Code" to begin</p>
-                </div>
-                <!-- Generated QR Code Details (Hidden Initially) -->
-                <div id="generated-qr-details" class="generated-qr-details" style="display: none;">
-                  <div id="qr-code-image-wrapper" class="qr-code-image-wrapper">
-                    <!-- QR Code iframe/image inserted here -->
-                  </div>
-                  <div id="qr-info" class="qr-info">
-                    <!-- Class/Section info -->
-                  </div>
-                  <div id="qr-timer-progress" class="qr-timer-progress">
-                    <span id="expires-text">Expires in: --:--</span>
-                    <div class="progress-bar-container">
-                      <div id="progress-bar" class="progress-bar"></div>
-                    </div>
-                  </div>
-                  <div id="qr-actions" class="qr-actions">
-                    <button id="download-qr-btn" class="btn btn-secondary"><span class="btn-icon">💾</span> Download</button>
-                    <button id="share-qr-btn" class="btn btn-success"><span class="btn-icon">🔗</span> Share</button>
-                    <button id="refresh-qr-btn" class="btn btn-warning"><span class="btn-icon">🔄</span> Refresh</button>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-           <!-- Right Column: QR Code Settings (Moved Right) -->
+            <!-- Left Column: QR Code Settings -->
             <div class="qr-settings-column card">
               <h3 class="card-header">QR Code Settings</h3>
               <div class="card-body">
@@ -183,6 +151,38 @@
                 <button id="generate-qr-code-btn" class="btn btn-primary btn-full-width">
                   <span class="btn-icon">📱</span> Generate QR Code
                 </button>
+              </div>
+            </div>
+
+            <!-- Right Column: Generated QR Code Display -->
+            <div class="qr-display-column card">
+              <h3 class="card-header">Generated QR Code</h3>
+              <div id="qr-display-area" class="card-body qr-display-area">
+                <!-- Initial Placeholder / Loading State -->
+                <div id="qr-placeholder" class="qr-placeholder">
+                  <div class="placeholder-icon">📱</div>
+                  <p>Click "Generate QR Code" to begin</p>
+                </div>
+                <!-- Generated QR Code Details (Hidden Initially) -->
+                <div id="generated-qr-details" class="generated-qr-details" style="display: none;">
+                  <div id="qr-code-image-wrapper" class="qr-code-image-wrapper">
+                    <!-- QR Code iframe/image inserted here -->
+                  </div>
+                  <div id="qr-info" class="qr-info">
+                    <!-- Class/Section info -->
+                  </div>
+                  <div id="qr-timer-progress" class="qr-timer-progress">
+                    <span id="expires-text">Expires in: --:--</span>
+                    <div class="progress-bar-container">
+                      <div id="progress-bar" class="progress-bar"></div>
+                    </div>
+                  </div>
+                  <div id="qr-actions" class="qr-actions">
+                    <button id="download-qr-btn" class="btn btn-secondary"><span class="btn-icon">💾</span> Download</button>
+                    <button id="share-qr-btn" class="btn btn-success"><span class="btn-icon">🔗</span> Share</button>
+                    <button id="refresh-qr-btn" class="btn btn-warning"><span class="btn-icon">🔄</span> Refresh</button>
+                  </div>
+                </div>
               </div>
             </div>
 
