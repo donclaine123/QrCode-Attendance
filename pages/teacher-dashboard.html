@@ -68,7 +68,8 @@
     <!-- Main Content -->
     <main class="main-content">
       <div class="content-header">
-        <h1 class="page-title">Teacher Dashboard</h1>
+        <h1 class="page-title">QR Session Management</h1>
+        <p class="page-subtitle">Generate and manage QR codes for attendance tracking</p>
         <div id="welcome-message"></div>
       </div>
 
@@ -102,10 +103,10 @@
         </div>
 
         <!-- QR Code Section -->
-        <div id="qr-section" class="dashboard-section" style="display: none;">
-          <!-- Moved Active Sessions Here -->
-          <div id="active-sessions-section" class="dashboard-section" style="margin-bottom: var(--spacing-xl); border: none; box-shadow: none; padding: 0;"> 
-            <h2>Active QR Sessions</h2>
+        <div id="qr-section" class="dashboard-section qr-management-page" style="display: none;">
+          <!-- Active Sessions Card -->
+          <div class="card active-sessions-card">
+            <h2 class="card-header"><span class="card-icon">🕒</span> Active QR Sessions</h2>
             <div class="table-responsive"> 
               <table id="active-sessions-table">
                 <thead>
@@ -120,42 +121,51 @@
                 <tbody>
                   <!-- Active sessions will be populated here by JS -->
                   <tr>
-                    <td colspan="5" style="text-align: center;">Loading active sessions...</td>
+                    <td colspan="5" class="empty-state">
+                      <span class="empty-icon">ⓘ</span> No active sessions found
+                    </td>
                   </tr>
                 </tbody>
               </table>
             </div>
-             <hr style="margin: var(--spacing-lg) 0;"> <!-- Add a separator -->
           </div>
-          <!-- End Moved Active Sessions -->
 
-          <h3>Generate QR Code for Attendance</h3>
-          <div class="form-group">
-            <label for="class-select">Select Class:</label>
-            <select id="class-select" class="form-control">
-              <option value="">-- Select a Class --</option>
-            </select>
-            
-            <label for="qr-section-input">Section:</label>
-            <input type="text" id="qr-section-input" placeholder="e.g. A, B, Morning, Afternoon, etc." class="form-control">
+          <!-- Generate QR Card -->
+          <div class="card generate-qr-card">
+            <h3 class="card-header"><span class="card-icon">📱</span> Generate QR Code for Attendance</h3>
+            <div class="form-group icon-input-group">
+              <label for="class-select"><span class="label-icon">📚</span> Select Class</label>
+              <select id="class-select" class="form-control">
+                <option value="">-- Select a Class --</option>
+              </select>
+            </div>
+
+            <div class="form-group icon-input-group">
+              <label for="qr-section-input"><span class="label-icon">👤</span> Section</label>
+              <input type="text" id="qr-section-input" placeholder="e.g. A, B, Morning, Afternoon, etc." class="form-control">
+            </div>
+
+            <div class="form-group icon-input-group">
+              <label for="duration-select"><span class="label-icon">⏱️</span> Session Duration</label>
+              <select id="duration-select" class="form-control">
+                <option value="5">5 minutes</option>
+                <option value="10" selected>10 minutes</option> 
+                <option value="15">15 minutes</option>
+                <option value="30">30 minutes</option>
+                <option value="60">60 minutes</option> 
+              </select>
+            </div>
+
           </div>
-          
-          <!-- NEW: Duration Selection -->
-          <div class="form-group">
-            <label for="duration-select">Session Duration (Minutes):</label>
-            <select id="duration-select" class="form-control">
-              <option value="5">5</option>
-              <option value="10" selected>10</option> <!-- Default to 10 mins -->
-              <option value="15">15</option>
-              <option value="30">30</option>
-              <option value="60">60</option> 
-            </select>
-          </div>
-          <!-- End Duration Selection -->
-          
+          <!-- End Generate QR Card -->
+
           <div class="form-actions">
-            <button id="generate-qr-code-btn">Generate QR Code</button>
-            <button id="view-current-attendance-btn">View Attendance for Current Session</button>
+            <button id="generate-qr-code-btn" class="btn btn-primary">
+              <span class="btn-icon">📱</span> Generate QR Code
+            </button>
+            <button id="view-current-attendance-btn" class="btn btn-secondary">
+              <span class="btn-icon">📊</span> View Attendance
+            </button>
           </div>
           <!-- Container for QR Code Image/Iframe AND Status/Timer -->
           <div id="qr-code-container">

@@ -157,14 +157,19 @@ body {
 /* Content Header */
 .content-header {
   margin-bottom: var(--spacing-lg);
-  border-bottom: 1px solid var(--color-secondary-dark);
-  padding-bottom: var(--spacing-lg);
 }
 
 .page-title {
-  font-size: 1.5rem;
+  font-size: 1.75rem;
   font-weight: 600;
   margin-bottom: var(--spacing-sm);
+  color: var(--color-text);
+}
+
+.page-subtitle {
+  font-size: 1rem;
+  color: var(--color-text-light);
+  margin-bottom: var(--spacing-xl);
 }
 
 /* Welcome Message */
@@ -194,11 +199,11 @@ body {
 /* Dashboard Sections */
 .dashboard-section {
   background-color: var(--color-white);
-  border-radius: var(--border-radius-md);
-  padding: var(--spacing-lg);
-  margin-bottom: var(--spacing-lg);
-  box-shadow: var(--shadow-sm);
-  border: 1px solid var(--color-secondary-dark);
+  border-radius: 0;
+  padding: 0;
+  margin-bottom: 0;
+  box-shadow: none;
+  border: none;
 }
 
 .dashboard-section h3 {
@@ -216,8 +221,9 @@ body {
 .form-group label {
   display: block;
   margin-bottom: var(--spacing-sm);
-  font-weight: 500;
-  color: var(--color-text);
+  font-weight: 600;
+  color: var(--color-text-light);
+  font-size: 0.9rem;
 }
 
 .form-group input,
@@ -237,32 +243,113 @@ body {
 .form-group textarea:focus {
   outline: none;
   border-color: var(--color-primary);
-  box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1);
+  box-shadow: 0 0 0 2px rgba(79, 70, 229, 0.2);
 }
 
 .form-actions {
   display: flex;
   gap: var(--spacing-md);
   margin-top: var(--spacing-lg);
+  justify-content: flex-start;
+  background-color: var(--color-white);
+  padding: var(--spacing-lg);
+  border-top: 1px solid var(--color-secondary-dark);
+  border-radius: 0 0 var(--border-radius-lg) var(--border-radius-lg);
+  margin-top: 0;
+  margin-left: calc(-1 * var(--spacing-lg));
+  margin-right: calc(-1 * var(--spacing-lg));
+  margin-bottom: calc(-1 * var(--spacing-lg));
 }
 
 /* Button Styles */
-button {
+.btn {
   padding: var(--spacing-md) var(--spacing-lg);
   border: none;
-  border-radius: var(--border-radius-sm);
+  border-radius: var(--border-radius-md);
   font-weight: 600;
   cursor: pointer;
   transition: background-color 0.2s ease;
   display: inline-flex;
   align-items: center;
   justify-content: center;
+}
+
+.btn-primary {
   background-color: var(--color-primary);
   color: var(--color-white);
 }
 
-button:hover {
+.btn-primary:hover {
   background-color: var(--color-primary-dark);
+}
+
+.btn-secondary {
+  background-color: var(--color-white);
+  color: var(--color-primary);
+  border: 1px solid var(--color-primary-light);
+}
+
+.btn-secondary:hover {
+  background-color: var(--color-secondary);
+}
+
+.btn-icon {
+  margin-right: var(--spacing-sm);
+  font-size: 1.1em;
+}
+
+/* Card Styles */
+.card {
+  background-color: var(--color-white);
+  border: 1px solid var(--color-secondary-dark);
+  border-radius: var(--border-radius-lg);
+  margin-bottom: var(--spacing-xl);
+  box-shadow: var(--shadow-sm);
+}
+
+.card-header {
+  display: flex;
+  align-items: center;
+  padding: var(--spacing-md) var(--spacing-lg);
+  border-bottom: 1px solid var(--color-secondary-dark);
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: var(--color-text);
+}
+
+.card-icon {
+  margin-right: var(--spacing-md);
+  color: var(--color-primary);
+  font-size: 1.2em;
+  line-height: 1;
+}
+
+.active-sessions-card .table-responsive {
+  padding: var(--spacing-lg);
+  padding-top: 0;
+}
+
+.generate-qr-card .form-group {
+  padding: 0 var(--spacing-lg);
+  margin-bottom: var(--spacing-lg);
+}
+
+.generate-qr-card .form-group:first-of-type {
+  padding-top: var(--spacing-lg);
+}
+
+/* Icon Input Styles */
+.icon-input-group label {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+}
+
+.label-icon {
+  color: var(--color-primary);
+  font-size: 1.1em;
+  width: 20px;
+  text-align: center;
 }
 
 /* QR Code Container */
@@ -691,8 +778,10 @@ button:hover {
 #active-sessions-table th {
   font-weight: 600;
   color: var(--color-text-light);
-  font-size: 0.85rem;
+  font-size: 0.8rem;
   text-transform: uppercase;
+  background-color: var(--color-secondary);
+  padding: var(--spacing-md);
 }
 
 #active-sessions-table tbody tr:last-child td {
@@ -735,3 +824,17 @@ button:hover {
 
 /* Ensure Orbitron font is available */
 @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@600&display=swap');
+
+/* New Empty State for Active Sessions Table */
+#active-sessions-table .empty-state {
+  text-align: center;
+  padding: var(--spacing-xl) 0;
+  color: var(--color-text-light);
+}
+
+#active-sessions-table .empty-icon {
+  display: block;
+  font-size: 2rem;
+  margin-bottom: var(--spacing-sm);
+  color: var(--color-secondary-dark);
+}
