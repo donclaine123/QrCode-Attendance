@@ -34,6 +34,12 @@
             </a>
           </li>
           <li class="nav-item">
+            <a href="#" class="nav-link" id="nav-profile">
+              <span class="nav-icon">👤</span>
+              Profile
+            </a>
+          </li>
+          <li class="nav-item">
             <a href="../index.html" class="nav-link">
               <span class="nav-icon">🏠</span>
               Home
@@ -92,6 +98,31 @@
         </section>
       </div>
       
+      <!-- Profile Section -->
+      <section id="profile-section" class="dashboard-section" style="display: none;">
+        <h3>Your Profile</h3>
+        <form id="profile-form">
+          <div id="profile-message" style="margin-bottom: var(--spacing-md);"></div> 
+          <div class="form-group">
+            <label for="profile-student-id">Student ID</label>
+            <input type="text" id="profile-student-id" class="input-field" readonly disabled>
+            <small>Student ID cannot be changed.</small>
+          </div>
+          <div class="form-group">
+            <label for="profile-first-name">First Name</label>
+            <input type="text" id="profile-first-name" name="firstName" class="input-field" required>
+          </div>
+          <div class="form-group">
+            <label for="profile-last-name">Last Name</label>
+            <input type="text" id="profile-last-name" name="lastName" class="input-field" required>
+          </div>
+          <div class="form-actions">
+              <button type="submit" id="save-profile-btn" class="btn btn-primary">Save Changes</button>
+          </div>
+        </form>
+      </section>
+      <!-- End Profile Section -->
+
       <!-- Debug Section (hidden by default in CSS) -->
       <div id="debug-section">
         <h4>Debug Information</h4>

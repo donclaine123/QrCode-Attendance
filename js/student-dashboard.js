@@ -133,28 +133,39 @@ document.addEventListener('DOMContentLoaded', function() {
 
 // Set up navigation menu
 function setupNavigation() {
-    const navScan = document.getElementById('nav-scan');
-    const navAttendance = document.getElementById('nav-attendance');
-    
-    if (navScan) {
-        navScan.addEventListener('click', function(e) {
-            e.preventDefault();
-            // Show scanner section, hide attendance
-            document.getElementById('qr-scanner-section').style.display = 'block';
-            document.getElementById('attendance-section').style.display = 'none';
-            setActiveNav('nav-scan');
+    const navLinks = document.querySelectorAll('.sidebar .nav-link');
+    const sections = {
+        'nav-scan': document.getElementById('qr-scanner-section'),
+        'nav-attendance': document.getElementById('attendance-section'),
+        'nav-profile': document.getElementById('profile-section') // Add profile section
+    };
+
+    navLinks.forEach(link => {
+        link.addEventListener('click', function(e) {
+            // Prevent default for links managing dashboard sections
+            if (sections[this.id]) {
+                e.preventDefault();
+                // Hide all sections
+                Object.values(sections).forEach(section => {
+                    if (section) section.style.display = 'none';
+                });
+                // Show the target section
+                if (sections[this.id]) {
+                    sections[this.id].style.display = 'block';
+                    // Load data if profile section is shown
+                    if (this.id === 'nav-profile') {
+                        loadProfileData();
+                    }
+                }
+                // Set active nav link
+                setActiveNav(this.id);
+            } else if (this.id === 'logout-btn') {
+                e.preventDefault();
+                logout();
+            }
+            // Allow default for other links like 'Home'
         });
-    }
-    
-    if (navAttendance) {
-        navAttendance.addEventListener('click', function(e) {
-            e.preventDefault();
-            // Hide scanner section, show attendance
-            document.getElementById('qr-scanner-section').style.display = 'none';
-            document.getElementById('attendance-section').style.display = 'block';
-            setActiveNav('nav-attendance');
-        });
-    }
+    });
 }
 
 // Set active navigation item
@@ -519,4 +530,125 @@ function setupDebugListeners() {
             }
         });
     }
-} 
+}
+
+// --- NEW PROFILE FUNCTIONS --- 
+
+async function loadProfileData() {
+    const studentIdInput = document.getElementById('profile-student-id');
+    const firstNameInput = document.getElementById('profile-first-name');
+    const lastNameInput = document.getElementById('profile-last-name');
+    const profileMessage = document.getElementById('profile-message');
+
+    if (!studentIdInput || !firstNameInput || !lastNameInput || !profileMessage) {
+        console.error('Profile form elements not found');
+        return;
+    }
+
+    profileMessage.textContent = 'Loading profile...';
+    profileMessage.className = 'info-message'; // Use a generic info class
+
+    try {
+        const response = await fetchWithAuth(`${API_URL}/auth/profile`); // Use helper function
+        const data = await response.json();
+
+        if (data.success && data.user) {
+            studentIdInput.value = data.user.student_id || 'N/A';
+            firstNameInput.value = data.user.first_name || '';
+            lastNameInput.value = data.user.last_name || '';
+            profileMessage.textContent = ''; // Clear loading message
+            profileMessage.className = '';
+        } else {
+            console.error('Failed to load profile data:', data.message);
+            profileMessage.textContent = `Error loading profile: ${data.message || 'Unknown error'}`;
+            profileMessage.className = 'error-message';
+        }
+    } catch (error) {
+        console.error('Error fetching profile data:', error);
+        profileMessage.textContent = `Network error loading profile: ${error.message}`;
+        profileMessage.className = 'error-message';
+    }
+}
+
+async function handleProfileUpdate(event) {
+    event.preventDefault(); // Prevent default form submission
+
+    const firstNameInput = document.getElementById('profile-first-name');
+    const lastNameInput = document.getElementById('profile-last-name');
+    const profileMessage = document.getElementById('profile-message');
+    const saveButton = document.getElementById('save-profile-btn');
+
+    if (!firstNameInput || !lastNameInput || !profileMessage || !saveButton) {
+        console.error('Profile form elements for update not found');
+        return;
+    }
+
+    const originalButtonText = saveButton.textContent;
+    saveButton.disabled = true;
+    saveButton.textContent = 'Saving...';
+    profileMessage.textContent = '';
+    profileMessage.className = '';
+
+    const updatedProfile = {
+        firstName: firstNameInput.value.trim(),
+        lastName: lastNameInput.value.trim()
+    };
+
+    try {
+        const response = await fetchWithAuth(`${API_URL}/auth/profile`, {
+            method: 'PUT',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(updatedProfile)
+        });
+
+        const data = await response.json();
+
+        if (data.success) {
+            profileMessage.textContent = 'Profile updated successfully!';
+            profileMessage.className = 'success-message';
+            
+            // Update sessionStorage and welcome message
+            sessionStorage.setItem('firstName', updatedProfile.firstName);
+            sessionStorage.setItem('lastName', updatedProfile.lastName);
+            const newUserName = `${updatedProfile.firstName} ${updatedProfile.lastName}`;
+            sessionStorage.setItem('userName', newUserName);
+            const welcomeMsg = document.getElementById('welcome-message');
+            if (welcomeMsg) {
+                welcomeMsg.textContent = `Welcome, ${newUserName}!`;
+            }
+
+            // Hide message after a delay
+            setTimeout(() => { 
+                profileMessage.textContent = ''; 
+                profileMessage.className = '';
+            }, 3000);
+
+        } else {
+            profileMessage.textContent = `Error updating profile: ${data.message || 'Unknown error'}`;
+            profileMessage.className = 'error-message';
+        }
+
+    } catch (error) {
+        console.error('Error updating profile:', error);
+        profileMessage.textContent = `Network error updating profile: ${error.message}`;
+        profileMessage.className = 'error-message';
+    } finally {
+        saveButton.disabled = false;
+        saveButton.textContent = originalButtonText;
+    }
+}
+
+// Attach listener to profile form WITHIN the main DOMContentLoaded or init function
+document.addEventListener('DOMContentLoaded', () => {
+    setupNavigation(); // Call the setup function
+    
+    const profileForm = document.getElementById('profile-form');
+    if (profileForm) {
+        profileForm.addEventListener('submit', handleProfileUpdate);
+    }
+    // Initial section hiding should be handled by setupNavigation or init logic
+});
+
+// --- END PROFILE FUNCTIONS --- 
