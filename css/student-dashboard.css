@@ -755,7 +755,6 @@ body {
   border-radius: var(--border-radius-md);
   padding: var(--spacing-xl); /* Increase padding */
   box-shadow: var(--shadow-md); /* Add subtle shadow */
-  margin-top: var(--spacing-lg);
   border: 1px solid var(--color-secondary-dark); /* Keep border */
 }
 
