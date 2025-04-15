@@ -1572,23 +1572,24 @@ async function generateQRCode() {
     const qrOpenBtn = document.getElementById('qr-open-btn');
     const directLinkContainer = document.getElementById('direct-link-container');
 
-    // More specific check to identify the missing element
-    const missingElements = [];
-    if (!classSelect) missingElements.push('#class-select');
-    if (!generateButton) missingElements.push('#generate-qr-code-btn');
-    if (!qrCodeContainer) missingElements.push('#qr-code-container');
-    // It's safer to check for children *after* confirming the parent exists
-    if (qrCodeContainer && !qrImageWrapper) missingElements.push('.qr-image-wrapper (inside #qr-code-container)'); 
-    if (!qrTimerSpan) missingElements.push('#qr-timer');
-    if (!qrSectionDisplay) missingElements.push('#qr-section-display');
-    if (!qrSessionIdDisplay) missingElements.push('#qr-session-id-display');
-    if (!qrOpenBtn) missingElements.push('#qr-open-btn');
-    if (!directLinkContainer) missingElements.push('#direct-link-container');
+    // Specific check for missing elements within the new structure
+    const missingDisplayElements = [];
+    if (!qrCodeContainer) missingDisplayElements.push('#qr-code-container');
+    // Check children only if parent exists
+    if (qrCodeContainer) {
+        if (!qrImageWrapper) missingDisplayElements.push('.qr-image-wrapper');
+        if (!directLinkContainer) missingDisplayElements.push('#direct-link-container');
+    }
+    if (!qrTimerSpan) missingDisplayElements.push('#qr-timer');
+    if (!qrSectionDisplay) missingDisplayElements.push('#qr-section-display');
+    if (!qrSessionIdDisplay) missingDisplayElements.push('#qr-session-id-display');
+    if (!qrOpenBtn) missingDisplayElements.push('#qr-open-btn');
 
-    if (missingElements.length > 0) {
-        const errorMsg = `Error: UI is incomplete. Cannot generate QR code. Missing: ${missingElements.join(', ')}`;
+    if (missingDisplayElements.length > 0) {
+        const errorMsg = `Error in renderQrCodeDisplay: UI elements missing: ${missingDisplayElements.join(', ')}`;
         console.error(errorMsg);
-        alert(errorMsg); // Show detailed alert
+        // Optionally alert, but console error is usually sufficient here
+        // alert(errorMsg); 
         return;
     }
 
