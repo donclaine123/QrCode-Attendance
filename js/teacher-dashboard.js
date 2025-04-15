@@ -1619,33 +1619,12 @@ function displayGeneratedQr(qrCodeUrl, sessionId, expiresAtIso, section, classNa
     img.alt = "Generated QR Code";
     qrCodeWrapper.appendChild(img);
     img.onload = function() {
-        if (loadingMsg.parentNode === qrDisplayArea) {
-            qrDisplayArea.removeChild(loadingMsg);
-        }
-        // Create iframe to display the image
-        const iframe = document.createElement('iframe');
-        const imgHTML = `<html><body style="margin:0; display:flex; justify-content:center; align-items:center; height:100%;"><img src="${img.src}" alt="QR Code" style="max-width:100%; max-height:100%;"></body></html>`;
-        const blob = new Blob([imgHTML], {type: 'text/html'});
-        iframe.src = URL.createObjectURL(blob);
-        iframe.id = 'qr-code-iframe';
-        iframe.width = '280';
-        iframe.height = '280';
-        iframe.style.border = 'none';
-        iframe.style.display = 'block';
-        iframe.style.margin = '0 auto';
-        qrCodeWrapper.appendChild(iframe);
-        // console.log("Active session QR code rendered via blob URL iframe");
-
-        // Call the display function AFTER image iframe is appended
-        if (typeof displayQrCodeDetails === 'function') {
-             displayQrCodeDetails(sessionId, qrCodeUrl, expiresAtIso, section);
-        } else {
-             console.error('displayQrCodeDetails function is not available.');
-             alert('Error: Could not display QR code details.');
-        }
-
-        // Release blob URL after iframe loads
-        iframe.onload = () => { setTimeout(() => URL.revokeObjectURL(iframe.src), 100); };
+        // No loadingMsg to remove here anymore
+        // Create iframe to display the image - Wait, we want to show the IMAGE directly now
+        // const iframe = document.createElement('iframe');
+        // const imgHTML = `<html><body style="margin:0; display:flex; justify-content:center; align-items:center; height:100%;"><img src="${img.src}" alt="QR Code" style="max-width:100%; max-height:100%;"></body></html>`;
+        // ... iframe logic ...
+        qrCodeWrapper.appendChild(img); // Append the loaded image
     };
 
     img.onerror = function() {
