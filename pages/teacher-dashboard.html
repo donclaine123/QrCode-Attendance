@@ -62,7 +62,7 @@
             </a>
           </li>
         </ul>
-      </nav>
+    </nav>
     </aside>
 
     <!-- Main Content -->
@@ -82,7 +82,7 @@
             <button id="refresh-recent-attendance-btn" class="btn btn-secondary btn-sm">
                 <span class="btn-icon">🔄</span> Refresh
             </button>
-          </div>
+    </div>
           <!-- End Refresh Button -->
           <table id="recent-attendance-table">
             <thead>
@@ -103,106 +103,91 @@
         </div>
 
         <!-- QR Code Section -->
-        <div id="qr-section" class="dashboard-section qr-management-page" style="display: none;">
-          <!-- Active Sessions Card -->
-          <div class="card active-sessions-card">
-            <h2 class="card-header"><span class="card-icon">🕒</span> Active QR Sessions</h2>
-            <div class="table-responsive"> 
-              <table id="active-sessions-table">
-                <thead>
-                  <tr>
-                    <th>Class Name</th>
-                    <th>Section</th>
-                    <th>Expires At</th>
-                    <th>Status</th>
-                    <th>Actions</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  <!-- Active sessions will be populated here by JS -->
-                  <tr>
-                    <td colspan="5" class="empty-state">
-                      <span class="empty-icon">ⓘ</span> No active sessions found
-                    </td>
-                  </tr>
-                </tbody>
-              </table>
-            </div>
-          </div>
+        <div id="qr-section" class="dashboard-section qr-management-page two-column-layout" style="display: none;">
+          <!-- Left Column: QR Code Settings -->
+          <div class="qr-settings-column card">
+            <h3 class="card-header">QR Code Settings</h3>
+            <div class="card-body">
+              <div class="form-group icon-input-group">
+                <label for="class-select"><span class="label-icon">📚</span> Select Class</label>
+                <select id="class-select" class="form-control">
+                  <option value="">-- Select a Class --</option>
+                  <!-- Options populated by JS -->
+                </select>
+              </div>
 
-          <!-- Generate QR Card -->
-          <div class="card generate-qr-card">
-            <h3 class="card-header"><span class="card-icon">📱</span> Generate QR Code for Attendance</h3>
-            <div class="form-group icon-input-group">
-              <label for="class-select"><span class="label-icon">📚</span> Select Class</label>
-              <select id="class-select" class="form-control">
-                <option value="">-- Select a Class --</option>
-              </select>
-            </div>
+              <div class="form-group icon-input-group">
+                <label for="qr-section-input"><span class="label-icon">👤</span> Section (Optional)</label>
+                <input type="text" id="qr-section-input" placeholder="e.g. A, B, Morning" class="form-control">
+              </div>
 
-            <div class="form-group icon-input-group">
-              <label for="qr-section-input"><span class="label-icon">👤</span> Section</label>
-              <input type="text" id="qr-section-input" placeholder="e.g. A, B, Morning, Afternoon, etc." class="form-control">
-            </div>
+              <div class="form-group icon-input-group">
+                <label for="duration-select"><span class="label-icon">⏱️</span> QR Code Validity</label>
+                <select id="duration-select" class="form-control">
+                  <option value="5">5 minutes</option>
+                  <option value="10" selected>10 minutes</option>
+                  <option value="15">15 minutes</option>
+                  <option value="30">30 minutes</option>
+                  <option value="60">60 minutes</option>
+                </select>
+              </div>
 
-            <div class="form-group icon-input-group">
-              <label for="duration-select"><span class="label-icon">⏱️</span> Session Duration</label>
-              <select id="duration-select" class="form-control">
-                <option value="5">5 minutes</option>
-                <option value="10" selected>10 minutes</option> 
-                <option value="15">15 minutes</option>
-                <option value="30">30 minutes</option>
-                <option value="60">60 minutes</option> 
-              </select>
+              <div class="form-group">
+                 <label><span class="label-icon">🏷️</span> QR Code Type</label>
+                 <div class="checkbox-group">
+                     <label for="type-attendance">
+                         <input type="checkbox" id="type-attendance" name="qr-type" value="attendance" checked> Attendance
+                     </label>
+                     <label for="type-quiz" title="Quiz functionality not yet implemented">
+                         <input type="checkbox" id="type-quiz" name="qr-type" value="quiz" disabled> Quiz
+                     </label>
+                 </div>
+              </div>
             </div>
-
-            <!-- Moved form actions inside the card -->
             <div class="form-actions">
-              <button id="generate-qr-code-btn" class="btn btn-primary">
+              <button id="generate-qr-code-btn" class="btn btn-primary btn-full-width">
                 <span class="btn-icon">📱</span> Generate QR Code
               </button>
-              <button id="view-current-attendance-btn" class="btn btn-secondary">
-                <span class="btn-icon">📊</span> View Attendance
-              </button>
             </div>
-            <!-- End Moved Form Actions -->
           </div>
-          <!-- End Generate QR Card -->
 
-          <!-- Container for QR Code Image/Iframe AND Status/Timer -->
-          <div id="qr-code-container" class="qr-display-card" style="display: none;"> <!-- Hide initially -->
-            <div class="qr-card-header">
-              <span class="qr-card-title">Active QR Session</span>
-              <span id="qr-timer" class="qr-card-timer">
-                <span class="timer-icon">⏱️</span> <span id="timer-text">--:--</span>
-              </span>
-            </div>
-            <div class="qr-card-body">
-              <div id="qr-session-info" class="qr-session-info">
-                <!-- Session info like Section, ID will be populated here -->
-              </div>
-              <div id="qr-code-image-wrapper">
-                <!-- QR Code iframe will be inserted here by JS -->
-              </div>
-              <div class="qr-card-actions">
-                <!-- Actions like Copy, Download, Open -->
-                <!-- <button id="copy-qr-link-btn" class="btn btn-secondary"><span class="btn-icon">📋</span> Copy Link</button> -->
-                <!-- <button id="download-qr-btn" class="btn btn-secondary"><span class="btn-icon">💾</span> Download</button> -->
-                <button id="open-qr-link-btn" class="btn btn-primary"><span class="btn-icon">🔗</span> Open</button>
-              </div>
-              <div id="qr-direct-link-container" class="qr-direct-link-container">
-                <!-- Direct link text and copy button will be added here -->
-              </div>
-            </div>
-            <!-- Status messages can potentially be integrated elsewhere or kept minimal -->
-            <div id="status-message" style="display: none;"></div> 
-          </div>
+          <!-- Right Column: Generated QR Code Display -->
+          <div class="qr-display-column card">
+             <h3 class="card-header">Generated QR Code</h3>
+             <div id="qr-display-area" class="card-body qr-display-area">
+               <!-- Initial Placeholder / Loading State -->
+               <div id="qr-placeholder" class="qr-placeholder">
+                  <div class="placeholder-icon">📱</div>
+                  <p>Click "Generate QR Code" to begin</p>
+               </div>
+               <!-- Generated QR Code Details (Hidden Initially) -->
+               <div id="generated-qr-details" class="generated-qr-details" style="display: none;">
+                 <div id="qr-code-image-wrapper" class="qr-code-image-wrapper">
+                     <!-- QR Code iframe/image inserted here -->
+                 </div>
+                 <div id="qr-info" class="qr-info">
+                     <!-- Class/Section info -->
+                 </div>
+                 <div id="qr-timer-progress" class="qr-timer-progress">
+                     <span id="expires-text">Expires in: --:--</span>
+                     <div class="progress-bar-container">
+                         <div id="progress-bar" class="progress-bar"></div>
+                     </div>
+                 </div>
+                 <div id="qr-actions" class="qr-actions">
+                     <button id="download-qr-btn" class="btn btn-secondary"><span class="btn-icon">💾</span> Download</button>
+                     <button id="share-qr-btn" class="btn btn-success"><span class="btn-icon">🔗</span> Share</button>
+                     <button id="refresh-qr-btn" class="btn btn-warning"><span class="btn-icon">🔄</span> Refresh</button>
+                 </div>
+               </div>
+             </div>
+           </div>
         </div>
 
         <!-- Classes Management Section -->
         <div id="classes-section" class="dashboard-section" style="display: none;">
           <h3>Manage Your Classes</h3>
-          <div class="form-group">
+        <div class="form-group">
             <h4>Add New Class</h4>
             <label for="class-name">Class Name:</label>
             <input type="text" id="class-name" required>
@@ -214,18 +199,18 @@
             <textarea id="description"></textarea>
             
             <button id="add-class-btn">Add Class</button>
-          </div>
+        </div>
           
           <div id="classes-list">
             <h4>Your Classes</h4>
             <div id="classes-container"></div>
-          </div>
-        </div>
-
+      </div>
+    </div>
+    
         <!-- Attendance Records Section -->
         <div id="attendance-section" class="dashboard-section" style="display: none;">
           <h3>View Attendance Records</h3>
-          <div class="form-group">
+        <div class="form-group">
             <label for="attendance-class-select">Select Class:</label>
             <select id="attendance-class-select">
               <option value="">-- Select a Class --</option>
@@ -248,7 +233,7 @@
             <button id="refresh-attendance-btn" class="btn btn-secondary">
                 <span class="btn-icon">🔄</span> Refresh List
             </button>
-          </div>
+        </div>
           <!-- End Refresh Button -->
           
           <div id="attendance-records"></div>
