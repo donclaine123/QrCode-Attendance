@@ -171,9 +171,28 @@
 
           <!-- Container for QR Code Image/Iframe AND Status/Timer -->
           <div id="qr-code-container">
-            <!-- Added dedicated element for status message and timer -->
-            <div id="status-message"></div> 
-            <!-- QR iframe and link will be added here by JS -->
+            <!-- NEW STRUCTURE START -->
+            <div class="qr-header">
+              <span class="qr-header-title">Active QR Session</span>
+              <span class="qr-header-timer" id="qr-timer">--:--</span>
+            </div>
+            <div class="qr-session-info">
+              <span class="qr-section-name" id="qr-section-display"></span>
+              <span class="qr-session-id" id="qr-session-id-display"></span>
+            </div>
+            <div class="qr-image-wrapper">
+              <!-- QR code iframe/image will be placed here by JS -->
+            </div>
+            <div class="qr-actions">
+              <!-- Removed Copy and Download buttons -->
+              <button id="qr-open-btn" class="btn btn-primary">
+                <span class="btn-icon">🔗</span> Open
+              </button>
+            </div>
+            <div class="direct-link-container" id="direct-link-container">
+              <!-- Direct link will be added here by JS -->
+            </div>
+            <!-- NEW STRUCTURE END -->
           </div>
         </div>
 
