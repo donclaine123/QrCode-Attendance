@@ -1338,6 +1338,7 @@ window.loadActiveQrSessions = async function() {
                     showBtn.dataset.expiresAtIso = session.expires_at_iso;
                     showBtn.dataset.section = session.section || ''; // Store section
                     showBtn.dataset.subject = session.subject || ''; // Store subject
+                    showBtn.dataset.className = session.class_name || session.subject || 'N/A'; // Add class name
                     showBtn.addEventListener('click', handleShowActiveQr);
                 }
                 if (deleteBtn) {
@@ -1365,129 +1366,21 @@ window.loadActiveQrSessions = async function() {
 // 📌 NEW: Handler for "Show QR" button click
 function handleShowActiveQr(event) {
     const button = event.target;
-    const { sessionId, qrCodeUrl, expiresAtIso, section, subject } = button.dataset;
-
-    // console.log(`Showing QR for active session: ${sessionId}`);
-    const qrSection = document.getElementById('qr-section');
-    if (qrSection) {
-        // console.log('[handleShowActiveQr] Ensuring #qr-section is visible.');
-        qrSection.style.display = 'block'; 
-    } else {
-        console.error('[handleShowActiveQr] Cannot find #qr-section to make visible.');
-        // Optionally hide other sections if needed
-        // document.getElementById('active-sessions-section').style.display = 'none';
-        // document.getElementById('classes-section').style.display = 'none';
-        // ... etc
-    }
-
-    const qrCodeDiv = document.getElementById('qr-code-container');
-    if (!qrCodeDiv) {
-        console.error("QR Code container not found!");
-        alert("Error: Cannot find QR code display area.");
-        return;
-    }
-
-    // --- Start: Modified Clearing Logic --- 
-    // Remove only previous QR-specific elements, not the status div
-    const existingIframe = qrCodeDiv.querySelector('#qr-code-iframe');
-    if(existingIframe) qrCodeDiv.removeChild(existingIframe);
-    const existingLinkContainer = qrCodeDiv.querySelector('.direct-link-container');
-    if(existingLinkContainer) qrCodeDiv.removeChild(existingLinkContainer);
-    const existingFallback = qrCodeDiv.querySelector('.qr-fallback'); 
-    if(existingFallback) qrCodeDiv.removeChild(existingFallback);
+    const { sessionId, qrCodeUrl, expiresAtIso, section, className } = button.dataset; // Use className now added
     
-    // Ensure status div exists and clear its text content if needed
-    const statusDiv = document.getElementById('status-message');
-    if (statusDiv) {
-        statusDiv.innerHTML = ''; // Clear any previous status text
-        statusDiv.className = ''; // Reset class
-    } else {
-        console.error("[handleShowActiveQr] #status-message div not found within #qr-code-container!");
-        // Cannot proceed without status div, maybe add it dynamically? For now, return.
-        return; 
+    // We also need the original duration to calculate the progress bar correctly.
+    // This isn't stored in the button dataset currently.
+    console.warn("[handleShowActiveQr] Cannot determine original duration. Using default for progress bar.");
+    let durationMinutes = 10; // Default to 10 mins if we can't parse
+
+    console.log(`[handleShowActiveQr] Showing details for Session: ${sessionId}, Class: ${className}, Section: ${section}`);
+    displayGeneratedQr(qrCodeUrl, sessionId, expiresAtIso, section, className, durationMinutes); // Use durationMinutes workaround
+
+    // Scroll to the top or the display area for visibility
+    const displayColumn = document.querySelector('.qr-display-column');
+    if (displayColumn) {
+        displayColumn.scrollIntoView({ behavior: 'smooth', block: 'start' });
     }
-    // --- End: Modified Clearing Logic --- 
-
-    // --- Start: Add QR Code Image/Iframe Rendering --- 
-    const loadingMsg = document.createElement('div');
-    loadingMsg.style.textAlign = 'center';
-    loadingMsg.style.padding = '20px';
-    loadingMsg.innerHTML = 'Loading QR code...';
-    qrCodeDiv.appendChild(loadingMsg);
-
-    const img = new Image();
-    img.crossOrigin = 'Anonymous';
-
-    img.onload = function() {
-        if (loadingMsg.parentNode === qrCodeDiv) { // Check if still attached
-            qrCodeDiv.removeChild(loadingMsg);
-        }
-        // Create iframe to display the image
-        const iframe = document.createElement('iframe');
-        const imgHTML = `<html><body style="margin:0; display:flex; justify-content:center; align-items:center; height:100%;"><img src="${img.src}" alt="QR Code" style="max-width:100%; max-height:100%;"></body></html>`;
-        const blob = new Blob([imgHTML], {type: 'text/html'});
-        iframe.src = URL.createObjectURL(blob);
-        iframe.id = 'qr-code-iframe'; // Add ID for styling
-        iframe.width = '280'; // Match styling
-        iframe.height = '280';
-        iframe.style.border = 'none';
-        iframe.style.display = 'block';
-        iframe.style.margin = '0 auto';
-        qrCodeDiv.appendChild(iframe);
-        // console.log("Active session QR code rendered via blob URL iframe");
-
-        // Call the display function AFTER image iframe is appended
-        if (typeof displayQrCodeDetails === 'function') {
-             displayQrCodeDetails(sessionId, qrCodeUrl, expiresAtIso, section);
-        } else {
-             console.error('displayQrCodeDetails function is not available.');
-             alert('Error: Could not display QR code details.');
-        }
-
-        // Release blob URL after iframe loads
-        iframe.onload = () => { setTimeout(() => URL.revokeObjectURL(iframe.src), 100); };
-    };
-
-    img.onerror = function() {
-        console.error("Failed to load QR code image from API for active session.");
-         if (loadingMsg.parentNode === qrCodeDiv) { 
-             qrCodeDiv.removeChild(loadingMsg);
-         }
-         // Show fallback link if image fails
-         qrCodeDiv.innerHTML = `
-            <div style="text-align: center; padding: 20px; border: 1px solid #ff6b6b; border-radius: 8px; margin: 20px 0; background-color: #fff9f9;">
-              <p style="margin-bottom: 10px; color: #d63031; font-weight: bold;">QR Code image failed to load. Please use this link:</p>
-              <a href="${qrCodeUrl}" target="_blank" style="color: #0984e3; font-weight: bold;">${qrCodeUrl}</a>
-          </div>
-        `;
-        // Still call display details to show status, timer, and *proper* direct link
-        if (typeof displayQrCodeDetails === 'function') {
-             displayQrCodeDetails(sessionId, qrCodeUrl, expiresAtIso, section);
-        } else {
-             console.error('displayQrCodeDetails function is not available.');
-             alert('Error: Could not display QR code details.');
-        }
-    };
-    
-    // Use the same QR server API source
-    img.src = `https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=${encodeURIComponent(qrCodeUrl)}`;
-    // --- End: Add QR Code Image/Iframe Rendering --- 
-
-    // Check if the display function from qrcode.js is available (MOVED INSIDE img.onload/onerror)
-    /*
-    if (typeof displayQrCodeDetails === 'function') {
-         displayQrCodeDetails(sessionId, qrCodeUrl, expiresAtIso, section);
-
-         // Optional: scroll to the QR code display area
-         const qrContainer = document.getElementById('qr-code-container');
-         if (qrContainer) {
-             qrContainer.scrollIntoView({ behavior: 'smooth' });
-         }
-    } else {
-        console.error('displayQrCodeDetails function is not available. Make sure qrcode.js exposes it.');
-        alert('Error: Could not display QR code. Function unavailable.');
-    }
-    */
 }
 
 // 📌 NEW: Handler for "Delete" button click
@@ -1679,6 +1572,14 @@ function displayGeneratedQr(qrCodeUrl, sessionId, expiresAtIso, section, classNa
     const qrPlaceholder = document.getElementById('qr-placeholder');
     const generatedQrDetails = document.getElementById('generated-qr-details');
 
+    // *** Added check for the main containers first ***
+    if (!qrDisplayArea || !qrPlaceholder || !generatedQrDetails) {
+        console.error("displayGeneratedQr: Main display area, placeholder, or details container not found!");
+        // Attempt to show a basic error if possible
+        if(qrDisplayArea) qrDisplayArea.innerHTML = '<div class="error-message centered-text"><p>Error: Display containers missing.</p></div>';
+        return;
+    }
+
     // Get elements within the details container
     const qrCodeWrapper = document.getElementById('qr-code-image-wrapper');
     const qrInfoDiv = document.getElementById('qr-info');
@@ -1688,9 +1589,13 @@ function displayGeneratedQr(qrCodeUrl, sessionId, expiresAtIso, section, classNa
     const shareBtn = document.getElementById('share-qr-btn');
     const refreshBtn = document.getElementById('refresh-qr-btn');
 
-    if (!qrDisplayArea || !qrPlaceholder || !generatedQrDetails || !qrCodeWrapper || !qrInfoDiv || !expiresTextSpan || !progressBar || !downloadBtn || !shareBtn || !refreshBtn) {
-        console.error("One or more elements for displaying generated QR not found!");
+    // *** Updated check to include ALL required inner elements ***
+    if (!qrCodeWrapper || !qrInfoDiv || !expiresTextSpan || !progressBar || !downloadBtn || !shareBtn || !refreshBtn) {
+        console.error("displayGeneratedQr: One or more INNER elements (wrapper, info, timer, progress, buttons) not found!");
         qrDisplayArea.innerHTML = '<div class="error-message centered-text"><p>Error displaying QR details. UI elements missing.</p></div>';
+        // Ensure placeholder is hidden if error occurs after loading state
+        if(qrPlaceholder) qrPlaceholder.style.display = 'none';
+        if(generatedQrDetails) generatedQrDetails.style.display = 'none';
         return;
     }
 
@@ -1722,7 +1627,7 @@ function displayGeneratedQr(qrCodeUrl, sessionId, expiresAtIso, section, classNa
         iframe.style.border = 'none';
         iframe.style.display = 'block';
         iframe.style.margin = '0 auto';
-        qrDisplayArea.appendChild(iframe);
+        qrCodeWrapper.appendChild(iframe);
         // console.log("Active session QR code rendered via blob URL iframe");
 
         // Call the display function AFTER image iframe is appended
