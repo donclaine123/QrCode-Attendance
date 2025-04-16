@@ -16,14 +16,19 @@ document.addEventListener('DOMContentLoaded', function() {
   const studentIdField = document.getElementById('student-id-field');
   const errorMsgElement = document.getElementById('errorMsg');
 
-  // Check if user is already logged in
-  checkAuthentication();
-
-  // Add password strength indicator
   const passwordInput = document.getElementById('reg-password');
   const strengthMeterFill = document.getElementById('strength-meter-fill');
   const strengthText = document.getElementById('strength-text');
   
+  const confirmPasswordInput = document.getElementById('confirm-password');
+  const signupErrorMessage = document.getElementById('signup-error-message');
+  const passwordMatchError = document.getElementById('password-match-error');
+  const signupForm = document.getElementById('signup-form');
+
+  // Check if user is already logged in
+  checkAuthentication();
+
+  // Add password strength indicator
   if (passwordInput && strengthMeterFill && strengthText) {
     passwordInput.addEventListener('input', () => {
       const password = passwordInput.value;
@@ -177,8 +182,8 @@ document.addEventListener('DOMContentLoaded', function() {
   }
 
   // Handle registration form submission
-  if (registerForm) {
-    registerForm.addEventListener('submit', async function(e) {
+  if (signupForm) {
+    signupForm.addEventListener('submit', async function(e) {
       e.preventDefault();
       
       const role = document.getElementById('role').value;
@@ -189,10 +194,10 @@ document.addEventListener('DOMContentLoaded', function() {
       const confirmPassword = document.getElementById('confirm-password').value;
       const studentId = document.getElementById('student-id')?.value || null;
       
-      // Check if passwords match
-      if (password !== confirmPassword) {
-        showError('Passwords do not match');
-        return;
+      // Final check before submitting
+      if (!validatePasswordMatch()) {
+          console.log('Signup prevented due to password mismatch.');
+          return; // Stop submission
       }
       
       // Show loading state
@@ -344,6 +349,42 @@ document.addEventListener('DOMContentLoaded', function() {
       errorMsgElement.style.display = 'none';
     }, 5000);
   }
+
+  // --- NEW: Password Match Validation Function ---
+  function validatePasswordMatch() {
+      if (!passwordInput || !confirmPasswordInput || !passwordMatchError) return false; // Elements not found
+
+      const password = passwordInput.value;
+      const confirmPassword = confirmPasswordInput.value;
+
+      if (confirmPassword === '') { // Don't show error if confirm field is empty
+          passwordMatchError.style.display = 'none';
+          passwordInput.classList.remove('input-error');
+          confirmPasswordInput.classList.remove('input-error');
+          return true; // Not an error state yet
+      }
+
+      if (password !== confirmPassword) {
+          passwordMatchError.style.display = 'block';
+          passwordInput.classList.add('input-error');
+          confirmPasswordInput.classList.add('input-error');
+          return false; // Passwords don't match
+      } else {
+          passwordMatchError.style.display = 'none';
+          passwordInput.classList.remove('input-error');
+          confirmPasswordInput.classList.remove('input-error');
+          return true; // Passwords match
+      }
+  }
+
+  // Add listeners to check passwords as user types
+  if (passwordInput) {
+      passwordInput.addEventListener('input', validatePasswordMatch);
+  }
+  if (confirmPasswordInput) {
+      confirmPasswordInput.addEventListener('input', validatePasswordMatch);
+  }
+  // --- END: Password Match Validation ---
 });
 
 // Get base path for redirects - handles both local and production
