@@ -1502,8 +1502,12 @@ async function handleDeleteActiveSession(event) {
         
         if (data.success) {
             // Remove the row from the table
+            console.log(`DEBUG: Delete successful for ${sessionId}. Attempting to remove row from UI.`);
+            const rowToRemove = button.closest('tr');
+            console.log(`DEBUG: Found row element to remove:`, rowToRemove);
             button.closest('tr').remove();
-            
+            console.log(`DEBUG: Row remove() called.`);
+ 
             // --- Check if the deleted session was the one displayed --- 
             if (sessionId === currentlyDisplayedSessionId) {
                 console.log(`Deleted session (${sessionId}) matches the currently displayed QR. Resetting display.`);
