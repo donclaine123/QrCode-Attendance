@@ -103,8 +103,35 @@ document.addEventListener('DOMContentLoaded', function() {
 
             // Show/hide the title and subtitle based on the active section
             const isQrSectionActive = this.id === 'generate-qr-btn';
-            if (pageTitle) pageTitle.style.display = isQrSectionActive ? 'block' : 'none';
-            if (pageSubtitle) pageSubtitle.style.display = isQrSectionActive ? 'block' : 'none';
+            const isManageClassesActive = this.id === 'manage-classes-btn';
+
+            if (pageTitle) {
+                if (isQrSectionActive) {
+                    pageTitle.textContent = 'QR Session Management';
+                    pageTitle.style.display = 'block';
+                } else if (isManageClassesActive) {
+                    pageTitle.textContent = 'Manage Your Classes';
+                    pageTitle.style.display = 'block';
+                } else {
+                    pageTitle.style.display = 'none';
+                }
+            }
+            if (pageSubtitle) {
+                if (isQrSectionActive) {
+                    pageSubtitle.textContent = 'Generate and manage QR codes for attendance tracking';
+                    pageSubtitle.style.display = 'block';
+                } else if (isManageClassesActive) {
+                    pageSubtitle.textContent = 'Create, view, and manage your academic classes in one place.';
+                    pageSubtitle.style.display = 'block';
+                } else {
+                    pageSubtitle.style.display = 'none';
+                }
+            }
+            // Ensure header is centered only for QR page?
+            const contentHeader = document.querySelector('.content-header');
+            if (contentHeader) {
+                contentHeader.style.textAlign = isQrSectionActive ? 'center' : 'left';
+            }
         });
     });
     
@@ -681,6 +708,12 @@ async function loadClasses() {
             // Clear existing class list
             classesContainer.innerHTML = '';
             
+            // Update total classes count
+            const totalClassesValue = document.getElementById('total-classes-value');
+            if (totalClassesValue) {
+                totalClassesValue.textContent = data.classes?.length || 0;
+            }
+
             if (data.classes && data.classes.length > 0) {
                 // Add classes to selects and class list
                 data.classes.forEach(cls => {
@@ -696,16 +729,23 @@ async function loadClasses() {
                     attOption.textContent = cls.class_name || cls.name;
                     attendanceClassSelect.appendChild(attOption);
                     
-                    // Add to class list
-                    const classCard = document.createElement('div');
-                    classCard.className = 'class-card';
-                    classCard.innerHTML = `
-                        <h3>${cls.class_name || cls.name}</h3>
-                        <p>${cls.subject || 'No subject'}</p>
-                        <p class="description">${cls.description || 'No description'}</p>
+                    // Add to class list - NEW STRUCTURE
+                    let classCode = (cls.subject || '').split(' ')[0].substring(0, 4).toUpperCase();
+                    if (!classCode) {
+                        classCode = (cls.class_name || 'CLS').substring(0,4).toUpperCase();
+                    }
+
+                    const classItem = document.createElement('div');
+                    classItem.className = 'class-list-item'; // Use a new class name
+                    classItem.innerHTML = `
+                        <div class="class-code">${classCode}</div>
+                        <div class="class-info">
+                            <h4 class="class-name">${cls.class_name || cls.name}</h4>
+                            <p class="class-description">${cls.description || 'No description'}</p>
+                        </div>
                         <button class="btn btn-sm btn-danger delete-class" data-id="${cls.id}">Delete</button>
                     `;
-                    classesContainer.appendChild(classCard);
+                    classesContainer.appendChild(classItem);
                 });
                 
                 // Add event listeners to delete buttons

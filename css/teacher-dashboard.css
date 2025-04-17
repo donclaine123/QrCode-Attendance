@@ -1213,3 +1213,170 @@ body {
   background-color: #d97706; /* Darker warning */
 }
 /* --- End QR Display Area Styles --- */
+
+/* --- Manage Classes Page Styles --- */
+.manage-classes-page .manage-classes-columns {
+  display: flex;
+  gap: var(--spacing-xl);
+  align-items: flex-start; /* Align cards to the top */
+  margin-bottom: var(--spacing-xl);
+}
+
+.manage-classes-page .add-class-column {
+  flex: 1 1 40%; /* Adjust flex basis as needed */
+  max-width: 450px;
+}
+
+.manage-classes-page .your-classes-column {
+  flex: 1 1 60%;
+}
+
+/* Style inputs specifically in add class card if needed */
+.add-class-column .input-field {
+  /* Inherits base styles, add specifics here if different */
+}
+
+.add-class-column textarea.input-field {
+  min-height: 100px;
+  resize: vertical;
+}
+
+/* Class List Styles */
+.classes-list-container {
+  max-height: 500px; /* Example max height */
+  overflow-y: auto;
+}
+
+.class-list-item {
+  display: flex;
+  align-items: center;
+  background-color: var(--color-white);
+  border: 1px solid var(--color-secondary-dark);
+  border-radius: var(--border-radius-md);
+  padding: var(--spacing-md);
+  margin-bottom: var(--spacing-md);
+  gap: var(--spacing-md);
+  transition: box-shadow 0.2s ease;
+}
+
+.class-list-item:hover {
+  box-shadow: var(--shadow-sm);
+}
+
+.class-code {
+  background-color: var(--color-primary);
+  color: var(--color-white);
+  font-weight: 600;
+  padding: var(--spacing-md);
+  border-radius: var(--border-radius-sm);
+  font-size: 0.9rem;
+  min-width: 70px; /* Ensure minimum width */
+  text-align: center;
+  position: relative;
+}
+
+/* Triangle effect for class code */
+.class-code::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  right: -10px; /* Position arrow outside the box */
+  transform: translateY(-50%);
+  width: 0;
+  height: 0;
+  border-top: 10px solid transparent;
+  border-bottom: 10px solid transparent;
+  border-left: 10px solid var(--color-primary);
+}
+
+.class-info {
+  flex-grow: 1;
+}
+
+.class-name {
+  font-weight: 600;
+  margin-bottom: var(--spacing-xs);
+}
+
+.class-description {
+  font-size: 0.9rem;
+  color: var(--color-text-light);
+}
+
+.class-list-item .delete-class {
+  background-color: var(--color-danger);
+  color: var(--color-white);
+  border: none;
+  padding: var(--spacing-xs) var(--spacing-sm);
+  border-radius: var(--border-radius-sm);
+  cursor: pointer;
+  font-size: 0.8rem;
+  margin-left: auto; /* Push to the right */
+  white-space: nowrap;
+}
+
+.class-list-item .delete-class:hover {
+  background-color: #dc2626; /* Darker danger */
+}
+
+/* Summary Row and Cards */
+.class-summary-row {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); /* Responsive grid */
+  gap: var(--spacing-lg);
+  margin-top: var(--spacing-lg);
+}
+
+.summary-card {
+  display: flex;
+  align-items: center;
+  background-color: var(--color-white);
+  padding: var(--spacing-lg);
+  border-radius: var(--border-radius-md);
+  border: 1px solid var(--color-secondary-dark);
+  box-shadow: var(--shadow-sm);
+  gap: var(--spacing-md);
+}
+
+.summary-icon-wrapper {
+  flex-shrink: 0;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: var(--color-primary-light);
+  color: var(--color-primary);
+}
+
+.summary-icon {
+  font-size: 1.2rem;
+}
+
+.summary-content {
+  display: flex;
+  flex-direction: column;
+}
+
+.summary-title {
+  font-size: 0.9rem;
+  color: var(--color-text-light);
+  margin-bottom: var(--spacing-xs);
+}
+
+.summary-value {
+  font-size: 1.2rem;
+  font-weight: 600;
+  color: var(--color-text);
+}
+
+/* Responsive adjustments for Manage Classes */
+@media (max-width: 992px) { /* Adjust breakpoint if needed */
+  .manage-classes-columns {
+    flex-direction: column;
+  }
+  .add-class-column, .your-classes-column {
+    max-width: 100%;
+  }
+}

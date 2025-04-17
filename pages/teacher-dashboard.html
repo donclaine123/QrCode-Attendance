@@ -216,28 +216,74 @@
          <!-- End qr-section -->
 
         <!-- Classes Management Section -->
-        <div id="classes-section" class="dashboard-section" style="display: none;">
-          <h3>Manage Your Classes</h3>
-        <div class="form-group">
-            <h4>Add New Class</h4>
-            <label for="class-name">Class Name:</label>
-            <input type="text" id="class-name" required>
-            
-            <label for="subject">Subject:</label>
-            <input type="text" id="subject" required>
-            
-            <label for="description">Description (Optional):</label>
-            <textarea id="description"></textarea>
-            
-            <button id="add-class-btn">Add Class</button>
+        <div id="classes-section" class="dashboard-section manage-classes-page" style="display: none;">
+          <!-- Main Header for the section (Handled by JS) -->
+          <!-- <h1 class="page-title">Manage Your Classes</h1> -->
+          <!-- <p class="page-subtitle">Create, view, and manage your academic classes in one place.</p> -->
+
+          <div class="manage-classes-columns">
+             <!-- Left Column: Add New Class -->
+             <div class="add-class-column">
+                <div class="card">
+                   <h3 class="card-header"><span class="card-icon">➕</span> Add New Class</h3>
+                   <div class="card-body">
+                      <div class="form-group">
+                         <label for="class-name">Class Name:</label>
+                         <input type="text" id="class-name" class="input-field" placeholder="e.g., CS101" required>
+                      </div>
+                      <div class="form-group">
+                         <label for="subject">Subject:</label>
+                         <input type="text" id="subject" class="input-field" placeholder="e.g., Introduction to Programming" required>
+                      </div>
+                      <div class="form-group">
+                         <label for="description">Description (Optional):</label>
+                         <textarea id="description" class="input-field" placeholder="Add a brief description of the class..."></textarea>
+                      </div>
+                   </div>
+                   <div class="form-actions">
+                       <button id="add-class-btn" class="btn btn-primary btn-full-width">
+                          <span class="btn-icon">➕</span> Add Class
+                       </button>
+                   </div>
+                </div>
+             </div>
+
+             <!-- Right Column: Your Classes -->
+             <div class="your-classes-column">
+                <div class="card">
+                    <h3 class="card-header"><span class="card-icon">📋</span> Your Classes</h3>
+                    <div id="classes-list" class="card-body classes-list-container">
+                       <!-- Class items will be populated here by JS -->
+                       <div id="classes-container">
+                           <!-- Placeholder or loading state can go here -->
+                           <p class="loading-indicator">Loading classes...</p>
+                       </div>
+                    </div>
+                </div>
+             </div>
+          </div>
+
+          <div class="form-group">
+          <!-- Summary Row -->
+          <div class="class-summary-row">
+              <div class="summary-card">
+                  <div class="summary-icon-wrapper"><span class="summary-icon">📚</span></div>
+                  <div class="summary-content">
+                      <span class="summary-title">Total Classes</span>
+                      <span id="total-classes-value" class="summary-value">-</span>
+                  </div>
+              </div>
+              <div class="summary-card">
+                  <div class="summary-icon-wrapper"><span class="summary-icon">🗓️</span></div>
+                  <div class="summary-content">
+                      <span class="summary-title">Current Semester</span>
+                      <span id="current-semester-value" class="summary-value">Fall 2023</span> <!-- Placeholder -->
+                  </div>
+              </div>
+          </div>
+          </div>
         </div>
-          
-          <div id="classes-list">
-            <h4>Your Classes</h4>
-            <div id="classes-container"></div>
-      </div>
-    </div>
-    
+        
         <!-- Attendance Records Section -->
         <div id="attendance-section" class="dashboard-section" style="display: none;">
           <h3>View Attendance Records</h3>
