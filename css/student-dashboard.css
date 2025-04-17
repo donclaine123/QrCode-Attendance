@@ -853,3 +853,9 @@ body {
   line-height: 1.5;
 }
 /* --- End Status Modal Styles --- */
+
+/* Style for the new section display */
+.history-section {
+  color: var(--color-text-light);
+  font-size: 0.9rem;
+}

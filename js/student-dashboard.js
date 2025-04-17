@@ -238,6 +238,7 @@ async function loadAttendanceHistory() {
                 historyHTML += `
                     <div class="history-item">
                         <div class="history-subject">${record.subject}</div>
+                        ${record.section ? `<div class="history-section">Section: ${record.section}</div>` : ''}
                         <div class="history-teacher">Teacher: ${record.teacherName}</div>
                         <div class="history-time">Recorded: ${formattedTime}</div>
                     </div>
