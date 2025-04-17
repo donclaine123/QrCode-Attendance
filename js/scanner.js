@@ -380,6 +380,7 @@ document.addEventListener("DOMContentLoaded", async () => {
         console.log("Subject:", subject || "Not specified");
         
         // Automatically stop scanner after successful scan
+        stopScanner();
         startScanBtn.textContent = "Start Scanner";
         scanning = false;
         
@@ -403,6 +404,7 @@ document.addEventListener("DOMContentLoaded", async () => {
           console.log("JSON attendance QR code detected");
           
           // Automatically stop scanner after successful scan
+          stopScanner();
           startScanBtn.textContent = "Start Scanner";
           scanning = false;
           
