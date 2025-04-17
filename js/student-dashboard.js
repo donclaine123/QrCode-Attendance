@@ -603,3 +603,76 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 // --- END PROFILE FUNCTIONS --- 
+
+// Function to show attendance popup (NOW USES GLOBAL MODAL)
+async function showAttendancePopup(sessionId, teacherId, subject) {
+    console.log("Processing attendance automatically via global modal...");
+
+    // --- Get Modal Elements ---
+    const modalOverlay = document.getElementById('status-modal-overlay');
+    const modalIconContainer = document.getElementById('status-modal-icon-container');
+    const modalMessage = document.getElementById('status-modal-message');
+
+    if (!modalOverlay || !modalIconContainer || !modalMessage) {
+        console.error("Status modal elements not found for attendance recording!");
+        alert("Processing attendance... Check console for details."); // Fallback alert
+        // Still attempt to record attendance below, just without modal feedback
+    } else {
+        // --- Show Loading Modal ---
+        modalIconContainer.innerHTML = '<div class="spinner"></div>';
+        modalMessage.textContent = 'Analyzing QR & Recording...';
+        modalOverlay.classList.add('visible');
+        // --- End Show Loading Modal ---
+    }
+
+    try {
+        // Corrected endpoint path to include /auth
+        const response = await fetch(`${API_URL}/auth/record-attendance`, { 
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            credentials: 'include',
+            body: JSON.stringify({ session_id: sessionId })
+        });
+        
+        const data = await response.json();
+        console.log('Attendance recording response:', data);
+
+        // --- Update Status Modal with Result ---
+        if (modalIconContainer && modalMessage) { // Only update if elements exist
+            if (data.success) {
+                modalIconContainer.innerHTML = '<span class="status-icon success">✅</span>';
+                modalMessage.innerHTML = `Attendance Recorded!<br><small>Subject: ${data.subject || 'N/A'}<br>Time: ${formatLocalDateTime(new Date())}</small>`; // Include details
+                // Dispatch event for history update
+                document.dispatchEvent(new CustomEvent('attendance-recorded', {
+                    detail: { success: true, subject: data.subject, timestamp: new Date().toISOString() }
+                }));
+            } else {
+                modalIconContainer.innerHTML = '<span class="status-icon error">❌</span>';
+                modalMessage.textContent = `Recording Failed: ${data.message || 'Unknown error'}`;
+            }
+        }
+
+        // --- Fallback Alert if Modal Elements Missing ---
+        if (!modalIconContainer || !modalMessage) {
+            alert(data.success ? `Attendance Recorded!\nSubject: ${data.subject || 'N/A'}` : `Recording Failed: ${data.message || 'Unknown error'}`);
+        }
+
+    } catch (error) {
+        console.error('Attendance recording error:', error);
+        // --- Update Status Modal with Network Error ---
+        if (modalIconContainer && modalMessage) {
+            modalIconContainer.innerHTML = '<span class="status-icon error">❌</span>';
+            modalMessage.textContent = `Server Error: ${error.message}`;
+        } else {
+            alert(`Server Error: ${error.message}`);
+        }
+    } finally {
+        // --- Hide Modal After Delay ---
+        if (modalOverlay) {
+            setTimeout(() => {
+                modalOverlay.classList.remove('visible');
+            }, 2000); // Hide after 2 seconds
+        }
+        // --- End Hide Modal ---
+    }
+}
