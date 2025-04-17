@@ -203,6 +203,7 @@ async function loadAttendanceHistory() {
         });
         
         const data = await response.json();
+        console.log('DEBUG: Raw attendance history data received:', data.history); // Log the raw data
         console.log('Attendance history data:', data);
         
         if (data.success && data.history && data.history.length > 0) {
