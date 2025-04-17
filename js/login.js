@@ -212,7 +212,7 @@ document.addEventListener('DOMContentLoaded', function() {
       emailInput?.classList.remove('input-error');
       if (emailErrorMsg) emailErrorMsg.textContent = '';
       // --- End Clear Error State ---
-
+      
       try {
         const response = await fetch(`${API_URL}/auth/register`, {
           method: 'POST',
@@ -230,7 +230,7 @@ document.addEventListener('DOMContentLoaded', function() {
           }),
           credentials: 'include'
         });
-        
+
         const data = await response.json();
 
         if (!response.ok) {
@@ -257,7 +257,7 @@ document.addEventListener('DOMContentLoaded', function() {
             if (verificationEmailElement && data.email) {
                 verificationEmailElement.textContent = data.email;
             }
-            registerSection.style.display = 'none';
+          registerSection.style.display = 'none';
             loginSection.style.display = 'none';
             verificationSection.style.display = 'block';
             setTimeout(() => {
@@ -524,11 +524,11 @@ async function checkAuthentication() {
       
       // 📌 Add a short delay before redirecting
       setTimeout(() => {
-          if (data.user.role === 'teacher') {
-            console.log('Redirecting to teacher dashboard');
+      if (data.user.role === 'teacher') {
+        console.log('Redirecting to teacher dashboard');
             window.location.href = `${basePath}/pages/teacher-dashboard.html`;
-          } else if (data.user.role === 'student') {
-            console.log('Redirecting to student dashboard');
+      } else if (data.user.role === 'student') {
+        console.log('Redirecting to student dashboard');
             window.location.href = `${basePath}/pages/student-dashboard.html`;
           }
       }, 150); // 150ms delay should be sufficient
@@ -547,13 +547,13 @@ async function checkAuthentication() {
       
       // 📌 Add a short delay before redirecting (SessionStorage fallback)
       setTimeout(() => {
-          if (localRole === 'teacher') {
+      if (localRole === 'teacher') {
             console.log('Redirecting to teacher dashboard (sessionStorage)');
             window.location.href = `${basePath}/pages/teacher-dashboard.html`;
-          } else if (localRole === 'student') {
+      } else if (localRole === 'student') {
             console.log('Redirecting to student dashboard (sessionStorage)');
             window.location.href = `${basePath}/pages/student-dashboard.html`;
-          }
+      }
        }, 150); 
 
       return; // Exit after starting timeout
@@ -572,11 +572,11 @@ async function checkAuthentication() {
       console.log('Using sessionStorage fallback due to server error, role:', localRole);
       // 📌 Add a short delay before redirecting (Server error fallback)
       setTimeout(() => {
-        if (localRole === 'teacher') {
-          window.location.href = '/QrCode-Attendance/pages/teacher-dashboard.html';
-        } else if (localRole === 'student') {
-          window.location.href = '/QrCode-Attendance/pages/student-dashboard.html';
-        }
+      if (localRole === 'teacher') {
+        window.location.href = '/QrCode-Attendance/pages/teacher-dashboard.html';
+      } else if (localRole === 'student') {
+        window.location.href = '/QrCode-Attendance/pages/student-dashboard.html';
+      }
       }, 150);
     }
   }

@@ -28,6 +28,8 @@
 let recentAttendanceIntervalId = null; // Variable to hold the interval ID
 let viewAttendanceIntervalId = null; // OLD: Interval ID for specific session view (no longer used for polling)
 let currentViewSessionId = null; // NEW: Store the ID of the session being viewed
+let generatedQrTimerIntervalId = null; // Timer specific to this display
+let currentlyDisplayedSessionId = null; // Keep track of what's shown
 
 document.addEventListener('DOMContentLoaded', function() {
     console.log('Teacher dashboard initializing...');
@@ -1501,6 +1503,14 @@ async function handleDeleteActiveSession(event) {
         if (data.success) {
             // Remove the row from the table
             button.closest('tr').remove();
+            
+            // --- Check if the deleted session was the one displayed --- 
+            if (sessionId === currentlyDisplayedSessionId) {
+                console.log(`Deleted session (${sessionId}) matches the currently displayed QR. Resetting display.`);
+                resetQrDisplayArea();
+            }
+            // --- End Check --- 
+
              // Check if table body is empty, if so hide section or show message
              const tableBody = document.querySelector('#active-sessions-table tbody');
               if (tableBody && tableBody.rows.length === 0) {
@@ -1668,7 +1678,6 @@ async function generateQRCode() {
 }
 
 // NEW: Function to display the generated QR code details in the right column
-let generatedQrTimerIntervalId = null; // Timer specific to this display
 function displayGeneratedQr(qrCodeUrl, sessionId, expiresAtIso, section, className, durationMinutes) {
     const qrDisplayArea = document.getElementById('qr-display-area');
     const qrPlaceholder = document.getElementById('qr-placeholder');
@@ -1797,4 +1806,29 @@ function displayGeneratedQr(qrCodeUrl, sessionId, expiresAtIso, section, classNa
     // Make the details visible
     qrPlaceholder.style.display = 'none';
     generatedQrDetails.style.display = 'block';
+
+    // Store the ID of the currently displayed session
+    currentlyDisplayedSessionId = sessionId; 
+}
+
+// NEW: Function to reset the QR display area to placeholder
+function resetQrDisplayArea() {
+    const qrDisplayArea = document.getElementById('qr-display-area');
+    const qrPlaceholder = document.getElementById('qr-placeholder');
+    const generatedQrDetails = document.getElementById('generated-qr-details');
+
+    if (qrPlaceholder && generatedQrDetails) {
+        generatedQrDetails.style.display = 'none';
+        qrPlaceholder.style.display = 'block';
+    }
+
+    // Clear the timer interval if it exists
+    if (generatedQrTimerIntervalId) {
+        clearInterval(generatedQrTimerIntervalId);
+        generatedQrTimerIntervalId = null;
+    }
+
+    // Reset the tracking variable
+    currentlyDisplayedSessionId = null;
+    console.log("QR Display area reset.");
 }
