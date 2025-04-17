@@ -1639,11 +1639,15 @@ async function generateQRCode() {
              // NEW: Display the generated QR in the new structure
              displayGeneratedQr(data.qrCodeUrl, data.sessionId, data.expiresAt, section, className, parseInt(durationMinutes));
              
-             // Refresh the active sessions list immediately
-             // if (typeof loadActiveQrSessions === 'function') {
-             //     loadActiveQrSessions(); // May not be needed if active sessions aren't displayed here
-             // }
-              
+             // --- Refresh the active sessions list --- 
+             if (typeof window.loadActiveQrSessions === 'function') {
+                 console.log("Refreshing active sessions list after QR generation...");
+                 window.loadActiveQrSessions();
+             } else {
+                 console.warn("loadActiveQrSessions function not found, cannot refresh list.");
+             }
+             // --- End Refresh ---
+               
         } else {
              console.error("QR Code generation failed:", data.message);
               // Show error in display area
