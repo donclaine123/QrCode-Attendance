@@ -1288,7 +1288,7 @@ async function loadRecentAttendanceRecords() {
     if (!tableBody) return;
     
     // Show loading state
-    tableBody.innerHTML = '<tr><td colspan="3" class="text-center">Loading recent attendance records...</td></tr>';
+    tableBody.innerHTML = '<tr><td colspan="5" class="text-center">Loading recent attendance records...</td></tr>'; // Updated colspan
     
     try {
         const teacherId = sessionStorage.getItem('userId');
@@ -1327,11 +1327,11 @@ async function loadRecentAttendanceRecords() {
         if (data.success && data.records && data.records.length > 0) {
             displayAttendanceRecords(data.records);
         } else {
-            tableBody.innerHTML = '<tr><td colspan="3" class="text-center">No attendance records found</td></tr>';
+            tableBody.innerHTML = '<tr><td colspan="5" class="text-center">No attendance records found</td></tr>'; // Updated colspan
         }
     } catch (error) {
         console.error('Error fetching recent attendance records:', error);
-        tableBody.innerHTML = `<tr><td colspan="3" class="text-center">Error loading records: ${error.message}</td></tr>`;
+        tableBody.innerHTML = `<tr><td colspan="5" class="text-center">Error loading records: ${error.message}</td></tr>`; // Updated colspan
     }
 }
 
@@ -1342,7 +1342,7 @@ function displayAttendanceRecords(records) {
     tableBody.innerHTML = ''; // Clear previous records
 
     if (!records || records.length === 0) {
-        tableBody.innerHTML = `<tr><td colspan="5" class="text-center">No attendance records found</td></tr>`; // Update colspan
+        tableBody.innerHTML = `<tr><td colspan="5" class="text-center">No attendance records found</td></tr>`; // Colspan is correct (5 columns)
         return;
     }
     
@@ -1358,15 +1358,20 @@ function displayAttendanceRecords(records) {
         });
         
         // Use the time directly from the backend query
-        const formattedTime = record.attendance_time || 'N/A'; 
+        const formattedTime = record.attendance_time || 'N/A';
         const sectionDisplay = record.section || 'N/A'; // Handle null sections
+
+        // Determine badge class based on present count
+        const presentCount = record.present_count;
+        const badgeClass = presentCount > 0 ? 'present-badge-positive' : 'present-badge-zero';
+        const badgeHTML = `<span class="present-badge ${badgeClass}">${presentCount}</span>`;
 
         row.innerHTML = `
             <td>${record.class_name}</td>
             <td>${sectionDisplay}</td>
             <td>${formattedDate}</td>
             <td>${formattedTime}</td>
-            <td>${record.present_count}</td>
+            <td>${badgeHTML}</td>
         `;
         
         tableBody.appendChild(row);

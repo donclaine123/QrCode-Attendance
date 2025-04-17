@@ -407,18 +407,20 @@ body {
   margin-top: var(--spacing-lg);
   border: 1px solid var(--color-secondary-dark);
   border-radius: var(--border-radius-md);
-  padding: var(--spacing-md);
   background-color: var(--color-white);
-  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
+  box-shadow: var(--shadow-sm);
   max-height: 400px;
   overflow-y: auto;
+  position: relative;
 }
 
 #dashboard-overview h2 {
-  margin-bottom: var(--spacing-md);
-  padding-bottom: var(--spacing-sm);
+  margin-bottom: 0;
+  padding: var(--spacing-md) var(--spacing-lg);
   border-bottom: 1px solid var(--color-secondary);
-  color: var(--color-primary);
+  color: var(--color-text);
+  font-size: 1.1rem;
+  font-weight: 600;
   position: sticky;
   top: 0;
   background-color: var(--color-white);
@@ -428,35 +430,66 @@ body {
 #recent-attendance-table {
   width: 100%;
   border-collapse: collapse;
-  margin-top: var(--spacing-md);
 }
 
 #recent-attendance-table thead {
-
+  background-color: var(--color-secondary);
+  border-bottom: 1px solid var(--color-secondary-dark);
 }
 
 #recent-attendance-table tbody {
-
 }
 
 #recent-attendance-table tr {
-  
 }
 
 #recent-attendance-table th,
 #recent-attendance-table td {
-  padding: var(--spacing-md);
+  padding: var(--spacing-sm) var(--spacing-lg);
   text-align: left;
   border-bottom: 1px solid var(--color-secondary-dark);
+  vertical-align: middle;
 }
 
 #recent-attendance-table th {
   font-weight: 600;
   color: var(--color-text-light);
   text-transform: uppercase;
-  font-size: 0.9rem;
+  font-size: 0.8rem;
 }
 
+#recent-attendance-table tbody tr:last-child td {
+  border-bottom: none;
+}
+
+/* Present Count Badge Styles */
+.present-badge {
+  display: inline-block;
+  padding: var(--spacing-xs) var(--spacing-sm);
+  font-size: 0.8rem;
+  font-weight: 600;
+  border-radius: var(--border-radius-sm);
+  color: var(--color-text);
+  min-width: 25px;
+  text-align: center;
+}
+
+.present-badge-zero {
+  background-color: #fee2e2;
+  color: #b91c1c;
+}
+
+.present-badge-positive {
+  background-color: #d1fae5;
+  color: #047857;
+}
+
+/* Ensure text-center utility class works */
+.text-center {
+  text-align: center;
+}
+
+/* Attendance Table (Keep distinct styles for the other table) */
 .attendance-table {
   width: 100%;
   border-collapse: collapse;
@@ -538,7 +571,7 @@ body {
   
   .nav-link {
     padding: var(--spacing-sm);
-  text-align: center;
+    text-align: center;
     justify-content: center;
   }
   
@@ -593,8 +626,8 @@ body {
 
   .qr-settings-column,
   .qr-display-column {
-    max-width: 100%; /* Allow full width */
-    flex-basis: auto; /* Reset flex basis */
+    max-width: 100%;
+    flex-basis: auto;
   }
 
   /* Adjust spacing for active sessions card when columns stack */
@@ -621,7 +654,7 @@ body {
   }
   
   .nav-item {
-    min-width: 100%; /* Stack nav items on very small screens */
+    min-width: 100%;
   }
   
   .nav-link {
@@ -652,8 +685,8 @@ body {
 
   /* Ensure buttons in QR actions stack nicely */
   .qr-actions {
-    flex-direction: column; /* Stack buttons vertically */
-    align-items: stretch; /* Make buttons full width */
+    flex-direction: column;
+    align-items: stretch;
   }
 }
 
@@ -708,78 +741,78 @@ body {
 /* QR Code Section Enhancement */
 #qr-code-container {
   text-align: center;
-    padding: var(--spacing-lg);
-    background-color: var(--color-secondary);
-    border-radius: var(--border-radius-md);
-    margin-top: var(--spacing-lg);
+  padding: var(--spacing-lg);
+  background-color: var(--color-secondary);
+  border-radius: var(--border-radius-md);
+  margin-top: var(--spacing-lg);
 }
 
 #qr-code-container #status-message {
-    margin-bottom: var(--spacing-md);
+  margin-bottom: var(--spacing-md);
   font-size: 1rem;
-    color: var(--color-text);
-    line-height: 1.6;
+  color: var(--color-text);
+  line-height: 1.6;
 }
 
 #qr-code-container #status-message > p {
-    margin-bottom: var(--spacing-sm);
+  margin-bottom: var(--spacing-sm);
 }
 
 #qr-code-container #expiration-timer {
-    display: block;
-    margin-top: var(--spacing-md);
-    font-size: 0.9rem;
-    color: var(--color-warning);
-    font-weight: 500;
+  display: block;
+  margin-top: var(--spacing-md);
+  font-size: 0.9rem;
+  color: var(--color-warning);
+  font-weight: 500;
 }
 
 #qr-code-container #qr-code-iframe {
-    display: block;
-    margin: var(--spacing-md) auto;
-    max-width: 100%;
-    height: auto;
-    border: none;
-    background-color: var(--color-white);
-    padding: var(--spacing-sm);
-    border-radius: var(--border-radius-sm);
+  display: block;
+  margin: var(--spacing-md) auto;
+  max-width: 100%;
+  height: auto;
+  border: none;
+  background-color: var(--color-white);
+  padding: var(--spacing-sm);
+  border-radius: var(--border-radius-sm);
   box-shadow: var(--shadow-sm);
 }
 
 #qr-code-container small,
 #qr-code-container .scan-prompt {
-    display: block;
-    margin-top: var(--spacing-sm);
-    margin-bottom: var(--spacing-md);
-    font-size: 0.85rem;
-    color: var(--color-text-light);
+  display: block;
+  margin-top: var(--spacing-sm);
+  margin-bottom: var(--spacing-md);
+  font-size: 0.85rem;
+  color: var(--color-text-light);
 }
 
 #qr-code-container #direct-link {
-    display: inline-block;
-    margin-top: var(--spacing-md);
-    padding: var(--spacing-sm) var(--spacing-md);
-    background-color: var(--color-primary);
-    color: var(--color-white) !important;
-    text-decoration: none;
-    border-radius: var(--border-radius-sm);
-    transition: background-color 0.2s ease;
+  display: inline-block;
+  margin-top: var(--spacing-md);
+  padding: var(--spacing-sm) var(--spacing-md);
+  background-color: var(--color-primary);
+  color: var(--color-white) !important;
+  text-decoration: none;
+  border-radius: var(--border-radius-sm);
+  transition: background-color 0.2s ease;
   font-weight: 500;
-    font-size: 0.9rem;
-  }
+  font-size: 0.9rem;
+}
 
 #qr-code-container #direct-link:hover {
-    background-color: var(--color-primary-dark);
-    text-decoration: none;
+  background-color: var(--color-primary-dark);
+  text-decoration: none;
 }
 
 #qr-code-container #status-message.error {
-    color: var(--color-danger);
-    font-weight: 500;
+  color: var(--color-danger);
+  font-weight: 500;
 }
 
 #qr-code-container #status-message.success {
-    color: var(--color-success);
-    font-weight: 500;
+  color: var(--color-success);
+  font-weight: 500;
 }
 
 /* Active Sessions Table */
@@ -828,7 +861,7 @@ body {
   color: var(--color-white);
 }
 #active-sessions-table .delete-btn:hover {
-  background-color: #dc2626; /* Darker red */
+  background-color: #dc2626;
 }
 
 #active-sessions-table .show-qr-btn {
@@ -868,7 +901,7 @@ body {
   border-radius: var(--border-radius-lg);
   margin-top: var(--spacing-xl);
   box-shadow: var(--shadow-md);
-  overflow: hidden; /* Prevent content spill */
+  overflow: hidden;
 }
 
 .qr-card-header {
@@ -900,12 +933,12 @@ body {
 }
 
 .qr-display-card.expired .qr-card-timer {
-  background-color: rgba(239, 68, 68, 0.7); /* Red background when expired */
+  background-color: rgba(239, 68, 68, 0.7);
 }
 
 .qr-card-body {
   padding: var(--spacing-lg);
-  background-color: var(--color-background); /* Lighter background for body */
+  background-color: var(--color-background);
 }
 
 .qr-session-info {
@@ -937,12 +970,12 @@ body {
   padding: var(--spacing-md);
   border-radius: var(--border-radius-md);
   margin-bottom: var(--spacing-lg);
-  position: relative; /* For potential future decorations */
+  position: relative;
   border: 1px solid var(--color-secondary-dark);
-  display: flex; /* Center iframe */
+  display: flex;
   justify-content: center;
   align-items: center;
-  min-height: 280px; /* Ensure space for QR */
+  min-height: 280px;
 }
 
 #qr-code-iframe {
@@ -951,7 +984,7 @@ body {
 
 .qr-card-actions {
   display: flex;
-  justify-content: center; /* Center the single 'Open' button */
+  justify-content: center;
   gap: var(--spacing-md);
   margin-bottom: var(--spacing-lg);
 }
@@ -1038,16 +1071,16 @@ body {
 .two-column-layout {
   display: flex;
   gap: var(--spacing-xl);
-  align-items: flex-start; /* Align items to the top */
+  align-items: flex-start;
 }
 
 .qr-settings-column {
-  flex: 1 1 400px; /* Flex basis for settings */
+  flex: 1 1 400px;
   max-width: 450px;
 }
 
 .qr-display-column {
-  flex: 1 1 60%; /* Flex basis for display */
+  flex: 1 1 60%;
 }
 
 /* Ensure card body has padding if not already applied */
@@ -1085,7 +1118,7 @@ body {
 
 /* --- QR Display Area Styles --- */
 .qr-display-area {
-  min-height: 400px; /* Ensure minimum height */
+  min-height: 400px;
   display: flex;
   flex-direction: column;
   justify-content: center;
@@ -1137,17 +1170,17 @@ body {
 }
 
 .qr-code-image-wrapper {
-  background-color: var(--color-secondary); /* Light background for QR */
+  background-color: var(--color-secondary);
   padding: var(--spacing-lg);
   border-radius: var(--border-radius-md);
   margin-bottom: var(--spacing-lg);
   border: 1px solid var(--color-secondary-dark);
-  display: inline-block; /* Fit content */
+  display: inline-block;
 }
 
 .qr-code-image-wrapper img {
   display: block;
-  max-width: 200px; /* Control QR size */
+  max-width: 200px;
   height: auto;
 }
 
@@ -1159,7 +1192,7 @@ body {
 
 .qr-timer-progress {
   width: 100%;
-  max-width: 300px; /* Limit width */
+  max-width: 300px;
   margin-bottom: var(--spacing-lg);
 }
 
@@ -1179,7 +1212,7 @@ body {
 
 .progress-bar {
   height: 100%;
-  width: 100%; /* Start full */
+  width: 100%;
   background-color: var(--color-primary);
   border-radius: 4px;
   transition: width 0.5s ease-out;
@@ -1202,7 +1235,7 @@ body {
   color: var(--color-white);
 }
 .btn-success:hover {
-  background-color: #059669; /* Darker success */
+  background-color: #059669;
 }
 
 .btn-warning {
@@ -1210,7 +1243,7 @@ body {
   color: var(--color-white);
 }
 .btn-warning:hover {
-  background-color: #d97706; /* Darker warning */
+  background-color: #d97706;
 }
 /* --- End QR Display Area Styles --- */
 
@@ -1218,12 +1251,12 @@ body {
 .manage-classes-page .manage-classes-columns {
   display: flex;
   gap: var(--spacing-xl);
-  align-items: flex-start; /* Align cards to the top */
+  align-items: flex-start;
   margin-bottom: var(--spacing-xl);
 }
 
 .manage-classes-page .add-class-column {
-  flex: 1 1 40%; /* Adjust flex basis as needed */
+  flex: 1 1 40%;
   max-width: 450px;
 }
 
@@ -1233,7 +1266,6 @@ body {
 
 /* Style inputs specifically in add class card if needed */
 .add-class-column .input-field {
-  /* Inherits base styles, add specifics here if different */
 }
 
 .add-class-column textarea.input-field {
@@ -1243,7 +1275,7 @@ body {
 
 /* Class List Styles */
 .classes-list-container {
-  max-height: 500px; /* Example max height */
+  max-height: 500px;
   overflow-y: auto;
 }
 
@@ -1282,7 +1314,7 @@ body {
   content: '';
   position: absolute;
   top: 50%;
-  right: -10px; /* Position arrow outside the box */
+  right: -10px;
   transform: translateY(-50%);
   width: 0;
   height: 0;
@@ -1313,18 +1345,18 @@ body {
   border-radius: var(--border-radius-sm);
   cursor: pointer;
   font-size: 0.8rem;
-  margin-left: auto; /* Push to the right */
+  margin-left: auto;
   white-space: nowrap;
 }
 
 .class-list-item .delete-class:hover {
-  background-color: #dc2626; /* Darker danger */
+  background-color: #dc2626;
 }
 
 /* Summary Row and Cards */
 .class-summary-row {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); /* Responsive grid */
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
   gap: var(--spacing-lg);
   margin-top: var(--spacing-lg);
 }
@@ -1374,7 +1406,7 @@ body {
 }
 
 /* Responsive adjustments for Manage Classes */
-@media (max-width: 992px) { /* Adjust breakpoint if needed */
+@media (max-width: 992px) {
   .manage-classes-columns {
     flex-direction: column;
   }
@@ -1391,10 +1423,10 @@ body {
   width: 100%;
   height: 100%;
   background-color: rgba(0, 0, 0, 0.5);
-  display: none; /* Hidden by default */
+  display: none;
   justify-content: center;
   align-items: center;
-  z-index: 1000; /* Ensure it's on top */
+  z-index: 1000;
 }
 
 .modal-overlay.visible {
@@ -1412,7 +1444,7 @@ body {
 
 #status-modal-icon-container {
   margin-bottom: var(--spacing-lg);
-  min-height: 50px; /* Reserve space for icon/spinner */
+  min-height: 50px;
   display: flex;
   justify-content: center;
   align-items: center;
