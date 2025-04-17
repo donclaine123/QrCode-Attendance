@@ -610,18 +610,24 @@ async function showAttendancePopup(sessionId, teacherId, subject) {
 
     // Use setTimeout to ensure DOM is ready before accessing/showing modal
     setTimeout(async () => {
+        console.log("DEBUG: Inside setTimeout for showAttendancePopup");
         // --- Get Modal Elements INSIDE setTimeout ---
         const modalOverlay = document.getElementById('status-modal-overlay');
         const modalIconContainer = document.getElementById('status-modal-icon-container');
         const modalMessage = document.getElementById('status-modal-message');
 
+        console.log("DEBUG: modalOverlay:", modalOverlay);
+        console.log("DEBUG: modalIconContainer:", modalIconContainer);
+        console.log("DEBUG: modalMessage:", modalMessage);
+
         if (!modalOverlay || !modalIconContainer || !modalMessage) {
-            console.error("Status modal elements STILL not found for attendance recording!");
+            console.error("DEBUG: Status modal elements NOT found, showing alert.");
             alert("Processing attendance... Check console for details."); // Fallback alert
             // Attempt to record attendance without modal feedback if elements are missing
             await recordAttendanceFetch(sessionId); 
             return; // Exit setTimeout callback
         } else {
+            console.log("DEBUG: Status modal elements FOUND, showing modal.");
             // --- Show Loading Modal ---
             modalIconContainer.innerHTML = '<div class="spinner"></div>';
             modalMessage.textContent = 'Analyzing QR & Recording...';

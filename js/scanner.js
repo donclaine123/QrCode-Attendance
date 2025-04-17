@@ -380,12 +380,16 @@ document.addEventListener("DOMContentLoaded", async () => {
         console.log("Subject:", subject || "Not specified");
         
         // Automatically stop scanner after successful scan
-        stopScanner();
         startScanBtn.textContent = "Start Scanner";
         scanning = false;
         
-        // Show attendance popup
-        await showAttendancePopup(sessionId, teacherId, subject);
+        // Call the GLOBAL showAttendancePopup from student-dashboard.js
+        if (typeof window.showAttendancePopup === 'function') {
+            window.showAttendancePopup(sessionId, teacherId, subject);
+        } else {
+            console.error("Global showAttendancePopup function not found!");
+            alert("Error: Cannot initiate attendance recording process.");
+        }
         
         return;
       }
@@ -399,18 +403,21 @@ document.addEventListener("DOMContentLoaded", async () => {
           console.log("JSON attendance QR code detected");
           
           // Automatically stop scanner after successful scan
-          stopScanner();
           startScanBtn.textContent = "Start Scanner";
           scanning = false;
           
-          // Show attendance popup
-          await showAttendancePopup(jsonData.sessionId, jsonData.teacherId, jsonData.subject);
+          // Call the GLOBAL showAttendancePopup from student-dashboard.js
+          if (typeof window.showAttendancePopup === 'function') {
+              window.showAttendancePopup(jsonData.sessionId, jsonData.teacherId, jsonData.subject);
+          } else {
+              console.error("Global showAttendancePopup function not found!");
+              alert("Error: Cannot initiate attendance recording process.");
+          }
           
           return;
         }
         
         scanStatus.textContent = "Unknown QR code format. Please try a valid attendance QR code.";
-        
       } catch (jsonError) {
         console.log("Not a JSON QR code. Processing as plain text.");
         scanStatus.textContent = "Not a valid attendance QR code. Please try again.";
