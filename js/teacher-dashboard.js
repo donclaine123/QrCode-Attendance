@@ -787,16 +787,26 @@ async function addNewClass() {
     const className = document.getElementById('class-name').value.trim();
     const classSubject = document.getElementById('subject').value.trim();
     const classDescription = document.getElementById('description').value.trim();
-    const statusDiv = document.getElementById('classes-list');
+    // Modal elements
+    const modalOverlay = document.getElementById('status-modal-overlay');
+    const modalIconContainer = document.getElementById('status-modal-icon-container');
+    const modalMessage = document.getElementById('status-modal-message');
+    const addClassButton = document.getElementById('add-class-btn'); // Get button to disable/enable
     
-    if (!className) {
-        statusDiv.innerHTML = '<div class="error-message">Please enter a class name</div>' + statusDiv.innerHTML;
+    // Basic validation before showing modal
+    if (!className || !classSubject) { 
+        alert('Please enter both Class Name and Subject.'); // Simple alert for now
         return;
     }
     
+    // --- Show Loading Modal ---
+    modalIconContainer.innerHTML = '<div class="spinner"></div>'; // Show spinner
+    modalMessage.textContent = 'Adding class...';
+    modalOverlay.classList.add('visible');
+    addClassButton.disabled = true;
+    // --- End Show Loading Modal ---
+    
     try {
-        statusDiv.innerHTML = '<div class="processing-status">Adding class...</div>' + statusDiv.innerHTML;
-        
         const response = await fetch(`${API_URL}/auth/classes`, {
             method: 'POST',
             headers: {
@@ -813,17 +823,33 @@ async function addNewClass() {
         const data = await response.json();
         
         if (data.success) {
-            statusDiv.innerHTML = '<div class="success-message">Class added successfully!</div>' + statusDiv.innerHTML;
+            // --- Show Success Modal ---
+            modalIconContainer.innerHTML = '<span class="status-icon success">✅</span>';
+            modalMessage.textContent = 'Class added successfully!';
+            // --- End Show Success Modal ---
             document.getElementById('class-name').value = '';
             document.getElementById('subject').value = '';
             document.getElementById('description').value = '';
             await loadClasses(); // Reload classes
         } else {
-            statusDiv.innerHTML = `<div class="error-message">Error: ${data.message}</div>` + statusDiv.innerHTML;
+            // --- Show Error Modal ---
+            modalIconContainer.innerHTML = '<span class="status-icon error">❌</span>';
+            modalMessage.textContent = `Error: ${data.message}`;
+            // --- End Show Error Modal ---
         }
     } catch (error) {
         console.error('Error adding class:', error);
-        statusDiv.innerHTML = '<div class="error-message">Server error. Please try again.</div>' + statusDiv.innerHTML;
+        // --- Show Network Error Modal ---
+        modalIconContainer.innerHTML = '<span class="status-icon error">❌</span>';
+        modalMessage.textContent = 'Server error. Please try again.';
+        // --- End Show Network Error Modal ---
+    } finally {
+        // --- Hide Modal After Delay & Re-enable Button ---
+        setTimeout(() => {
+            modalOverlay.classList.remove('visible');
+        }, 2500); // Keep modal visible for 2.5 seconds
+        addClassButton.disabled = false;
+        // --- End Hide Modal & Re-enable ---
     }
 }
 

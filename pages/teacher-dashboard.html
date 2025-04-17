@@ -116,12 +116,12 @@
                     <option value="">-- Select a Class --</option>
                     <!-- Options populated by JS -->
                   </select>
-                </div>
-
+    </div>
+    
                 <div class="form-group icon-input-group">
                   <label for="qr-section-input"><span class="label-icon">👤</span> Section (Optional)</label>
                   <input type="text" id="qr-section-input" placeholder="e.g. A, B, Morning" class="form-control">
-                </div>
+      </div>
 
                 <div class="form-group icon-input-group">
                   <label for="duration-select"><span class="label-icon">⏱️</span> QR Code Validity</label>
@@ -317,6 +317,16 @@
         </div>
       </div>
     </main>
+
+    <!-- Status Modal -->
+    <div id="status-modal-overlay" class="modal-overlay">
+      <div id="status-modal-content" class="modal-content">
+        <div id="status-modal-icon-container"></div>
+        <p id="status-modal-message"></p>
+      </div>
+    </div>
+    <!-- End Status Modal -->
+
   </div>
 
   <!-- Configure API URL -->
