@@ -70,7 +70,7 @@ document.addEventListener('DOMContentLoaded', function() {
     if (logoutBtn) {
         logoutBtn.addEventListener('click', function(e) {
             e.preventDefault();
-            logout();
+            logout(this);
         });
     }
     
@@ -903,7 +903,7 @@ async function deleteClass(classId, deleteButtonElement) {
         // --- Hide Modal After Delay & Re-enable Button (if it still exists) ---
         setTimeout(() => {
             modalOverlay.classList.remove('visible');
-        }, 1500); // Keep modal visible for 2 seconds
+        }, 1500); // Keep modal visible for 1.5 seconds
         if (deleteButtonElement) deleteButtonElement.disabled = false; // Re-enable (though it might be gone)
         // --- End Hide Modal & Re-enable ---
     }
@@ -1213,7 +1213,24 @@ async function viewCurrentSessionAttendance() {
 }
 
 // Logout function
-async function logout() {
+async function logout(logoutButtonElement) {
+    // Modal elements
+    const modalOverlay = document.getElementById('status-modal-overlay');
+    const modalIconContainer = document.getElementById('status-modal-icon-container');
+    const modalMessage = document.getElementById('status-modal-message');
+
+    if (!modalOverlay || !modalIconContainer || !modalMessage) {
+        console.error("Status modal elements not found for logout action!");
+        // Proceed without modal if elements are missing
+    } else {
+        // --- Show Loading Modal ---
+        modalIconContainer.innerHTML = '<div class="spinner"></div>';
+        modalMessage.textContent = 'Logging out...';
+        modalOverlay.classList.add('visible');
+        if (logoutButtonElement) logoutButtonElement.disabled = true;
+        // --- End Show Loading Modal ---
+    }
+
     console.log("Logging out and stopping polling...");
     // Stop recent attendance polling
     if (recentAttendanceIntervalId) {
