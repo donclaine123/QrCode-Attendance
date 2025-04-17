@@ -125,7 +125,10 @@
         
         <div class="form-group">
           <label for="reg-password">Password</label>
-          <input type="password" id="reg-password" name="password" class="input-field" placeholder="Create a password" required>
+          <div class="password-input-wrapper">
+            <input type="password" id="reg-password" name="password" class="input-field" placeholder="Create a password" required>
+            <span class="toggle-password">👁️</span>
+          </div>
           <div class="password-strength">
             <div class="strength-meter">
               <div class="strength-meter-fill" id="strength-meter-fill"></div>
@@ -136,7 +139,10 @@
         
         <div class="input-group">
           <label for="confirm-password">Confirm Password</label>
-          <input type="password" id="confirm-password" class="input-field" required>
+          <div class="password-input-wrapper">
+            <input type="password" id="confirm-password" class="input-field" required>
+            <span class="toggle-password">👁️</span>
+          </div>
           <div id="password-match-error" class="error-message" style="display: none;">Passwords do not match.</div>
         </div>
         

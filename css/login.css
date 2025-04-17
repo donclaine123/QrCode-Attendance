@@ -143,6 +143,26 @@ label {
   min-height: 1em; /* Reserve space even when empty */
 }
 
+/* NEW: Password Input Wrapper & Toggle Icon */
+.password-input-wrapper {
+  position: relative;
+}
+
+.toggle-password {
+  position: absolute;
+  top: 50%;
+  right: 15px; /* Adjust as needed */
+  transform: translateY(-50%);
+  cursor: pointer;
+  color: var(--color-text-light);
+  user-select: none; /* Prevent text selection */
+  font-size: 1.2rem; /* Adjust icon size */
+}
+
+.toggle-password:hover {
+  color: var(--color-text);
+}
+
 .btn {
   display: block;
   width: 100%;

@@ -385,6 +385,30 @@ document.addEventListener('DOMContentLoaded', function() {
       confirmPasswordInput.addEventListener('input', validatePasswordMatch);
   }
   // --- END: Password Match Validation ---
+
+  // --- NEW: Password Visibility Toggle ---
+  function setupPasswordToggle(inputId, toggleId) {
+      const passwordInput = document.getElementById(inputId);
+      const toggleButton = passwordInput?.nextElementSibling; // Assuming the span is the next sibling
+
+      if (passwordInput && toggleButton && toggleButton.classList.contains('toggle-password')) {
+          toggleButton.addEventListener('click', () => {
+              // Toggle the type
+              const type = passwordInput.getAttribute('type') === 'password' ? 'text' : 'password';
+              passwordInput.setAttribute('type', type);
+
+              // Toggle the icon (example using simple text change)
+              toggleButton.textContent = type === 'password' ? '👁️' : '🙈'; // Eye / See-no-evil monkey
+          });
+      } else {
+          console.warn(`Password toggle setup failed for input: ${inputId}`);
+      }
+  }
+
+  // Setup for both password fields in the registration form
+  setupPasswordToggle('reg-password');
+  setupPasswordToggle('confirm-password');
+  // --- END: Password Visibility Toggle ---
 });
 
 // Get base path for redirects - handles both local and production
