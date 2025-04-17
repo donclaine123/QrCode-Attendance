@@ -903,7 +903,7 @@ async function deleteClass(classId, deleteButtonElement) {
         // --- Hide Modal After Delay & Re-enable Button (if it still exists) ---
         setTimeout(() => {
             modalOverlay.classList.remove('visible');
-        }, 2000); // Keep modal visible for 2 seconds
+        }, 1500); // Keep modal visible for 2 seconds
         if (deleteButtonElement) deleteButtonElement.disabled = false; // Re-enable (though it might be gone)
         // --- End Hide Modal & Re-enable ---
     }
