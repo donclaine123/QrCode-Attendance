@@ -565,3 +565,42 @@ function formatLocalDateTime(date) { // Renamed from formatDateToUTC8
         return 'Unknown Date';
     }
 }
+
+// Function to handle the detected QR code data
+function handleQrCode(code) {
+    if (code && code.data) {
+        console.log(`QR Code detected: ${code.data}`);
+        const scanStatusDiv = document.getElementById('scanStatus');
+        scanStatusDiv.textContent = 'QR Code Detected! Processing...';
+        videoElement.pause(); // Pause the video stream
+
+        // --- Show Loading Modal ---
+        const modalOverlay = document.getElementById('status-modal-overlay');
+        const modalIconContainer = document.getElementById('status-modal-icon-container');
+        const modalMessage = document.getElementById('status-modal-message');
+
+        if (!modalOverlay || !modalIconContainer || !modalMessage) {
+            console.error("Status modal elements not found for scan action!");
+            // Proceed without modal if elements are missing, but log error
+        } else {
+            modalIconContainer.innerHTML = '<div class="spinner"></div>';
+            modalMessage.textContent = 'Processing scan...';
+            modalOverlay.classList.add('visible');
+            // No need to disable buttons here as we are navigating away
+        }
+        // --- End Show Loading Modal ---
+
+        // Stop the scanner animation/loop
+        if (animationFrameId) {
+            cancelAnimationFrame(animationFrameId);
+            animationFrameId = null;
+        }
+
+        // Navigate to the backend endpoint for processing
+        // The modal will remain visible until the browser navigates
+        window.location.href = code.data;
+
+    } else {
+        scanStatusDiv.textContent = 'Scanning...';
+    }
+}
