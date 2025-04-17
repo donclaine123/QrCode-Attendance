@@ -756,7 +756,7 @@ async function loadClasses() {
                 classesContainer.innerHTML = `
                     <div class="empty-state">
                         <p>You haven't created any classes yet.</p>
-                        <p>Add your first class using the form below.</p>
+                        <p>Add your first class using the Add Class Form.</p>
                     </div>
                 `;
             }
@@ -847,7 +847,7 @@ async function addNewClass() {
         // --- Hide Modal After Delay & Re-enable Button ---
         setTimeout(() => {
             modalOverlay.classList.remove('visible');
-        }, 2500); // Keep modal visible for 2.5 seconds
+        }, 1800); // Keep modal visible for 2 seconds
         addClassButton.disabled = false;
         // --- End Hide Modal & Re-enable ---
     }
@@ -903,7 +903,7 @@ async function deleteClass(classId, deleteButtonElement) {
         // --- Hide Modal After Delay & Re-enable Button (if it still exists) ---
         setTimeout(() => {
             modalOverlay.classList.remove('visible');
-        }, 2500); // Keep modal visible for 2.5 seconds
+        }, 2000); // Keep modal visible for 2 seconds
         if (deleteButtonElement) deleteButtonElement.disabled = false; // Re-enable (though it might be gone)
         // --- End Hide Modal & Re-enable ---
     }
