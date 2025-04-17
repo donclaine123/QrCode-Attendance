@@ -748,7 +748,7 @@ async function loadClasses() {
                     button.addEventListener('click', async function() {
                         const classId = this.getAttribute('data-id');
                         if (confirm('Are you sure you want to delete this class?')) {
-                            await deleteClass(classId);
+                            await deleteClass(classId, this);
                         }
                     });
                 });
@@ -854,23 +854,58 @@ async function addNewClass() {
 }
 
 // Delete a class
-async function deleteClass(classId) {
+async function deleteClass(classId, deleteButtonElement) {
+    // Modal elements
+    const modalOverlay = document.getElementById('status-modal-overlay');
+    const modalIconContainer = document.getElementById('status-modal-icon-container');
+    const modalMessage = document.getElementById('status-modal-message');
+
+    if (!modalOverlay || !modalIconContainer || !modalMessage) {
+        console.error("Status modal elements not found for delete action!");
+        alert("Error: Cannot show status. UI elements missing."); // Fallback alert
+        return;
+    }
+
+    // --- Show Loading Modal ---
+    modalIconContainer.innerHTML = '<div class="spinner"></div>';
+    modalMessage.textContent = 'Deleting class...';
+    modalOverlay.classList.add('visible');
+    if (deleteButtonElement) deleteButtonElement.disabled = true; // Disable the specific button
+    // --- End Show Loading Modal ---
+
     try {
         const response = await fetch(`${API_URL}/auth/classes/${classId}`, {
             method: 'DELETE',
             credentials: 'include'
         });
-        
+
         const data = await response.json();
-        
+
         if (data.success) {
+            // --- Show Success Modal ---
+            modalIconContainer.innerHTML = '<span class="status-icon success">✅</span>';
+            modalMessage.textContent = 'Class deleted successfully!';
+            // --- End Show Success Modal ---
             await loadClasses(); // Reload classes
         } else {
-            alert(`Error: ${data.message}`);
+            // --- Show Error Modal ---
+            modalIconContainer.innerHTML = '<span class="status-icon error">❌</span>';
+            modalMessage.textContent = `Error: ${data.message}`;
+            // --- End Show Error Modal ---
         }
     } catch (error) {
         console.error('Error deleting class:', error);
-        alert('Server error. Please try again.');
+        // --- Show Network Error Modal ---
+        modalIconContainer.innerHTML = '<span class="status-icon error">❌</span>';
+        modalMessage.textContent = 'Server error. Please try again.';
+        // --- End Show Network Error Modal ---
+    } finally {
+        // --- Hide Modal After Delay & Re-enable Button (if it still exists) ---
+        setTimeout(() => {
+            modalOverlay.classList.remove('visible');
+        }, 2500); // Keep modal visible for 2.5 seconds
+        if (deleteButtonElement) deleteButtonElement.disabled = false; // Re-enable (though it might be gone)
+        // --- End Hide Modal & Re-enable ---
     }
 }
 
