@@ -608,23 +608,35 @@ document.addEventListener('DOMContentLoaded', () => {
 async function showAttendancePopup(sessionId, teacherId, subject) {
     console.log("Processing attendance automatically via global modal...");
 
-    // --- Get Modal Elements ---
-    const modalOverlay = document.getElementById('status-modal-overlay');
-    const modalIconContainer = document.getElementById('status-modal-icon-container');
-    const modalMessage = document.getElementById('status-modal-message');
+    // Use setTimeout to ensure DOM is ready before accessing/showing modal
+    setTimeout(async () => {
+        // --- Get Modal Elements INSIDE setTimeout ---
+        const modalOverlay = document.getElementById('status-modal-overlay');
+        const modalIconContainer = document.getElementById('status-modal-icon-container');
+        const modalMessage = document.getElementById('status-modal-message');
 
-    if (!modalOverlay || !modalIconContainer || !modalMessage) {
-        console.error("Status modal elements not found for attendance recording!");
-        alert("Processing attendance... Check console for details."); // Fallback alert
-        // Still attempt to record attendance below, just without modal feedback
-    } else {
-        // --- Show Loading Modal ---
-        modalIconContainer.innerHTML = '<div class="spinner"></div>';
-        modalMessage.textContent = 'Analyzing QR & Recording...';
-        modalOverlay.classList.add('visible');
-        // --- End Show Loading Modal ---
-    }
+        if (!modalOverlay || !modalIconContainer || !modalMessage) {
+            console.error("Status modal elements STILL not found for attendance recording!");
+            alert("Processing attendance... Check console for details."); // Fallback alert
+            // Attempt to record attendance without modal feedback if elements are missing
+            await recordAttendanceFetch(sessionId); 
+            return; // Exit setTimeout callback
+        } else {
+            // --- Show Loading Modal ---
+            modalIconContainer.innerHTML = '<div class="spinner"></div>';
+            modalMessage.textContent = 'Analyzing QR & Recording...';
+            modalOverlay.classList.add('visible');
+            // --- End Show Loading Modal ---
+        }
 
+        // Now perform the fetch and update logic
+        await recordAttendanceFetch(sessionId, modalOverlay, modalIconContainer, modalMessage);
+
+    }, 50); // 50ms delay - adjust if needed, but keep small
+}
+
+// Separate function for the fetch/update logic to keep it clean
+async function recordAttendanceFetch(sessionId, modalOverlay = null, modalIconContainer = null, modalMessage = null) {
     try {
         // Corrected endpoint path to include /auth
         const response = await fetch(`${API_URL}/auth/record-attendance`, { 

@@ -22,9 +22,6 @@ document.addEventListener("DOMContentLoaded", async () => {
   let scanning = false;
   let stream = null;
 
-  // Scan loop
-  let animationFrameId = null; // Keep track of the animation frame
-
   // Check authentication first
   try {
     console.log("Checking authentication on page load...");
@@ -290,79 +287,137 @@ document.addEventListener("DOMContentLoaded", async () => {
   }
 
   function scanQRCode() {
-    if (!scanning || !video || video.readyState !== video.HAVE_ENOUGH_DATA) {
-      if (scanning) animationFrameId = requestAnimationFrame(scanQRCode); // Keep trying if video not ready
-      return;
-    }
+    if (!scanning) return;
 
     try {
       const context = canvas.getContext('2d');
-      canvas.width = video.videoWidth;
-      canvas.height = video.videoHeight;
-      context.drawImage(video, 0, 0, canvas.width, canvas.height);
-      const imageData = context.getImageData(0, 0, canvas.width, canvas.height);
-
-      // Use jsQR library to detect QR code
-      const code = jsQR(imageData.data, imageData.width, imageData.height, {
-        inversionAttempts: "dontInvert",
-      });
-
-      if (code && code.data) {
-        // Found a QR code! Stop scanning and handle it.
-        scanning = false;
-        stopScanner(); // Stop camera, etc.
-        startScanBtn.textContent = "Start Scanner"; // Reset button text
-        handleQrCode(code); // Call the handler function
-        return; // Exit the loop
-      } else {
-        // No QR code found, continue scanning
-        animationFrameId = requestAnimationFrame(scanQRCode);
+      const video = document.getElementById('video');
+      
+      if (video.readyState === video.HAVE_ENOUGH_DATA) {
+        // Get video dimensions
+        const videoWidth = video.videoWidth;
+        const videoHeight = video.videoHeight;
+        
+        // Set canvas to match video dimensions
+        canvas.width = videoWidth;
+        canvas.height = videoHeight;
+        
+        // Draw video frame to canvas
+        context.drawImage(video, 0, 0, videoWidth, videoHeight);
+        
+        // Get image data for QR code detection
+        const imageData = context.getImageData(0, 0, videoWidth, videoHeight);
+        
+        try {
+          // Use jsQR library to detect QR code
+          const qrCode = jsQR(imageData.data, imageData.width, imageData.height, {
+            inversionAttempts: "dontInvert",
+          });
+          
+          if (qrCode) {
+            console.log("QR Code detected:", qrCode.data);
+            
+            // Stop scanning
+            scanning = false;
+            
+            // Process QR code data
+            processQRCode(qrCode.data);
+            return;
+          }
+        } catch (qrError) {
+          console.error("QR processing error:", qrError);
+        }
       }
+      
+      // Continue scanning
+      requestAnimationFrame(scanQRCode);
     } catch (error) {
-      console.error("Error during QR Scanning loop:", error);
-      scanStatus.textContent = "Error during scan. Please try again.";
-      stopScanner();
-      startScanBtn.textContent = "Start Scanner";
+      console.error("Error in scanQRCode:", error);
       scanning = false;
+      scanStatus.textContent = "Scanner error. Please try again.";
     }
   }
 
-  // Function to handle the detected QR code data (shows modal and navigates)
-  function handleQrCode(code) {
-    if (code && code.data) {
-        console.log(`QR Code detected: ${code.data}`);
-        // scanStatus.textContent = 'QR Code Detected! Processing...'; // Modal shows this now
-        // video.pause(); // stopScanner already handles pausing/stopping video
-
-        // --- Show Loading Modal ---
-        const modalOverlay = document.getElementById('status-modal-overlay');
-        const modalIconContainer = document.getElementById('status-modal-icon-container');
-        const modalMessage = document.getElementById('status-modal-message');
-
-        if (!modalOverlay || !modalIconContainer || !modalMessage) {
-            console.error("Status modal elements not found for scan action!");
-            // Proceed without modal if elements are missing, but log error
-        } else {
-            modalIconContainer.innerHTML = '<div class="spinner"></div>';
-            modalMessage.textContent = 'Processing scan...';
-            modalOverlay.classList.add('visible');
+  async function processQRCode(qrData) {
+    try {
+      console.log("QR Code data:", qrData);
+      scanStatus.textContent = "QR Code detected! Processing...";
+      
+      if (!qrData || typeof qrData !== 'string') {
+        scanStatus.textContent = "Invalid QR code format. Please try again.";
+        return;
+      }
+      
+      // Handle different URL formats (direct, proxy, or relative)
+      let sessionId, teacherId, subject;
+      
+      // Check if it's a URL for our attendance system
+      if (qrData.includes('/attend?') || qrData.includes('/auth/attend?')) {
+        try {
+          // Extract session ID and teacher ID from URL
+          const url = new URL(qrData);
+          sessionId = url.searchParams.get('session');
+          teacherId = url.searchParams.get('teacher');
+          subject = url.searchParams.get('subject');
+        } catch (urlError) {
+          console.error("URL parsing error:", urlError);
+          
+          // Try to extract parameters directly from the string as fallback
+          const urlParams = new URLSearchParams(qrData.split('?')[1]);
+          sessionId = urlParams.get('session');
+          teacherId = urlParams.get('teacher');
+          subject = urlParams.get('subject');
         }
-        // --- End Show Loading Modal ---
-
-        // Stop the scanner animation/loop (redundant if called from scanQRCode, but safe)
-        if (animationFrameId) {
-            cancelAnimationFrame(animationFrameId);
-            animationFrameId = null;
+        
+        if (!sessionId || !teacherId) {
+          scanStatus.textContent = "Invalid QR code. Missing required parameters.";
+          return;
         }
-
-        // Navigate to the backend endpoint for processing
-        // The modal will remain visible until the browser navigates
-        console.log(`Navigating to: ${code.data}`);
-        window.location.href = code.data;
-
-    } else {
-        console.warn("handleQrCode called with invalid code object");
-        scanStatus.textContent = 'Error handling QR code.';
+        
+        console.log("Valid attendance QR code detected");
+        console.log("Session ID:", sessionId);
+        console.log("Teacher ID:", teacherId);
+        console.log("Subject:", subject || "Not specified");
+        
+        // Automatically stop scanner after successful scan
+        stopScanner();
+        startScanBtn.textContent = "Start Scanner";
+        scanning = false;
+        
+        // Show attendance popup
+        await showAttendancePopup(sessionId, teacherId, subject);
+        
+        return;
+      }
+      
+      // Parse JSON data if it's not a URL
+      try {
+        const jsonData = JSON.parse(qrData);
+        console.log("Parsed JSON data:", jsonData);
+        
+        if (jsonData.type === 'attendance' && jsonData.sessionId && jsonData.teacherId) {
+          console.log("JSON attendance QR code detected");
+          
+          // Automatically stop scanner after successful scan
+          stopScanner();
+          startScanBtn.textContent = "Start Scanner";
+          scanning = false;
+          
+          // Show attendance popup
+          await showAttendancePopup(jsonData.sessionId, jsonData.teacherId, jsonData.subject);
+          
+          return;
+        }
+        
+        scanStatus.textContent = "Unknown QR code format. Please try a valid attendance QR code.";
+        
+      } catch (jsonError) {
+        console.log("Not a JSON QR code. Processing as plain text.");
+        scanStatus.textContent = "Not a valid attendance QR code. Please try again.";
+      }
+    } catch (error) {
+      console.error("Error processing QR code:", error);
+      scanStatus.textContent = "Error processing QR code: " + error.message;
     }
   }
 
@@ -508,5 +563,44 @@ function formatLocalDateTime(date) { // Renamed from formatDateToUTC8
     } catch (error) {
         console.error('Date formatting error:', error);
         return 'Unknown Date';
+    }
+}
+
+// Function to handle the detected QR code data
+function handleQrCode(code) {
+    if (code && code.data) {
+        console.log(`QR Code detected: ${code.data}`);
+        const scanStatusDiv = document.getElementById('scanStatus');
+        scanStatusDiv.textContent = 'QR Code Detected! Processing...';
+        videoElement.pause(); // Pause the video stream
+
+        // --- Show Loading Modal ---
+        const modalOverlay = document.getElementById('status-modal-overlay');
+        const modalIconContainer = document.getElementById('status-modal-icon-container');
+        const modalMessage = document.getElementById('status-modal-message');
+
+        if (!modalOverlay || !modalIconContainer || !modalMessage) {
+            console.error("Status modal elements not found for scan action!");
+            // Proceed without modal if elements are missing, but log error
+        } else {
+            modalIconContainer.innerHTML = '<div class="spinner"></div>';
+            modalMessage.textContent = 'Processing scan...';
+            modalOverlay.classList.add('visible');
+            // No need to disable buttons here as we are navigating away
+        }
+        // --- End Show Loading Modal ---
+
+        // Stop the scanner animation/loop
+        if (animationFrameId) {
+            cancelAnimationFrame(animationFrameId);
+            animationFrameId = null;
+        }
+
+        // Navigate to the backend endpoint for processing
+        // The modal will remain visible until the browser navigates
+        window.location.href = code.data;
+
+    } else {
+        scanStatusDiv.textContent = 'Scanning...';
     }
 }

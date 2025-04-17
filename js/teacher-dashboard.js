@@ -878,9 +878,9 @@ async function deleteClass(classId, deleteButtonElement) {
             method: 'DELETE',
             credentials: 'include'
         });
-
+        
         const data = await response.json();
-
+        
         if (data.success) {
             // --- Show Success Modal ---
             modalIconContainer.innerHTML = '<span class="status-icon success">✅</span>';
