@@ -1503,9 +1503,21 @@ async function handleDeleteActiveSession(event) {
         if (data.success) {
             // Remove the row from the table
             console.log(`DEBUG: Delete successful for ${sessionId}. Attempting to remove row from UI.`);
-            const rowToRemove = button.closest('tr');
-            console.log(`DEBUG: Found row element to remove:`, rowToRemove);
-            button.closest('tr').remove();
+            // Re-find the specific button and row AFTER the await, using sessionId
+            let tableBody = document.querySelector('#active-sessions-table tbody');
+            const buttonInTable = tableBody ? tableBody.querySelector(`.delete-btn[data-session-id="${sessionId}"]`) : null;
+            const rowToRemove = buttonInTable ? buttonInTable.closest('tr') : null;
+
+            console.log(`DEBUG: Re-found button element:`, buttonInTable);
+            console.log(`DEBUG: Re-found row element to remove:`, rowToRemove);
+
+            if (rowToRemove) {
+                rowToRemove.remove();
+            } else {
+                console.warn(`DEBUG: Could not re-find row for session ${sessionId} to remove it from UI.`);
+                // Optionally force a full reload of the list as a fallback
+                // window.loadActiveQrSessions(); 
+            }
             console.log(`DEBUG: Row remove() called.`);
  
             // --- Check if the deleted session was the one displayed --- 
@@ -1516,11 +1528,10 @@ async function handleDeleteActiveSession(event) {
             // --- End Check --- 
 
              // Check if table body is empty, if so hide section or show message
-             const tableBody = document.querySelector('#active-sessions-table tbody');
-              if (tableBody && tableBody.rows.length === 0) {
-                  // Instead of hiding, show the empty state message
-                  tableBody.innerHTML = '<tr><td colspan="5" style="text-align: center;">No active sessions found.</td></tr>'; 
-              }
+             if (tableBody && tableBody.rows.length === 0) {
+                 // Instead of hiding, show the empty state message
+                 tableBody.innerHTML = '<tr><td colspan="5" style="text-align: center;">No active sessions found.</td></tr>'; 
+             }
              // Potentially clear the main QR display if it was showing this session
              // clearQrDisplay(); // Hypothetical function
         } else {
