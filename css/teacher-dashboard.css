@@ -1270,7 +1270,6 @@ body {
   padding: var(--spacing-md);
   border-radius: var(--border-radius-sm);
   font-size: 0.9rem;
-  min-width: 70px; /* Ensure minimum width */
   text-align: center;
   position: relative;
 }

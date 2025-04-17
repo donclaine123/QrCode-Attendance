@@ -131,9 +131,9 @@ document.addEventListener('DOMContentLoaded', function() {
             const contentHeader = document.querySelector('.content-header');
             if (contentHeader) {
                 contentHeader.style.textAlign = isQrSectionActive ? 'center' : 'left';
-            }
+                }
+            });
         });
-    });
     
     // Attach session select listener (now safe to attach here)
     const sessionSelect = document.getElementById('session-select'); 
@@ -713,7 +713,7 @@ async function loadClasses() {
             if (totalClassesValue) {
                 totalClassesValue.textContent = data.classes?.length || 0;
             }
-
+            
             if (data.classes && data.classes.length > 0) {
                 // Add classes to selects and class list
                 data.classes.forEach(cls => {
