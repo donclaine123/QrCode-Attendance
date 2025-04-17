@@ -1502,13 +1502,13 @@ async function handleDeleteActiveSession(event) {
             // Remove the row from the table
             button.closest('tr').remove();
              // Check if table body is empty, if so hide section or show message
-            const tableBody = document.querySelector('#active-sessions-table tbody');
-             if (tableBody && tableBody.rows.length === 0) {
-                 document.getElementById('active-sessions-section').style.display = 'none';
-                 // Or: tableBody.innerHTML = '<tr><td colspan="5" style="text-align: center;">No active sessions found.</td></tr>';
-             }
-            // Potentially clear the main QR display if it was showing this session
-            // clearQrDisplay(); // Hypothetical function
+             const tableBody = document.querySelector('#active-sessions-table tbody');
+              if (tableBody && tableBody.rows.length === 0) {
+                  // Instead of hiding, show the empty state message
+                  tableBody.innerHTML = '<tr><td colspan="5" style="text-align: center;">No active sessions found.</td></tr>'; 
+              }
+             // Potentially clear the main QR display if it was showing this session
+             // clearQrDisplay(); // Hypothetical function
         } else {
             alert(`Error deleting session: ${data.message}`);
             button.textContent = 'Delete';
