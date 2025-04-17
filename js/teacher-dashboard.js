@@ -729,18 +729,13 @@ async function loadClasses() {
                     attOption.textContent = cls.class_name || cls.name;
                     attendanceClassSelect.appendChild(attOption);
                     
-                    // Generate class code abbreviation from CLASS NAME
-                    let classCodeAbbreviation = (cls.class_name || 'CLS').split(' ').map(word => word[0]).join('').substring(0, 4).toUpperCase();
-                    // Alternative: First word, up to 4 chars
-                    // let classCodeAbbreviation = (cls.class_name || 'CLS').split(' ')[0].substring(0,4).toUpperCase();
-
-                    // Add to class list - FINAL STRUCTURE (Abbreviation in box, Subject next to it)
+                    // Add to class list - FINAL FINAL STRUCTURE (Subject Code in box, Class Name next to it)
                     const classItem = document.createElement('div');
                     classItem.className = 'class-list-item'; 
                     classItem.innerHTML = `
-                        <div class="class-code">${classCodeAbbreviation}</div> <!-- Abbreviation in the code box -->
+                        <div class="class-code">${cls.subject || 'N/A'}</div> <!-- Subject Code in the code box -->
                         <div class="class-info">
-                            <h4 class="class-name">${cls.subject || 'No Subject'}</h4> <!-- Subject here -->
+                            <h4 class="class-name">${cls.class_name || cls.name}</h4> <!-- Class Name here -->
                             <p class="class-description">${cls.description || 'No description'}</p>
                         </div>
                          <button class="btn btn-sm btn-danger delete-class" data-id="${cls.id}">Delete</button>
