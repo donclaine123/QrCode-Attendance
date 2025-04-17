@@ -787,27 +787,24 @@ body {
 /* --- End Profile Section Styles --- */
 
 /* --- Status Modal Styles --- */
-/* Base overlay style - hidden by default */
-#status-modal-overlay {
+.modal-overlay {
   position: fixed;
   top: 0;
   left: 0;
   width: 100%;
   height: 100%;
   background-color: rgba(0, 0, 0, 0.5);
-  display: none; /* Use display none/flex for visibility */
+  display: none;
   justify-content: center;
   align-items: center;
   z-index: 1000;
 }
 
-/* Make overlay visible */
-#status-modal-overlay.visible {
+.modal-overlay.visible {
   display: flex;
 }
 
-/* Content box style */
-#status-modal-content {
+.modal-content {
   background-color: var(--color-white);
   padding: var(--spacing-xl) var(--spacing-xxl);
   border-radius: var(--border-radius-md);
@@ -816,7 +813,6 @@ body {
   max-width: 300px;
 }
 
-/* Icon/Spinner container style */
 #status-modal-icon-container {
   margin-bottom: var(--spacing-lg);
   min-height: 50px;
@@ -825,7 +821,7 @@ body {
   align-items: center;
 }
 
-/* Spinner style */
+/* Reusing existing spinner animation */
 #status-modal-icon-container .spinner {
   border: 4px solid var(--color-secondary);
   border-top: 4px solid var(--color-primary);
@@ -835,13 +831,7 @@ body {
   animation: spin 1s linear infinite;
 }
 
-/* Define spin animation if not already defined */
-@keyframes spin {
-  0% { transform: rotate(0deg); }
-  100% { transform: rotate(360deg); }
-}
-
-/* Success/Error icon styles */
+/* Success/Error Icons (using emojis) */
 #status-modal-icon-container .status-icon {
   font-size: 3rem;
 }
@@ -854,7 +844,6 @@ body {
   color: var(--color-danger);
 }
 
-/* Message text style */
 #status-modal-message {
   font-size: 1rem;
   color: var(--color-text);
