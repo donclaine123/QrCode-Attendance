@@ -806,15 +806,18 @@ body {
 
 .modal-content {
   background-color: var(--color-white);
-  padding: var(--spacing-xl) var(--spacing-xxl);
+  padding: var(--spacing-xl); /* Adjust padding if needed */
   border-radius: var(--border-radius-md);
   box-shadow: var(--shadow-lg);
-  text-align: center;
+  /* Use flexbox for content alignment */
+  display: flex;
+  flex-direction: column;
+  align-items: center; /* Center items horizontally */
   max-width: 300px;
 }
 
 #status-modal-icon-container {
-  margin-bottom: var(--spacing-lg);
+  margin-bottom: var(--spacing-md); /* Adjust margin if needed */
   min-height: 50px;
   display: flex;
   justify-content: center;
