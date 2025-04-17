@@ -1479,3 +1479,28 @@ body {
   line-height: 1.5;
 }
 /* --- End Status Modal Styles --- */
+
+/* New style for the header containing the button */
+.card-like-header {
+  display: flex;
+  justify-content: space-between; /* Pushes title left, button right */
+  align-items: center; /* Vertically aligns title and button */
+  padding: var(--spacing-md) var(--spacing-lg); /* Padding inside header */
+  border-bottom: 1px solid var(--color-secondary-dark); /* Separator line */
+  margin-bottom: 0; /* Remove default h2 margin */
+  background-color: var(--color-white); /* Match container background */
+  position: sticky; /* Keep sticky if needed */
+  top: 0;
+  z-index: 1;
+}
+
+.card-like-header span {
+  font-size: 1.1rem; /* Control title font size */
+  font-weight: 600;
+  color: var(--color-text);
+}
+
+/* Adjust button margin if needed */
+.card-like-header .btn {
+  margin-left: var(--spacing-md); /* Add some space to the left of the button */
+}
