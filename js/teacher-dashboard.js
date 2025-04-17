@@ -729,15 +729,15 @@ async function loadClasses() {
                     attOption.textContent = cls.class_name || cls.name;
                     attendanceClassSelect.appendChild(attOption);
                     
-                    // Add to class list - NEW STRUCTURE
+                    // Add to class list - CORRECTED STRUCTURE
                     const classItem = document.createElement('div');
-                    classItem.className = 'class-list-item'; // Use a new class name
+                    classItem.className = 'class-list-item'; 
                     classItem.innerHTML = `
-                        <div class="class-code">${cls.subject || 'N/A'}</div>
-                        <div class="class-info">
-                            <h4 class="class-name">${cls.class_name || cls.name}</h4>
-                            <p class="class-description">${cls.description || 'No description'}</p>
-                        </div>
+                       <div class="class-code">${cls.subject || 'N/A'}</div> <!-- Subject in the code box -->
+                       <div class="class-info">
+                           <h4 class="class-name">${cls.class_name || cls.name}</h4> <!-- Class Name here -->
+                           <p class="class-description">${cls.description || 'No description'}</p>
+                       </div>
                         <button class="btn btn-sm btn-danger delete-class" data-id="${cls.id}">Delete</button>
                     `;
                     classesContainer.appendChild(classItem);
