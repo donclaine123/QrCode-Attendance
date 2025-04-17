@@ -1261,6 +1261,9 @@ body {
 
 .class-list-item:hover {
   box-shadow: var(--shadow-sm);
+  background-color: var(--color-secondary);
+  transform: translateY(-2px);
+  transition: box-shadow 0.2s ease, background-color 0.2s ease, transform 0.2s ease;
 }
 
 .class-code {
