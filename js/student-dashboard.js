@@ -83,7 +83,7 @@ document.addEventListener('DOMContentLoaded', function() {
     if (logoutBtn) {
         logoutBtn.addEventListener('click', function(e) {
             e.preventDefault();
-            logout();
+            logout(this);
         });
         console.log('Logout button event listener added');
     } else {
@@ -443,7 +443,25 @@ function showError(message) {
 }
 
 // Logout function
-async function logout() {
+async function logout(logoutButtonElement) {
+    // Modal elements
+    const modalOverlay = document.getElementById('status-modal-overlay');
+    const modalIconContainer = document.getElementById('status-modal-icon-container');
+    const modalMessage = document.getElementById('status-modal-message');
+
+    if (!modalOverlay || !modalIconContainer || !modalMessage) {
+        console.error("Status modal elements not found for logout action!");
+        // Proceed without modal if elements are missing
+    } else {
+        // --- Show Loading Modal ---
+        modalIconContainer.innerHTML = '<div class="spinner"></div>';
+        modalMessage.textContent = 'Logging out...';
+        modalOverlay.classList.add('visible');
+        if (logoutButtonElement) logoutButtonElement.disabled = true;
+        // --- End Show Loading Modal ---
+    }
+
+    console.log("Logging out...");
     try {
         // Call the logout endpoint
         const response = await fetch(`${API_URL}/auth/logout`, {
