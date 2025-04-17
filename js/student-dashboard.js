@@ -180,14 +180,6 @@ async function initDashboard() {
             if (welcomeMessage) {
                 welcomeMessage.textContent = `Welcome, ${userName}!`;
             }
-            
-            // Show student section
-            const studentSection = document.getElementById('student-section');
-            if (studentSection) {
-                studentSection.style.display = 'block';
-            }
-            
-            // No longer need to load enrolled classes
         }
     } catch (error) {
         console.error("Error initializing dashboard:", error);
