@@ -1532,7 +1532,6 @@ body {
 
   .main-content {
     margin-left: 0; /* Take full width */
-    padding-top: 60px; /* Add padding to avoid overlap with fixed button */
   }
 
   /* Ensure sidebar content is scrollable if needed */
