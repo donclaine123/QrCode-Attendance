@@ -702,10 +702,12 @@ async function recordAttendanceFetch(sessionId, modalOverlay = null, modalIconCo
 function setupMobileMenu() {
     const toggleBtn = document.getElementById('mobile-menu-toggle');
     const sidebar = document.querySelector('.sidebar');
+    const overlay = document.getElementById('mobile-menu-overlay'); // Get overlay
 
-    if (toggleBtn && sidebar) {
+    if (toggleBtn && sidebar && overlay) { // Check overlay exists
         toggleBtn.addEventListener('click', () => {
             sidebar.classList.toggle('mobile-open');
+            overlay.classList.toggle('visible'); // Toggle overlay visibility
             // Hide button when menu opens, show when it closes (on mobile)
             if (window.innerWidth <= 768) { // Only apply on mobile view
                 toggleBtn.style.display = sidebar.classList.contains('mobile-open') ? 'none' : 'block';
@@ -718,6 +720,7 @@ function setupMobileMenu() {
                 // Only close if it's currently open (for mobile view)
                 if (sidebar.classList.contains('mobile-open')) {
                     sidebar.classList.remove('mobile-open');
+                    overlay.classList.remove('visible'); // Hide overlay
                     // Ensure button reappears when menu closes via link click
                     if (window.innerWidth <= 768) {
                         toggleBtn.style.display = 'block'; 
@@ -731,16 +734,26 @@ function setupMobileMenu() {
         if (mainContent) {
             mainContent.addEventListener('click', (event) => {
                 if (sidebar.classList.contains('mobile-open') && !sidebar.contains(event.target) && !toggleBtn.contains(event.target)) {
+                    sidebar.classList.remove('mobile-open');
+                    overlay.classList.remove('visible'); // Hide overlay
                     // Ensure button reappears when menu closes via outside click
                     if (window.innerWidth <= 768) {
                          toggleBtn.style.display = 'block';
                     }
-                    sidebar.classList.remove('mobile-open');
                 }
             });
         }
+
+        // Add listener to overlay to close menu
+        overlay.addEventListener('click', () => {
+            sidebar.classList.remove('mobile-open');
+            overlay.classList.remove('visible');
+            if (window.innerWidth <= 768) { // Show toggle button
+                toggleBtn.style.display = 'block'; 
+            }
+        });
     } else {
-        console.warn("Mobile menu toggle button or sidebar not found.");
+        console.warn("Mobile menu toggle button, sidebar, or overlay not found.");
     }
 }
 // --- End Mobile Menu Toggle --- 
