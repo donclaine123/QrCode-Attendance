@@ -1564,14 +1564,3 @@ body {
 .card-like-header .btn {
   margin-left: var(--spacing-md); /* Add some space to the left of the button */
 }
-
-/* Main content title styling */
-.main-content-title {
-  font-size: 1.8rem;
-  font-weight: 600;
-  color: var(--color-primary);
-  margin: var(--spacing-md) 0 var(--spacing-lg) 0;
-  padding-bottom: var(--spacing-sm);
-  border-bottom: 2px solid var(--color-primary-light);
-  display: none; /* Hidden by default, will be shown via JS */
-}
