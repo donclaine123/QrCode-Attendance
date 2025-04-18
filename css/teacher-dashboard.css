@@ -721,7 +721,7 @@ body {
 
   /* Prevent mobile menu button from becoming full width */
   .mobile-menu-btn {
-    width: auto;
+  width: auto;
   }
 
   /* Ensure buttons in QR actions stack nicely */
