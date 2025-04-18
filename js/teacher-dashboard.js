@@ -128,7 +128,9 @@ document.addEventListener('DOMContentLoaded', function () {
                     pageTitle.style.display = 'block';
                     pageTitle.style.textAlign = 'center';
                 } else {
-                    pageTitle.style.display = 'none';
+                    pageTitle.textContent = 'Dashboard';
+                    pageTitle.style.display = 'block';
+                    pageTitle.style.textAlign = 'center';
                 }
             }
             if (pageSubtitle) {
@@ -148,7 +150,9 @@ document.addEventListener('DOMContentLoaded', function () {
                     pageSubtitle.style.display = 'block';
                     pageSubtitle.style.textAlign = 'center';
                 } else {
-                    pageSubtitle.style.display = 'none';
+                    pageSubtitle.textContent = 'Welcome to the Teacher Dashboard';
+                    pageSubtitle.style.display = 'block';
+                    pageSubtitle.style.textAlign = 'center';
                 }
             }
             // Ensure header is centered only for QR page?
