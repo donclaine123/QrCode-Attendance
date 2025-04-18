@@ -98,11 +98,17 @@ document.addEventListener('DOMContentLoaded', function() {
             const attendanceSection = document.getElementById('attendance-section');
             const pageTitle = document.querySelector('.page-title'); // Get the title element
             const pageSubtitle = document.querySelector('.page-subtitle'); // Get the subtitle element
+            const dashboardTitle = document.getElementById('dashboard-main-title'); // Get the dashboard title
 
             if (overview) overview.style.display = (this.id === 'dashboard-nav') ? 'block' : 'none';
             if (qrSection) qrSection.style.display = (this.id === 'generate-qr-btn') ? 'block' : 'none';
             if (classesSection) classesSection.style.display = (this.id === 'manage-classes-btn') ? 'block' : 'none';
             if (attendanceSection) attendanceSection.style.display = (this.id === 'view-attendance-btn') ? 'block' : 'none';
+            
+            // Show dashboard title only when on dashboard view
+            if (dashboardTitle) {
+                dashboardTitle.style.display = (this.id === 'dashboard-nav') ? 'block' : 'none';
+            }
 
             // Show/hide the title and subtitle based on the active section
             const isQrSectionActive = this.id === 'generate-qr-btn';
@@ -600,10 +606,16 @@ async function initDashboard() {
     const userId = sessionStorage.getItem('userId');
     const userRole = sessionStorage.getItem('userRole');
     const teacherSection = document.getElementById('teacher-section');
+    const dashboardTitle = document.getElementById('dashboard-main-title');
 
     if (teacherSection && userRole === 'teacher') {
         teacherSection.style.display = 'block';
         console.log("Teacher section displayed");
+        
+        // Show dashboard title if dashboard is the active view
+        if (dashboardTitle && document.getElementById('dashboard-nav').classList.contains('active')) {
+            dashboardTitle.style.display = 'block';
+        }
 
         try {
             console.log("Loading classes...");
