@@ -535,9 +535,7 @@ body {
 /* Responsive */
 @media (max-width: 768px) {
   /* Basic layout */
-  .dashboard {
-    flex-direction: column;
-  }
+  /* Removed .dashboard rule */
   
   /* Navigation */
   
