@@ -24,6 +24,7 @@
 
 document.addEventListener('DOMContentLoaded', function() {
     console.log('Student dashboard loaded');
+    setupMobileMenu(); // Call the setup function for the mobile menu
     // Initialize dashboard
     initDashboard();
     
@@ -696,3 +697,38 @@ async function recordAttendanceFetch(sessionId, modalOverlay = null, modalIconCo
         // --- End Hide Modal ---
     }
 }
+
+// --- Mobile Menu Toggle --- 
+function setupMobileMenu() {
+    const toggleBtn = document.getElementById('mobile-menu-toggle');
+    const sidebar = document.querySelector('.sidebar');
+
+    if (toggleBtn && sidebar) {
+        toggleBtn.addEventListener('click', () => {
+            sidebar.classList.toggle('mobile-open');
+        });
+
+        // Optional: Close menu when clicking a nav link inside
+        sidebar.querySelectorAll('.nav-link').forEach(link => {
+            link.addEventListener('click', () => {
+                // Only close if it's currently open (for mobile view)
+                if (sidebar.classList.contains('mobile-open')) {
+                    sidebar.classList.remove('mobile-open');
+                }
+            });
+        });
+
+        // Optional: Close menu when clicking outside (on main content)
+        const mainContent = document.querySelector('.main-content');
+        if (mainContent) {
+            mainContent.addEventListener('click', (event) => {
+                if (sidebar.classList.contains('mobile-open') && !sidebar.contains(event.target) && !toggleBtn.contains(event.target)) {
+                    sidebar.classList.remove('mobile-open');
+                }
+            });
+        }
+    } else {
+        console.warn("Mobile menu toggle button or sidebar not found.");
+    }
+}
+// --- End Mobile Menu Toggle --- 
