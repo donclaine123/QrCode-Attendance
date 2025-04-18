@@ -1,7 +1,7 @@
 // Teacher Dashboard functionality
 
 // --- Role Check --- 
-(function() {
+(function () {
     const userId = sessionStorage.getItem('userId');
     const userRole = sessionStorage.getItem('userRole');
     const expectedRole = 'teacher'; // Role expected for this page
@@ -11,9 +11,9 @@
     if (!userId || userRole !== expectedRole) {
         console.warn(`[Role Check - Teacher] Access denied. Role is ${userRole}, expected ${expectedRole}. Redirecting to login.`);
         // Clear potentially incorrect session data before redirecting
-        sessionStorage.clear(); 
+        sessionStorage.clear();
         // Use getBasePath if available, otherwise assume root or relative path
-        const basePath = typeof getBasePath === 'function' ? getBasePath() : ''; 
+        const basePath = typeof getBasePath === 'function' ? getBasePath() : '';
         window.location.href = basePath + '/pages/login.html'; // Redirect to main login page
     }
 })();
@@ -31,7 +31,7 @@ let currentViewSessionId = null; // NEW: Store the ID of the session being viewe
 let generatedQrTimerIntervalId = null; // Timer specific to this display
 let currentlyDisplayedSessionId = null; // Keep track of what's shown
 
-document.addEventListener('DOMContentLoaded', function() {
+document.addEventListener('DOMContentLoaded', function () {
     console.log('Teacher dashboard initializing...');
     setupMobileMenu(); // Call the setup function for the mobile menu
     initDashboard();
@@ -41,7 +41,7 @@ document.addEventListener('DOMContentLoaded', function() {
     if (recentAttendanceIntervalId) {
         clearInterval(recentAttendanceIntervalId);
     }
-   
+
     console.log(`Polling for recent attendance started (Interval ID: ${recentAttendanceIntervalId})`);
 
     // Check if the specific listener *for attendance class select* has already been attached 
@@ -50,7 +50,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const attendanceClassSelect = document.getElementById('attendance-class-select');
     if (attendanceClassSelect && !attendanceClassSelect.dataset.listenerAttached) {
         console.log('[TeacherDashboard] Attaching CHANGE listener to #attendance-class-select');
-        attendanceClassSelect.addEventListener('change', function() {
+        attendanceClassSelect.addEventListener('change', function () {
             console.log('[TeacherDashboard] #attendance-class-select CHANGE event fired. Value:', this.value);
             // --- STOP POLLING VIEW ATTENDANCE --- 
             if (viewAttendanceIntervalId) {
@@ -61,7 +61,7 @@ document.addEventListener('DOMContentLoaded', function() {
             // --- END STOP POLLING ---
             loadSessions(this.value);
             const attendanceRecordsDiv = document.getElementById('attendance-records');
-            if(attendanceRecordsDiv) attendanceRecordsDiv.innerHTML = ''; 
+            if (attendanceRecordsDiv) attendanceRecordsDiv.innerHTML = '';
         });
         attendanceClassSelect.dataset.listenerAttached = 'true'; // Mark as attached
     } else if (attendanceClassSelect) {
@@ -71,26 +71,26 @@ document.addEventListener('DOMContentLoaded', function() {
     // Attach other listeners unconditionally as they are specific to this dashboard
     const logoutBtn = document.getElementById('logout-btn');
     if (logoutBtn) {
-        logoutBtn.addEventListener('click', function(e) {
+        logoutBtn.addEventListener('click', function (e) {
             e.preventDefault();
             logout(this);
         });
     }
-    
+
     // Attach sidebar navigation listeners
     console.log('[TeacherDashboard] Attaching listeners to .nav-link elements');
     const navLinks = document.querySelectorAll('.nav-link');
     navLinks.forEach(link => {
-        link.addEventListener('click', function(e) {
+        link.addEventListener('click', function (e) {
             // Prevent default only for dashboard functionality links
             if (this.getAttribute('href') === '#' || this.id === 'logout-btn') {
                 e.preventDefault();
             }
-            
+
             // Update active state
             navLinks.forEach(navLink => navLink.classList.remove('active'));
             this.classList.add('active');
-            
+
             // Show/hide sections based on clicked link ID
             const overview = document.getElementById('dashboard-overview');
             const qrSection = document.getElementById('qr-section');
@@ -98,27 +98,18 @@ document.addEventListener('DOMContentLoaded', function() {
             const attendanceSection = document.getElementById('attendance-section');
             const pageTitle = document.querySelector('.page-title'); // Get the title element
             const pageSubtitle = document.querySelector('.page-subtitle'); // Get the subtitle element
-            const mainContentTitle = document.getElementById('main-content-title-heading'); // Get the new Dashboard title
-            const attendanceTitle = document.getElementById('attendance-section-title'); // Get the new Attendances title
 
             if (overview) overview.style.display = (this.id === 'dashboard-nav') ? 'block' : 'none';
             if (qrSection) qrSection.style.display = (this.id === 'generate-qr-btn') ? 'block' : 'none';
             if (classesSection) classesSection.style.display = (this.id === 'manage-classes-btn') ? 'block' : 'none';
             if (attendanceSection) attendanceSection.style.display = (this.id === 'view-attendance-btn') ? 'block' : 'none';
 
-            // Show/hide the main Dashboard title
-            if (mainContentTitle) {
-                mainContentTitle.style.display = (this.id === 'dashboard-nav') ? 'block' : 'none';
-            }
-            
-            // Show/hide the Attendances title
-            if (attendanceTitle) {
-                attendanceTitle.style.display = (this.id === 'view-attendance-btn') ? 'block' : 'none';
-            }
 
             // Show/hide the specific page title and subtitle based on the active section
             const isQrSectionActive = this.id === 'generate-qr-btn';
             const isManageClassesActive = this.id === 'manage-classes-btn';
+            const isDashboardSectionActive = this.id === 'dashboard-nav';
+            const isAttendanceSectionActive = this.id === 'view-attendance-btn';
 
             if (pageTitle) {
                 if (isQrSectionActive) {
@@ -126,6 +117,14 @@ document.addEventListener('DOMContentLoaded', function() {
                     pageTitle.style.display = 'block';
                 } else if (isManageClassesActive) {
                     pageTitle.textContent = 'Manage Your Classes';
+                    pageTitle.style.display = 'block';
+                    pageTitle.style.textAlign = 'center';
+                } else if (isAttendanceSectionActive) {
+                    pageTitle.textContent = 'Attendances';
+                    pageTitle.style.display = 'block';
+                    pageTitle.style.textAlign = 'center';
+                } else if (isDashboardSectionActive) {
+                    pageTitle.textContent = 'Dashboard';
                     pageTitle.style.display = 'block';
                     pageTitle.style.textAlign = 'center';
                 } else {
@@ -140,6 +139,14 @@ document.addEventListener('DOMContentLoaded', function() {
                     pageSubtitle.textContent = 'Create, view, and manage your academic classes in one place.';
                     pageSubtitle.style.display = 'block';
                     pageSubtitle.style.textAlign = 'center';
+                } else if (isAttendanceSectionActive) {
+                    pageSubtitle.textContent = 'View and manage attendance records for your classes.';
+                    pageSubtitle.style.display = 'block';
+                    pageSubtitle.style.textAlign = 'center';
+                } else if (isDashboardSectionActive) {
+                    pageSubtitle.textContent = 'Welcome to the Teacher Dashboard';
+                    pageSubtitle.style.display = 'block';
+                    pageSubtitle.style.textAlign = 'center';
                 } else {
                     pageSubtitle.style.display = 'none';
                 }
@@ -148,15 +155,15 @@ document.addEventListener('DOMContentLoaded', function() {
             const contentHeader = document.querySelector('.content-header');
             if (contentHeader) {
                 contentHeader.style.textAlign = isQrSectionActive ? 'center' : 'left';
-                }
-            });
+            }
         });
-    
+    });
+
     // Attach session select listener (now safe to attach here)
-    const sessionSelect = document.getElementById('session-select'); 
+    const sessionSelect = document.getElementById('session-select');
     if (sessionSelect && !sessionSelect.dataset.listenerAttached) {
         console.log('[TeacherDashboard] Attaching CHANGE listener to #session-select');
-        sessionSelect.addEventListener('change', async function() {
+        sessionSelect.addEventListener('change', async function () {
             // --- STOP POLLING VIEW ATTENDANCE --- 
             if (viewAttendanceIntervalId) {
                 clearInterval(viewAttendanceIntervalId);
@@ -164,17 +171,17 @@ document.addEventListener('DOMContentLoaded', function() {
                 console.log('[TeacherDashboard] Stopped specific session polling due to date change.');
             }
             // --- END STOP POLLING ---
-            
+
             const attendanceRecordsDiv = document.getElementById('attendance-records');
             const sectionChoicesDiv = document.getElementById('section-choices');
             const sectionButtonsContainer = document.getElementById('section-buttons-container');
-            
+
             // Clear previous attendance and section choices
             if (attendanceRecordsDiv) attendanceRecordsDiv.innerHTML = '';
-            
+
             // --- Show Loading State for Sections --- 
             if (sectionButtonsContainer) {
-                 sectionButtonsContainer.innerHTML = '<p class="loading-indicator">Loading sections...</p>';
+                sectionButtonsContainer.innerHTML = '<p class="loading-indicator">Loading sections...</p>';
             }
             if (sectionChoicesDiv) sectionChoicesDiv.style.display = 'block'; // Show the container
             // --- End Loading State ---
@@ -183,7 +190,7 @@ document.addEventListener('DOMContentLoaded', function() {
             const classId = document.getElementById('attendance-class-select').value;
             const sessionDate = selectedOption.getAttribute('data-session-date');
 
-            if (this.value && classId && sessionDate) { 
+            if (this.value && classId && sessionDate) {
                 console.log(`Session selected. Fetching sections for Class ${classId} on Date ${sessionDate}`);
                 try {
                     const response = await fetch(`${API_URL}/auth/sessions-on-date?classId=${classId}&date=${sessionDate}`, {
@@ -194,49 +201,49 @@ document.addEventListener('DOMContentLoaded', function() {
                             'Cache-Control': 'no-cache'
                         }
                     });
-                    
+
                     if (!response.ok) {
-                         throw new Error(`Failed to fetch sections: ${response.status}`);
-                     }
-                     
-                     const data = await response.json();
-                     console.log("Sections data:", data);
-                     
-                     // --- Populate Sections or Show Message --- 
-                     if (sectionButtonsContainer) sectionButtonsContainer.innerHTML = ''; // Clear loading message
-                     if (data.success && data.sections && data.sections.length > 0) {
-                         if (sectionChoicesDiv) sectionChoicesDiv.style.display = 'block';
-                         
-                         data.sections.forEach(sec => {
-                             const button = document.createElement('button');
-                             button.textContent = sec.section || 'No Section';
-                             button.className = 'btn btn-secondary section-choice-btn';
-                             button.setAttribute('data-session-id', sec.session_id);
-                             
-                             // --- MODIFIED: Clear view attendance interval on SECTION button click ---
-                             button.addEventListener('click', function() {
-                                 // --- STOP POLLING VIEW ATTENDANCE (Keep this for safety) ---
-                                 if (viewAttendanceIntervalId) {
-                                     clearInterval(viewAttendanceIntervalId);
-                                     viewAttendanceIntervalId = null;
-                                     // console.log('[TeacherDashboard] Stopped specific session polling due to section button click.'); // Log not needed
-                                 }
-                                 // --- END STOP POLLING ---
-                                 
-                                 const specificSessionId = this.getAttribute('data-session-id');
-                                 currentViewSessionId = specificSessionId; // Store the current session ID
-                                 console.log(`Loading attendance for selected section's session ID: ${specificSessionId}`);
-                                 loadAttendanceRecords(specificSessionId); 
-                             });
-                             
-                             if (sectionButtonsContainer) sectionButtonsContainer.appendChild(button);
-                         });
-                         
-                     } else {
-                         if (sectionChoicesDiv) sectionChoicesDiv.style.display = 'block'; // Still show container
-                         if (sectionButtonsContainer) sectionButtonsContainer.innerHTML = '<p class="empty-message">No attendance sections found for this date.</p>';
-                         if (attendanceRecordsDiv) attendanceRecordsDiv.innerHTML = ''; // Clear any previous records
-                     }
+                        throw new Error(`Failed to fetch sections: ${response.status}`);
+                    }
+
+                    const data = await response.json();
+                    console.log("Sections data:", data);
+
+                    // --- Populate Sections or Show Message --- 
+                    if (sectionButtonsContainer) sectionButtonsContainer.innerHTML = ''; // Clear loading message
+                    if (data.success && data.sections && data.sections.length > 0) {
+                        if (sectionChoicesDiv) sectionChoicesDiv.style.display = 'block';
+
+                        data.sections.forEach(sec => {
+                            const button = document.createElement('button');
+                            button.textContent = sec.section || 'No Section';
+                            button.className = 'btn btn-secondary section-choice-btn';
+                            button.setAttribute('data-session-id', sec.session_id);
+
+                            // --- MODIFIED: Clear view attendance interval on SECTION button click ---
+                            button.addEventListener('click', function () {
+                                // --- STOP POLLING VIEW ATTENDANCE (Keep this for safety) ---
+                                if (viewAttendanceIntervalId) {
+                                    clearInterval(viewAttendanceIntervalId);
+                                    viewAttendanceIntervalId = null;
+                                    // console.log('[TeacherDashboard] Stopped specific session polling due to section button click.'); // Log not needed
+                                }
+                                // --- END STOP POLLING ---
+
+                                const specificSessionId = this.getAttribute('data-session-id');
+                                currentViewSessionId = specificSessionId; // Store the current session ID
+                                console.log(`Loading attendance for selected section's session ID: ${specificSessionId}`);
+                                loadAttendanceRecords(specificSessionId);
+                            });
+
+                            if (sectionButtonsContainer) sectionButtonsContainer.appendChild(button);
+                        });
+
+                    } else {
+                        if (sectionChoicesDiv) sectionChoicesDiv.style.display = 'block'; // Still show container
+                        if (sectionButtonsContainer) sectionButtonsContainer.innerHTML = '<p class="empty-message">No attendance sections found for this date.</p>';
+                        if (attendanceRecordsDiv) attendanceRecordsDiv.innerHTML = ''; // Clear any previous records
+                    }
                 } catch (error) {
                     console.error('Error fetching sections:', error);
                     // --- Show Section Fetch Error --- 
@@ -249,33 +256,33 @@ document.addEventListener('DOMContentLoaded', function() {
         });
         sessionSelect.dataset.listenerAttached = 'true';
     } else if (sessionSelect) {
-         console.log('[TeacherDashboard] CHANGE listener already attached to #session-select.');
+        console.log('[TeacherDashboard] CHANGE listener already attached to #session-select.');
     }
 
     // Initialize the dashboard logic (fetches user data, classes, etc.) if not already done
-    if (!window.dashboardInitialized) { 
+    if (!window.dashboardInitialized) {
         console.log('[TeacherDashboard] Initializing dashboard logic (initDashboard)...');
         initDashboard(); // This function internally shows #teacher-section on success
-        window.dashboardInitialized = true; 
+        window.dashboardInitialized = true;
     } else {
-        console.log ('[TeacherDashboard] Dashboard logic already initialized by another script.');
+        console.log('[TeacherDashboard] Dashboard logic already initialized by another script.');
         // Manually show the main container if initDashboard was skipped but we have user info
         // This ensures the container is visible even if qrcode.js initialized first.
         if (sessionStorage.getItem('userId') && sessionStorage.getItem('userRole') === 'teacher') {
-             const teacherSection = document.getElementById('teacher-section');
-             if(teacherSection) {
-                 console.log('[TeacherDashboard] Manually showing #teacher-section because initDashboard was skipped.');
-                 teacherSection.style.display = 'block';
-             } else {
-                 console.error('[TeacherDashboard] Cannot manually show #teacher-section, element not found.');
-             }
+            const teacherSection = document.getElementById('teacher-section');
+            if (teacherSection) {
+                console.log('[TeacherDashboard] Manually showing #teacher-section because initDashboard was skipped.');
+                teacherSection.style.display = 'block';
+            } else {
+                console.error('[TeacherDashboard] Cannot manually show #teacher-section, element not found.');
+            }
         } else {
-             console.log('[TeacherDashboard] Skipping manual show of #teacher-section, user info not in session storage.');
-             // Optional: redirect to login if no user info is found here either?
-             // window.location.href = getBasePath() + '/pages/login.html';
+            console.log('[TeacherDashboard] Skipping manual show of #teacher-section, user info not in session storage.');
+            // Optional: redirect to login if no user info is found here either?
+            // window.location.href = getBasePath() + '/pages/login.html';
         }
     }
-    
+
     // Ensure initial view is correct (Dashboard overview) - Runs Unconditionally
     console.log('[TeacherDashboard] Setting initial section visibility within #teacher-section.');
     const overview = document.getElementById('dashboard-overview');
@@ -295,9 +302,9 @@ document.addEventListener('DOMContentLoaded', function() {
     const manageClassesBtn = document.getElementById('manage-classes-btn');
     const viewAttendanceBtn = document.getElementById('view-attendance-btn');
     const dashboardNav = document.getElementById('dashboard-nav');
-    
+
     if (dashboardNav) {
-        dashboardNav.addEventListener('click', function() {
+        dashboardNav.addEventListener('click', function () {
             // Show dashboard overview, hide other sections
             document.getElementById('dashboard-overview').style.display = 'block';
             document.getElementById('qr-section').style.display = 'none';
@@ -305,83 +312,83 @@ document.addEventListener('DOMContentLoaded', function() {
             document.getElementById('attendance-section').style.display = 'none';
         });
     }
-    
+
     if (generateQrBtn) {
-        generateQrBtn.addEventListener('click', function() {
+        generateQrBtn.addEventListener('click', function () {
             document.getElementById('dashboard-overview').style.display = 'none'; // Hide overview
             document.getElementById('qr-section').style.display = 'block';
             document.getElementById('classes-section').style.display = 'none';
             document.getElementById('attendance-section').style.display = 'none';
         });
     }
-    
+
     if (manageClassesBtn) {
-        manageClassesBtn.addEventListener('click', function() {
+        manageClassesBtn.addEventListener('click', function () {
             document.getElementById('dashboard-overview').style.display = 'none'; // Hide overview
             document.getElementById('qr-section').style.display = 'none';
             document.getElementById('classes-section').style.display = 'block';
             document.getElementById('attendance-section').style.display = 'none';
         });
     }
-    
+
     if (viewAttendanceBtn) {
-        viewAttendanceBtn.addEventListener('click', function() {
+        viewAttendanceBtn.addEventListener('click', function () {
             document.getElementById('dashboard-overview').style.display = 'none'; // Hide overview
             document.getElementById('qr-section').style.display = 'none';
             document.getElementById('classes-section').style.display = 'none';
             document.getElementById('attendance-section').style.display = 'block';
         });
     }
-    
+
     // Set up event listeners for QR code generation
     const generateQrCodeBtn = document.getElementById('generate-qr-code-btn');
     const viewCurrentAttendanceBtn = document.getElementById('view-current-attendance-btn');
-    
+
     if (generateQrCodeBtn) {
         generateQrCodeBtn.addEventListener('click', generateQRCode);
     }
-    
+
     if (viewCurrentAttendanceBtn) {
         viewCurrentAttendanceBtn.addEventListener('click', viewCurrentSessionAttendance);
     }
-    
+
     // Set up event listeners for class management
     const addClassBtn = document.getElementById('add-class-btn');
-    
+
     if (addClassBtn) {
         addClassBtn.addEventListener('click', addNewClass);
     }
-    
+
     // Set up debug listeners
     setupDebugListeners();
-    
+
     // Log cookies for debugging
     console.log("Cookies:", document.cookie);
-    
+
     // Check headers to debug CORS issues
-    fetch(`${API_URL}/auth/debug-headers`, { 
+    fetch(`${API_URL}/auth/debug-headers`, {
         credentials: 'include',
         headers: {
             'Cache-Control': 'no-cache'
         }
     })
-    .then(response => response.json())
-    .then(data => {
-        console.log("Debug headers response:", data);
-        
-        // Don't check for cookies here - let the authentication flow handle this properly
-        if (document.cookie) {
-            console.log("Cookies found:", document.cookie);
-        }
-    })
-    .catch(error => {
-        console.error("Headers debug error:", error);
-    });
+        .then(response => response.json())
+        .then(data => {
+            console.log("Debug headers response:", data);
+
+            // Don't check for cookies here - let the authentication flow handle this properly
+            if (document.cookie) {
+                console.log("Cookies found:", document.cookie);
+            }
+        })
+        .catch(error => {
+            console.error("Headers debug error:", error);
+        });
 
     // Add event listener for the Refresh Attendance button
     const refreshBtn = document.getElementById('refresh-attendance-btn');
     if (refreshBtn) {
-        refreshBtn.addEventListener('click', function() {
+        refreshBtn.addEventListener('click', function () {
             if (currentViewSessionId) {
                 console.log(`Refreshing attendance for session ID: ${currentViewSessionId}`);
                 loadAttendanceRecords(currentViewSessionId); // Reload using the stored ID
@@ -399,7 +406,7 @@ document.addEventListener('DOMContentLoaded', function() {
     // Add event listener for the Refresh Recent Attendance button
     const refreshRecentBtn = document.getElementById('refresh-recent-attendance-btn');
     if (refreshRecentBtn) {
-        refreshRecentBtn.addEventListener('click', function() {
+        refreshRecentBtn.addEventListener('click', function () {
             console.log('Refreshing recent attendance records...');
             loadRecentAttendanceRecords();
         });
@@ -408,26 +415,26 @@ document.addEventListener('DOMContentLoaded', function() {
 
 // Function to check authentication status
 async function checkAuthStatus() {
-  try {
+    try {
         const response = await fetch(`${API_URL}/auth/check-auth`, {
-      method: "GET",
-      credentials: "include",
-      headers: { 
-        "Accept": "application/json",
-        "Cache-Control": "no-cache"
-      }
-    });
-    
-    if (!response.ok) return false;
+            method: "GET",
+            credentials: "include",
+            headers: {
+                "Accept": "application/json",
+                "Cache-Control": "no-cache"
+            }
+        });
+
+        if (!response.ok) return false;
         const data = await response.json();
-    
-    // Remove localStorage fallback entirely
-    return data.authenticated && data.user?.role === 'teacher';
-    
-  } catch (error) {
-    console.error("Auth check error:", error);
-    return false;
-  }
+
+        // Remove localStorage fallback entirely
+        return data.authenticated && data.user?.role === 'teacher';
+
+    } catch (error) {
+        console.error("Auth check error:", error);
+        return false;
+    }
 }
 
 // Function to test cookies
@@ -439,22 +446,22 @@ async function testCookies() {
             credentials: "include",
             headers: { "Accept": "application/json" }
         });
-        
+
         console.log("Cookie test response:", response);
         if (!response.ok) {
             throw new Error(`HTTP error! status: ${response.status}`);
         }
-        
+
         const data = await response.json();
         console.log("Cookie test data:", data);
-        
+
         // Show success in debug message
         const debugMessage = document.getElementById("debug-message");
         if (debugMessage) {
             debugMessage.textContent = `Test cookie set. Session ID: ${data.sessionId}`;
             debugMessage.style.color = "green";
         }
-        
+
         // Now check if we can get the cookie back
         setTimeout(async () => {
             try {
@@ -463,14 +470,14 @@ async function testCookies() {
                     credentials: "include",
                     headers: { "Accept": "application/json" }
                 });
-                
+
                 if (!checkResponse.ok) {
                     throw new Error(`HTTP error! status: ${checkResponse.status}`);
                 }
-                
+
                 const checkData = await checkResponse.json();
                 console.log("Cookie check data:", checkData);
-                
+
                 if (debugMessage) {
                     debugMessage.textContent += `\nCookies found: ${JSON.stringify(checkData.cookies)}`;
                 }
@@ -482,7 +489,7 @@ async function testCookies() {
                 }
             }
         }, 1000);
-        
+
     } catch (error) {
         console.error("Cookie test error:", error);
         const debugMessage = document.getElementById("debug-message");
@@ -499,7 +506,7 @@ async function checkAuthDebug() {
     if (debugMessage) {
         debugMessage.textContent = "Checking authentication status...";
     }
-    
+
     try {
         // Check auth status
         const authCheck = await fetch(`${API_URL}/auth/check-auth`, {
@@ -507,42 +514,42 @@ async function checkAuthDebug() {
             credentials: "include",
             headers: { "Accept": "application/json" }
         });
-        
+
         const authData = await authCheck.json();
         console.log("Auth status:", authData);
-        
+
         if (debugMessage) {
             debugMessage.textContent = "Auth status: " + JSON.stringify(authData, null, 2);
         }
-        
+
         // Check cookies
         const cookieCheck = await fetch(`${API_URL}/auth/debug-cookies`, {
             method: "GET",
             credentials: "include",
             headers: { "Accept": "application/json" }
         });
-        
+
         const cookieData = await cookieCheck.json();
         console.log("Cookie data:", cookieData);
-        
+
         if (debugMessage) {
             debugMessage.textContent += "\n\nCookie data: " + JSON.stringify(cookieData, null, 2);
         }
-        
+
         // Check headers
         const headerCheck = await fetch(`${API_URL}/auth/debug-headers`, {
             method: "GET",
             credentials: "include",
             headers: { "Accept": "application/json" }
         });
-        
+
         const headerData = await headerCheck.json();
         console.log("Header data:", headerData);
-        
+
         if (debugMessage) {
             debugMessage.textContent += "\n\nHeader data: " + JSON.stringify(headerData, null, 2);
         }
-        
+
     } catch (error) {
         console.error("Debug check error:", error);
         if (debugMessage) {
@@ -556,15 +563,15 @@ function setupDebugListeners() {
     // Debug buttons
     const testCookiesBtn = document.getElementById('test-cookies-btn');
     const checkAuthBtn = document.getElementById('check-auth-btn');
-    
+
     if (testCookiesBtn) {
-        testCookiesBtn.addEventListener('click', async function() {
+        testCookiesBtn.addEventListener('click', async function () {
             try {
                 const response = await fetch(`${API_URL}/auth/debug-cookies`, {
                     credentials: 'include'
                 });
                 const data = await response.json();
-                
+
                 console.log('Cookie test response:', data);
                 alert(`Cookie test: ${JSON.stringify(data)}`);
             } catch (error) {
@@ -573,9 +580,9 @@ function setupDebugListeners() {
             }
         });
     }
-    
+
     if (checkAuthBtn) {
-        checkAuthBtn.addEventListener('click', async function() {
+        checkAuthBtn.addEventListener('click', async function () {
             try {
                 // Use the same authentication approach as the main dashboard init
                 const userId = sessionStorage.getItem('userId');
@@ -584,19 +591,19 @@ function setupDebugListeners() {
                     'Accept': 'application/json',
                     'Cache-Control': 'no-cache'
                 };
-                
+
                 // Add user headers if available in sessionStorage as fallback
                 if (userId && userRole) {
                     headers['X-User-ID'] = userId;
                     headers['X-User-Role'] = userRole;
                 }
-                
+
                 const response = await fetch(`${API_URL}/auth/check-auth`, {
                     credentials: 'include',
                     headers: headers
                 });
                 const data = await response.json();
-                
+
                 console.log('Auth check response:', data);
                 alert(`Auth check: ${JSON.stringify(data)}`);
             } catch (error) {
@@ -621,9 +628,9 @@ async function initDashboard() {
 
         try {
             console.log("Loading classes...");
-            await loadClasses(); 
+            await loadClasses();
             console.log("Loading recent attendance...");
-            await loadRecentAttendanceRecords(); 
+            await loadRecentAttendanceRecords();
             console.log("Loading active QR sessions...");
             await loadActiveQrSessions(); // 📌 Call the new function here
             console.log("Setting up navigation...");
@@ -647,22 +654,22 @@ async function loadClasses() {
         const classSelect = document.getElementById('class-select');
         const attendanceClassSelect = document.getElementById('attendance-class-select');
         const classesContainer = document.getElementById('classes-container');
-        
+
         if (!classSelect || !attendanceClassSelect || !classesContainer) {
             console.error("Required elements for class loading not found");
             return;
         }
-        
+
         const userId = sessionStorage.getItem('userId');
         console.log(`Fetching classes for user ID: ${userId}`);
         console.log(`Session cookies: ${document.cookie}`);
-        
+
         // Prepare headers with auth information
         const headers = {
             'Accept': 'application/json',
             'Cache-Control': 'no-cache'
         };
-        
+
         // Only add header auth if no valid cookie exists
         if (!document.cookie.includes('qr_attendance_sid')) {
             const userId = sessionStorage.getItem('userId');
@@ -672,19 +679,19 @@ async function loadClasses() {
                 headers['X-User-Role'] = userRole;
             }
         }
-        
+
         // Try the authenticated endpoint with headers
         let response = await fetch(`${API_URL}/auth/teacher-classes/${userId}`, {
             credentials: 'include',
             headers: headers
         });
-        
+
         console.log(`Classes response status: ${response.status}`);
-        
+
         // If unauthorized or error, retry with explicit header-based auth only
         if (response.status === 401 || response.status >= 500) {
             console.log('Using fallback method to fetch classes via header auth');
-            
+
             // Try again with explicit content type
             response = await fetch(`${API_URL}/auth/teacher-classes/${userId}`, {
                 credentials: 'include',
@@ -695,9 +702,9 @@ async function loadClasses() {
                     'X-User-Role': userRole
                 }
             });
-            
+
             console.log(`Fallback response status: ${response.status}`);
-            
+
             if (response.status === 401 || response.status >= 500) {
                 console.error('Both authenticated and direct methods failed');
                 classesContainer.innerHTML = `
@@ -706,31 +713,31 @@ async function loadClasses() {
                         <button class="btn" id="reloginBtn">Login Again</button>
                     </div>
                 `;
-                
+
                 document.getElementById('reloginBtn')?.addEventListener('click', () => {
                     logout();
                 });
-                
+
                 return;
             }
         }
-        
+
         const data = await response.json();
-        
+
         // Clear existing options
         classSelect.innerHTML = '<option value="">Select a class</option>';
         attendanceClassSelect.innerHTML = '<option value="">Select a class</option>';
-        
+
         if (data.success) {
             // Clear existing class list
             classesContainer.innerHTML = '';
-            
+
             // Update total classes count
             const totalClassesValue = document.getElementById('total-classes-value');
             if (totalClassesValue) {
                 totalClassesValue.textContent = data.classes?.length || 0;
             }
-            
+
             if (data.classes && data.classes.length > 0) {
                 // Add classes to selects and class list
                 data.classes.forEach(cls => {
@@ -739,16 +746,16 @@ async function loadClasses() {
                     option.value = cls.id;
                     option.textContent = cls.class_name || cls.name;
                     classSelect.appendChild(option);
-                    
+
                     // Add to attendance class select
                     const attOption = document.createElement('option');
                     attOption.value = cls.id;
                     attOption.textContent = cls.class_name || cls.name;
                     attendanceClassSelect.appendChild(attOption);
-                    
+
                     // Add to class list - FINAL-FINAL STRUCTURE (Subject in box, Class Name next to it)
                     const classItem = document.createElement('div');
-                    classItem.className = 'class-list-item'; 
+                    classItem.className = 'class-list-item';
                     classItem.innerHTML = `
                         <div class="class-code">${cls.class_name || cls.name}</div> <!-- Subject in the code box -->
                         <div class="class-info">
@@ -759,10 +766,10 @@ async function loadClasses() {
                     `;
                     classesContainer.appendChild(classItem);
                 });
-                
+
                 // Add event listeners to delete buttons
                 document.querySelectorAll('.delete-class').forEach(button => {
-                    button.addEventListener('click', async function() {
+                    button.addEventListener('click', async function () {
                         const classId = this.getAttribute('data-id');
                         if (confirm('Are you sure you want to delete this class?')) {
                             await deleteClass(classId, this);
@@ -809,20 +816,20 @@ async function addNewClass() {
     const modalIconContainer = document.getElementById('status-modal-icon-container');
     const modalMessage = document.getElementById('status-modal-message');
     const addClassButton = document.getElementById('add-class-btn'); // Get button to disable/enable
-    
+
     // Basic validation before showing modal
-    if (!className || !classSubject) { 
+    if (!className || !classSubject) {
         alert('Please enter both Class Name and Subject.'); // Simple alert for now
         return;
     }
-    
+
     // --- Show Loading Modal ---
     modalIconContainer.innerHTML = '<div class="spinner"></div>'; // Show spinner
     modalMessage.textContent = 'Adding class...';
     modalOverlay.classList.add('visible');
     addClassButton.disabled = true;
     // --- End Show Loading Modal ---
-    
+
     try {
         const response = await fetch(`${API_URL}/auth/classes`, {
             method: 'POST',
@@ -836,9 +843,9 @@ async function addNewClass() {
                 description: classDescription
             })
         });
-        
+
         const data = await response.json();
-        
+
         if (data.success) {
             // --- Show Success Modal ---
             modalIconContainer.innerHTML = '<span class="status-icon success">✅</span>';
@@ -895,9 +902,9 @@ async function deleteClass(classId, deleteButtonElement) {
             method: 'DELETE',
             credentials: 'include'
         });
-        
+
         const data = await response.json();
-        
+
         if (data.success) {
             // --- Show Success Modal ---
             modalIconContainer.innerHTML = '<span class="status-icon success">✅</span>';
@@ -940,22 +947,22 @@ async function loadSessions(classId) {
     if (sectionChoicesDiv) sectionChoicesDiv.style.display = 'none'; // Hide section choices
     if (recordsDiv) recordsDiv.innerHTML = ''; // Clear previous records
     // --- End Loading State ---
-    
+
     if (!classId) {
         sessionSelect.innerHTML = '<option disabled selected>Please select a class first</option>';
         // Keep disabled
         return;
     }
-    
+
     try {
         console.log(`Loading DISTINCT DATES for class ID: ${classId}`);
 
         // Prepare headers with existing auth info
-        const headers = { 
+        const headers = {
             'Accept': 'application/json',
             'Cache-Control': 'no-cache'
         };
-        
+
         // Only add header auth if no valid cookie exists
         if (!document.cookie.includes('qr_attendance_sid')) {
             const userId = sessionStorage.getItem('userId');
@@ -965,27 +972,27 @@ async function loadSessions(classId) {
                 headers['X-User-Role'] = userRole;
             }
         }
-        
+
         const response = await fetch(`${API_URL}/auth/class-sessions/${classId}`, {
             method: 'GET',
             credentials: 'include',
             headers: headers
         });
-        
+
         // Handle Unauthorized error specifically
         if (response.status === 401) {
             console.error('Authentication failed when loading sessions');
             sessionSelect.innerHTML += '<option disabled>Authentication failed. Please try logging in again.</option>';
             return;
         }
-        
+
         if (!response.ok) {
             throw new Error(`Server returned ${response.status}: ${response.statusText}`);
         }
-        
+
         const data = await response.json();
         console.log('Distinct dates data received:', data);
-        
+
         // --- Populate Dates or Show No Dates --- 
         sessionSelect.innerHTML = '<option value="" disabled selected>Select date</option>'; // Reset placeholder
         if (data.success && data.dates && data.dates.length > 0) {
@@ -996,14 +1003,14 @@ async function loadSessions(classId) {
                 // Format date for display (e.g., "Apr 5, 2025")
                 let displayDate = 'Unknown Date';
                 try {
-                   const dateObj = new Date(dateStr + 'T00:00:00'); // Add time to parse correctly
-                   if (!isNaN(dateObj.getTime())) {
-                       displayDate = dateObj.toLocaleDateString('en-US', {
-                                year: 'numeric',
-                           month: 'long', // Use 'long' for full month name
-                           day: 'numeric'
-                       });
-                   }
+                    const dateObj = new Date(dateStr + 'T00:00:00'); // Add time to parse correctly
+                    if (!isNaN(dateObj.getTime())) {
+                        displayDate = dateObj.toLocaleDateString('en-US', {
+                            year: 'numeric',
+                            month: 'long', // Use 'long' for full month name
+                            day: 'numeric'
+                        });
+                    }
                 } catch (e) { console.error("Error parsing date for display:", e); }
 
                 // Set option text
@@ -1037,33 +1044,33 @@ async function loadAttendanceRecords(specificSessionId = null) {
         console.log('[loadAttendanceRecords] Cleared previous specific session polling interval.');
     }
     // --- END STOP POLLING ---
-    
+
     // Use the provided sessionId if available, otherwise try to get from button/context if needed
-    const sessionId = specificSessionId; 
+    const sessionId = specificSessionId;
     const recordsDiv = document.getElementById('attendance-records');
-    
+
     // --- Show Loading State for Records --- 
     // Clear previous content and show loading message immediately
     if (recordsDiv) {
-        recordsDiv.innerHTML = '<p class="loading-indicator">Loading attendance records...</p>'; 
+        recordsDiv.innerHTML = '<p class="loading-indicator">Loading attendance records...</p>';
     } else {
         console.error("Attendance records div not found!");
         return; // Cannot proceed without the container
     }
     // --- End Loading State ---
-    
+
     if (!sessionId) {
         recordsDiv.innerHTML = '<div class="error-message">Please select a class, date, and section.</div>';
         return;
     }
-    
+
     try {
         // Include both cookie-based and header-based auth
-        const headers = { 
+        const headers = {
             'Accept': 'application/json',
             'Cache-Control': 'no-cache'
         };
-        
+
         // Add fallback header auth
         const userId = sessionStorage.getItem('userId');
         const userRole = sessionStorage.getItem('userRole');
@@ -1071,36 +1078,36 @@ async function loadAttendanceRecords(specificSessionId = null) {
             headers['X-User-ID'] = userId;
             headers['X-User-Role'] = userRole;
         }
-        
+
         const response = await fetch(`${API_URL}/teacher/attendance/${sessionId}`, {
             method: 'GET',
             credentials: 'include',
             headers: headers
         });
-        
+
         // Handle Unauthorized error specifically
         if (response.status === 401) {
             console.error('Authentication failed when loading attendance records');
             recordsDiv.innerHTML = '<div class="error-message">Authentication failed. Please try logging in again.</div>';
             return;
         }
-        
+
         if (!response.ok) {
             throw new Error(`Server returned ${response.status}: ${response.statusText}`);
         }
-        
+
         const data = await response.json();
         console.log('Attendance data received:', data);
-        
+
         if (data.success) {
             if (!data.attendanceRecords || data.attendanceRecords.length === 0) {
                 recordsDiv.innerHTML = '<p class="empty-message">No attendance records found for this session.</p>';
                 return;
             }
-            
+
             // Get section information to display
             const sectionInfo = data.section ? `<p class="session-section">Section: ${data.section}</p>` : '';
-            
+
             // Create attendance table
             let tableHTML = `
                 <div class="attendance-header">
@@ -1118,7 +1125,7 @@ async function loadAttendanceRecords(specificSessionId = null) {
                     </thead>
                     <tbody>
             `;
-            
+
             data.attendanceRecords.forEach(record => {
                 // Format time safely with error handling for UTC+8 time
                 let timeDisplay = 'Unknown Time';
@@ -1142,7 +1149,7 @@ async function loadAttendanceRecords(specificSessionId = null) {
                 } catch (timeError) {
                     console.error('Error formatting time:', timeError, record);
                 }
-                
+
                 tableHTML += `
                     <tr>
                         <td>${record.student_number || record.student_id || 'Unknown'}</td>
@@ -1151,16 +1158,16 @@ async function loadAttendanceRecords(specificSessionId = null) {
                     </tr>
                 `;
             });
-            
+
             tableHTML += `
                     </tbody>
                 </table>
             `;
-            
+
             recordsDiv.innerHTML = tableHTML;
-            
-     
-            
+
+
+
         } else {
             recordsDiv.innerHTML = `<div class="error-message">Error: ${data.message || 'Failed to load attendance records'}</div>`;
             // Stop polling if there was an API error (Keep this clearInterval)
@@ -1186,12 +1193,12 @@ async function loadAttendanceRecords(specificSessionId = null) {
 async function viewCurrentSessionAttendance() {
     try {
         const currentSessionId = sessionStorage.getItem('currentQrSessionId');
-    
-    if (!currentSessionId) {
+
+        if (!currentSessionId) {
             alert('No active session. Please generate a QR code first.');
-        return;
-    }
-    
+            return;
+        }
+
         // Switch to the attendance view
         const viewAttendanceBtn = document.getElementById('view-attendance-btn');
         if (viewAttendanceBtn) {
@@ -1201,28 +1208,28 @@ async function viewCurrentSessionAttendance() {
             document.getElementById('qr-section').style.display = 'none';
             document.getElementById('classes-section').style.display = 'none';
             document.getElementById('attendance-section').style.display = 'block';
-            
+
             // Also update active class in navigation
             document.querySelectorAll('.nav-link').forEach(link => link.classList.remove('active'));
             document.querySelector('#view-attendance-btn').classList.add('active');
         }
-    
+
         // Set the class select to match the current session
         const classId = document.getElementById('class-select').value;
         document.getElementById('attendance-class-select').value = classId;
-    
+
         // Set the session select to the current session
-        document.getElementById('session-select').value = currentSessionId; 
-        
+        document.getElementById('session-select').value = currentSessionId;
+
         // We might need to manually trigger the section loading or attendance loading here 
         // if just setting the sessionSelect value doesn't fire the change event reliably, 
         // or if we want it to load immediately after clicking 'View Current'.
         // For now, let's rely on the change event listener.
-        
+
         // REMOVED: We don't want to load attendance directly here anymore, 
         // the session select 'change' listener handles section fetching first.
         // await loadAttendanceRecords();
-        
+
     } catch (error) {
         console.error('Error viewing current attendance:', error);
         alert('Error loading current attendance data. Please try again.');
@@ -1261,35 +1268,35 @@ async function logout(logoutButtonElement) {
         console.log(`Polling stopped (Interval ID: ${viewAttendanceIntervalId})`);
         viewAttendanceIntervalId = null;
     }
-    
+
     try {
         // Call the logout endpoint
         const response = await fetch(`${API_URL}/auth/logout`, {
             method: 'POST',
-      credentials: 'include',
-      headers: {
-        'Accept': 'application/json'
-      }
-    });
-    
-    // Clear sessionStorage
-    sessionStorage.clear();
-    
-    // Redirect to login page
-    window.location.href = getBasePath() + '/pages/login.html';
+            credentials: 'include',
+            headers: {
+                'Accept': 'application/json'
+            }
+        });
+
+        // Clear sessionStorage
+        sessionStorage.clear();
+
+        // Redirect to login page
+        window.location.href = getBasePath() + '/pages/login.html';
     } catch (error) {
         console.error('Logout error:', error);
-    // Even if the server request fails, clear local storage and redirect
-    sessionStorage.clear();
-    window.location.href = getBasePath() + '/pages/login.html';
-  }
+        // Even if the server request fails, clear local storage and redirect
+        sessionStorage.clear();
+        window.location.href = getBasePath() + '/pages/login.html';
+    }
 }
 
 // Helper function to get base path - same as in login.js
 function getBasePath() {
     // Check if we're in production (Netlify)
     const isProduction = window.location.hostname.includes('netlify.app');
-    
+
     if (isProduction) {
         // In production, paths should be relative to root
         return '';
@@ -1303,23 +1310,23 @@ function getBasePath() {
 async function loadRecentAttendanceRecords() {
     const tableBody = document.querySelector('#recent-attendance-table tbody');
     if (!tableBody) return;
-    
+
     // Show loading state
     tableBody.innerHTML = '<tr><td colspan="5" class="text-center">Loading recent attendance records...</td></tr>'; // Updated colspan
-    
+
     try {
         const teacherId = sessionStorage.getItem('userId');
         if (!teacherId) {
             console.error('Teacher ID not found in session storage');
             return;
         }
-        
+
         // Prepare headers with auth information
         const headers = {
             'Accept': 'application/json',
             'Cache-Control': 'no-cache'
         };
-        
+
         // Add fallback header auth
         const userId = sessionStorage.getItem('userId');
         const userRole = sessionStorage.getItem('userRole');
@@ -1327,20 +1334,20 @@ async function loadRecentAttendanceRecords() {
             headers['X-User-ID'] = userId;
             headers['X-User-Role'] = userRole;
         }
-        
+
         // Updated endpoint to match the backend route pattern
         const response = await fetch(`${API_URL}/auth/recent-attendance-summary`, {
             method: 'GET',
             credentials: 'include',
             headers: headers
         });
-        
+
         if (!response.ok) {
             throw new Error(`Failed to fetch attendance records: ${response.status}`);
         }
-        
+
         const data = await response.json();
-        
+
         if (data.success && data.records && data.records.length > 0) {
             displayAttendanceRecords(data.records);
         } else {
@@ -1355,25 +1362,25 @@ async function loadRecentAttendanceRecords() {
 function displayAttendanceRecords(records) {
     const tableBody = document.querySelector('#recent-attendance-table tbody');
     if (!tableBody) return;
-    
+
     tableBody.innerHTML = ''; // Clear previous records
 
     if (!records || records.length === 0) {
         tableBody.innerHTML = `<tr><td colspan="5" class="text-center">No attendance records found</td></tr>`; // Colspan is correct (5 columns)
         return;
     }
-    
+
     records.forEach(record => {
         const row = document.createElement('tr');
-        
+
         // Format date to be more readable
         const dateObj = new Date(record.attendance_date + 'T00:00:00'); // Ensure correct parsing
-        const formattedDate = dateObj.toLocaleDateString('en-US', { 
-            year: 'numeric', 
-            month: 'short', 
-            day: 'numeric' 
+        const formattedDate = dateObj.toLocaleDateString('en-US', {
+            year: 'numeric',
+            month: 'short',
+            day: 'numeric'
         });
-        
+
         // Use the time directly from the backend query
         const formattedTime = record.attendance_time || 'N/A';
         const sectionDisplay = record.section || 'N/A'; // Handle null sections
@@ -1390,14 +1397,14 @@ function displayAttendanceRecords(records) {
             <td>${formattedTime}</td>
             <td>${badgeHTML}</td>
         `;
-        
+
         tableBody.appendChild(row);
     });
 }
 
 // 📌 NEW: Function to fetch and display active QR sessions
 // Make it globally accessible
-window.loadActiveQrSessions = async function() {
+window.loadActiveQrSessions = async function () {
     const activeSessionsSection = document.getElementById('active-sessions-section');
     const tableBody = document.querySelector('#active-sessions-table tbody');
     if (!tableBody || !activeSessionsSection) return;
@@ -1406,9 +1413,9 @@ window.loadActiveQrSessions = async function() {
 
     try {
         // console.log(`[loadActiveQrSessions] Fetching from /auth/active-sessions...`);
-        const response = await fetchWithAuth(`/auth/active-sessions`); 
+        const response = await fetchWithAuth(`/auth/active-sessions`);
         // console.log(`[loadActiveQrSessions] Response status: ${response.status}`);
-        
+
         const data = await response.json();
         // console.log('[loadActiveQrSessions] Response data:', data);
 
@@ -1427,7 +1434,7 @@ window.loadActiveQrSessions = async function() {
 
                 // Format expiration time (example: HH:MM:SS on YYYY-MM-DD)
                 const formattedExpires = expires.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' }) +
-                                       ' on ' + expires.toLocaleDateString();
+                    ' on ' + expires.toLocaleDateString();
 
                 row.innerHTML = `
                     <td>${session.class_name || session.subject || 'N/A'}</td>
@@ -1459,10 +1466,10 @@ window.loadActiveQrSessions = async function() {
                 }
             });
         } else if (data.success) {
-             // console.log('[loadActiveQrSessions] No active sessions found. Displaying message.');
-             activeSessionsSection.style.display = 'block'; 
-             // Update the table body to show a message
-             tableBody.innerHTML = '<tr><td colspan="5" style="text-align: center;">No active sessions found.</td></tr>';
+            // console.log('[loadActiveQrSessions] No active sessions found. Displaying message.');
+            activeSessionsSection.style.display = 'block';
+            // Update the table body to show a message
+            tableBody.innerHTML = '<tr><td colspan="5" style="text-align: center;">No active sessions found.</td></tr>';
         } else { // if !data.success
             console.error(`[loadActiveQrSessions] API call failed: ${data.message}`);
             tableBody.innerHTML = `<tr><td colspan="5" style="text-align: center; color: red;">Error loading sessions: ${data.message}</td></tr>`;
@@ -1479,7 +1486,7 @@ window.loadActiveQrSessions = async function() {
 function handleShowActiveQr(event) {
     const button = event.target;
     const { sessionId, qrCodeUrl, expiresAtIso, section, className } = button.dataset; // Use className now added
-    
+
     // We also need the original duration to calculate the progress bar correctly.
     // This isn't stored in the button dataset currently.
     console.warn("[handleShowActiveQr] Cannot determine original duration. Using default for progress bar.");
@@ -1514,7 +1521,7 @@ async function handleDeleteActiveSession(event) {
             method: 'DELETE'
         });
         const data = await response.json();
-        
+
         if (data.success) {
             // Remove the row from the table
             console.log(`DEBUG: Delete successful for ${sessionId}. Attempting to remove row from UI.`);
@@ -1534,7 +1541,7 @@ async function handleDeleteActiveSession(event) {
                 // window.loadActiveQrSessions(); 
             }
             console.log(`DEBUG: Row remove() called.`);
- 
+
             // --- Check if the deleted session was the one displayed --- 
             if (sessionId === currentlyDisplayedSessionId) {
                 console.log(`Deleted session (${sessionId}) matches the currently displayed QR. Resetting display.`);
@@ -1542,13 +1549,13 @@ async function handleDeleteActiveSession(event) {
             }
             // --- End Check --- 
 
-             // Check if table body is empty, if so hide section or show message
-             if (tableBody && tableBody.rows.length === 0) {
-                 // Instead of hiding, show the empty state message
-                 tableBody.innerHTML = '<tr><td colspan="5" style="text-align: center;">No active sessions found.</td></tr>'; 
-             }
-             // Potentially clear the main QR display if it was showing this session
-             // clearQrDisplay(); // Hypothetical function
+            // Check if table body is empty, if so hide section or show message
+            if (tableBody && tableBody.rows.length === 0) {
+                // Instead of hiding, show the empty state message
+                tableBody.innerHTML = '<tr><td colspan="5" style="text-align: center;">No active sessions found.</td></tr>';
+            }
+            // Potentially clear the main QR display if it was showing this session
+            // clearQrDisplay(); // Hypothetical function
         } else {
             alert(`Error deleting session: ${data.message}`);
             button.textContent = 'Delete';
@@ -1573,7 +1580,7 @@ function formatDate(dateString) {
 // Make sure this isn't called twice if qrcode.js also calls it
 if (!window.dashboardInitialized) {
     document.addEventListener('DOMContentLoaded', initDashboard);
-    window.dashboardInitialized = true; 
+    window.dashboardInitialized = true;
 }
 
 // Helper function to show error messages (if not already defined)
@@ -1623,7 +1630,7 @@ async function generateQRCode() {
         qrDisplayArea.insertAdjacentHTML('afterbegin', '<div class="error-message centered-text"><p>Teacher ID not found. Please log in again.</p></div>');
         return;
     }
-    
+
     // --- Show Loading State --- 
     qrPlaceholder.style.display = 'none';
     generatedQrDetails.style.display = 'none';
@@ -1633,14 +1640,14 @@ async function generateQRCode() {
     // Add new loading state
     qrDisplayArea.insertAdjacentHTML('afterbegin', '<div class="loading-state centered-text"><div class="spinner"></div><p>Generating QR Code...</p></div>');
     // --- End Loading State --- 
-    
+
     try {
         // Prepare headers with auth information
         const headers = {
             'Content-Type': 'application/json',
             'Accept': 'application/json' // Expect JSON back
         };
-        
+
         // Fallback header auth (if needed)
         if (!document.cookie.includes('qr_attendance_sid')) {
             const userId = sessionStorage.getItem('userId');
@@ -1650,7 +1657,7 @@ async function generateQRCode() {
                 headers['X-User-Role'] = userRole;
             }
         }
-        
+
         const response = await fetch(`${API_URL}/auth/generate-qr`, {
             method: 'POST',
             credentials: 'include',
@@ -1663,37 +1670,37 @@ async function generateQRCode() {
                 duration: parseInt(durationMinutes) // NEW: Send duration as integer
             })
         });
-        
+
         const data = await response.json();
-         
+
         // --- Remove Loading State --- 
         const currentLoading = qrDisplayArea.querySelector('.loading-state');
         if (currentLoading) qrDisplayArea.removeChild(currentLoading);
         // --- End Remove Loading State --- 
-        
-        if (data.success) {
-             console.log("QR Code Generated:", data);
-             // Store current session ID for viewing attendance
-             sessionStorage.setItem('currentQrSessionId', data.sessionId);
 
-             // NEW: Display the generated QR in the new structure
-             displayGeneratedQr(data.qrCodeUrl, data.sessionId, data.expiresAt, section, className, parseInt(durationMinutes));
-             
-             // --- Refresh the active sessions list --- 
-             if (typeof window.loadActiveQrSessions === 'function') {
-                 console.log("Refreshing active sessions list after QR generation...");
-                 window.loadActiveQrSessions();
+        if (data.success) {
+            console.log("QR Code Generated:", data);
+            // Store current session ID for viewing attendance
+            sessionStorage.setItem('currentQrSessionId', data.sessionId);
+
+            // NEW: Display the generated QR in the new structure
+            displayGeneratedQr(data.qrCodeUrl, data.sessionId, data.expiresAt, section, className, parseInt(durationMinutes));
+
+            // --- Refresh the active sessions list --- 
+            if (typeof window.loadActiveQrSessions === 'function') {
+                console.log("Refreshing active sessions list after QR generation...");
+                window.loadActiveQrSessions();
+            } else {
+                console.warn("loadActiveQrSessions function not found, cannot refresh list.");
+            }
+            // --- End Refresh ---
+
         } else {
-                 console.warn("loadActiveQrSessions function not found, cannot refresh list.");
-             }
-             // --- End Refresh ---
-               
-        } else {
-             console.error("QR Code generation failed:", data.message);
-              // Show error in display area
-              qrPlaceholder.style.display = 'none'; // Keep placeholder hidden
-              generatedQrDetails.style.display = 'none'; // Keep details hidden
-              qrDisplayArea.insertAdjacentHTML('afterbegin', `<div class="error-message centered-text"><p>Failed to generate QR code: ${data.message}</p></div>`);
+            console.error("QR Code generation failed:", data.message);
+            // Show error in display area
+            qrPlaceholder.style.display = 'none'; // Keep placeholder hidden
+            generatedQrDetails.style.display = 'none'; // Keep details hidden
+            qrDisplayArea.insertAdjacentHTML('afterbegin', `<div class="error-message centered-text"><p>Failed to generate QR code: ${data.message}</p></div>`);
         }
     } catch (error) {
         console.error('Error generating QR code:', error);
@@ -1738,7 +1745,7 @@ function displayGeneratedQr(qrCodeUrl, sessionId, expiresAtIso, section, classNa
         generatedQrDetails.style.display = 'none';
         // Clear previous errors/content before adding new one
         const existingContent = qrDisplayArea.querySelector('.error-message, .loading-state');
-        if(existingContent) qrDisplayArea.removeChild(existingContent);
+        if (existingContent) qrDisplayArea.removeChild(existingContent);
         qrDisplayArea.insertAdjacentHTML('afterbegin', '<div class="error-message centered-text"><p>Error displaying QR details. Inner UI elements missing.</p></div>');
         return;
     }
@@ -1746,7 +1753,7 @@ function displayGeneratedQr(qrCodeUrl, sessionId, expiresAtIso, section, classNa
     // Clear display area content (remove loading state or previous error)
     const existingLoadingOrError = qrDisplayArea.querySelector('.loading-state, .error-message');
     if (existingLoadingOrError) qrDisplayArea.removeChild(existingLoadingOrError);
-    
+
     // --- Render QR Code --- 
     qrCodeWrapper.innerHTML = ''; // Clear previous QR
     // Use qrserver API for the image source
@@ -1755,7 +1762,7 @@ function displayGeneratedQr(qrCodeUrl, sessionId, expiresAtIso, section, classNa
     img.crossOrigin = 'Anonymous';
     img.alt = "Generated QR Code";
     qrCodeWrapper.appendChild(img);
-    img.onload = function() {
+    img.onload = function () {
         // No loadingMsg to remove here anymore
         // Create iframe to display the image - Wait, we want to show the IMAGE directly now
         // const iframe = document.createElement('iframe');
@@ -1764,7 +1771,7 @@ function displayGeneratedQr(qrCodeUrl, sessionId, expiresAtIso, section, classNa
         qrCodeWrapper.appendChild(img); // Append the loaded image
     };
 
-    img.onerror = function() {
+    img.onerror = function () {
         console.error("Failed to load QR code image from API.");
         qrCodeWrapper.innerHTML = '<p class="error-message">Failed to load QR image.</p>';
     };
@@ -1838,7 +1845,7 @@ function displayGeneratedQr(qrCodeUrl, sessionId, expiresAtIso, section, classNa
     generatedQrDetails.style.display = 'block';
 
     // Store the ID of the currently displayed session
-    currentlyDisplayedSessionId = sessionId; 
+    currentlyDisplayedSessionId = sessionId;
 }
 
 // NEW: Function to reset the QR display area to placeholder
@@ -1888,7 +1895,7 @@ function setupMobileMenu() {
                     overlay.classList.remove('visible'); // Hide overlay
                     // Ensure button reappears when menu closes via link click
                     if (window.innerWidth <= 768) {
-                        toggleBtn.style.display = 'block'; 
+                        toggleBtn.style.display = 'block';
                     }
                 }
             });
@@ -1903,7 +1910,7 @@ function setupMobileMenu() {
                     overlay.classList.remove('visible'); // Hide overlay
                     // Ensure button reappears when menu closes via outside click
                     if (window.innerWidth <= 768) {
-                         toggleBtn.style.display = 'block';
+                        toggleBtn.style.display = 'block';
                     }
                 }
             });
@@ -1914,7 +1921,7 @@ function setupMobileMenu() {
             sidebar.classList.remove('mobile-open');
             overlay.classList.remove('visible');
             if (window.innerWidth <= 768) { // Show toggle button
-                toggleBtn.style.display = 'block'; 
+                toggleBtn.style.display = 'block';
             }
         });
     } else {
