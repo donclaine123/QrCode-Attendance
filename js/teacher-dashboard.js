@@ -90,7 +90,7 @@ document.addEventListener('DOMContentLoaded', function () {
             // Update active state
             navLinks.forEach(navLink => navLink.classList.remove('active'));
             this.classList.add('active');
-
+            
             // Show/hide sections based on clicked link ID
             const overview = document.getElementById('dashboard-overview');
             const qrSection = document.getElementById('qr-section');
@@ -115,6 +115,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 if (isQrSectionActive) {
                     pageTitle.textContent = 'QR Session Management';
                     pageTitle.style.display = 'block';
+                    pageTitle.style.textAlign = 'center'
                 } else if (isManageClassesActive) {
                     pageTitle.textContent = 'Manage Your Classes';
                     pageTitle.style.display = 'block';
@@ -137,6 +138,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 if (isQrSectionActive) {
                     pageSubtitle.textContent = 'Generate and manage QR codes for attendance tracking';
                     pageSubtitle.style.display = 'block';
+                    pageSubtitle.style.textAlign = 'center';
                 } else if (isManageClassesActive) {
                     pageSubtitle.textContent = 'Create, view, and manage your academic classes in one place.';
                     pageSubtitle.style.display = 'block';
@@ -159,9 +161,9 @@ document.addEventListener('DOMContentLoaded', function () {
             const contentHeader = document.querySelector('.content-header');
             if (contentHeader) {
                 contentHeader.style.textAlign = isQrSectionActive ? 'center' : 'left';
-            }
+                }
+            });
         });
-    });
 
     // Attach session select listener (now safe to attach here)
     const sessionSelect = document.getElementById('session-select');
@@ -300,6 +302,21 @@ document.addEventListener('DOMContentLoaded', function () {
     // Set initial active nav link
     document.querySelectorAll('.nav-link').forEach(link => link.classList.remove('active'));
     document.getElementById('dashboard-nav')?.classList.add('active');
+
+    // --- Set Initial Title and Subtitle for Default Dashboard View ---
+    const initialPageTitle = document.querySelector('.page-title');
+    const initialPageSubtitle = document.querySelector('.page-subtitle');
+    if (initialPageTitle) {
+        initialPageTitle.textContent = 'Dashboard';
+        initialPageTitle.style.display = 'block';
+        initialPageTitle.style.textAlign = 'center'; // Match style from click handler
+    }
+    if (initialPageSubtitle) {
+        initialPageSubtitle.textContent = 'Welcome to the Teacher Dashboard';
+        initialPageSubtitle.style.display = 'block';
+        initialPageSubtitle.style.textAlign = 'center'; // Match style from click handler
+    }
+    // --- End Set Initial Title and Subtitle ---
 
     // Set up event listeners for dashboard actions
     const generateQrBtn = document.getElementById('generate-qr-btn');
@@ -553,7 +570,7 @@ async function checkAuthDebug() {
         if (debugMessage) {
             debugMessage.textContent += "\n\nHeader data: " + JSON.stringify(headerData, null, 2);
         }
-
+        
     } catch (error) {
         console.error("Debug check error:", error);
         if (debugMessage) {
@@ -725,13 +742,13 @@ async function loadClasses() {
                 return;
             }
         }
-
+        
         const data = await response.json();
-
+        
         // Clear existing options
         classSelect.innerHTML = '<option value="">Select a class</option>';
         attendanceClassSelect.innerHTML = '<option value="">Select a class</option>';
-
+        
         if (data.success) {
             // Clear existing class list
             classesContainer.innerHTML = '';
@@ -741,7 +758,7 @@ async function loadClasses() {
             if (totalClassesValue) {
                 totalClassesValue.textContent = data.classes?.length || 0;
             }
-
+            
             if (data.classes && data.classes.length > 0) {
                 // Add classes to selects and class list
                 data.classes.forEach(cls => {
@@ -750,13 +767,13 @@ async function loadClasses() {
                     option.value = cls.id;
                     option.textContent = cls.class_name || cls.name;
                     classSelect.appendChild(option);
-
+                    
                     // Add to attendance class select
                     const attOption = document.createElement('option');
                     attOption.value = cls.id;
                     attOption.textContent = cls.class_name || cls.name;
                     attendanceClassSelect.appendChild(attOption);
-
+                    
                     // Add to class list - FINAL-FINAL STRUCTURE (Subject in box, Class Name next to it)
                     const classItem = document.createElement('div');
                     classItem.className = 'class-list-item';
@@ -770,7 +787,7 @@ async function loadClasses() {
                     `;
                     classesContainer.appendChild(classItem);
                 });
-
+                
                 // Add event listeners to delete buttons
                 document.querySelectorAll('.delete-class').forEach(button => {
                     button.addEventListener('click', async function () {
@@ -826,7 +843,7 @@ async function addNewClass() {
         alert('Please enter both Class Name and Subject.'); // Simple alert for now
         return;
     }
-
+    
     // --- Show Loading Modal ---
     modalIconContainer.innerHTML = '<div class="spinner"></div>'; // Show spinner
     modalMessage.textContent = 'Adding class...';
@@ -847,9 +864,9 @@ async function addNewClass() {
                 description: classDescription
             })
         });
-
+        
         const data = await response.json();
-
+        
         if (data.success) {
             // --- Show Success Modal ---
             modalIconContainer.innerHTML = '<span class="status-icon success">✅</span>';
@@ -906,9 +923,9 @@ async function deleteClass(classId, deleteButtonElement) {
             method: 'DELETE',
             credentials: 'include'
         });
-
+        
         const data = await response.json();
-
+        
         if (data.success) {
             // --- Show Success Modal ---
             modalIconContainer.innerHTML = '<span class="status-icon success">✅</span>';
@@ -951,13 +968,13 @@ async function loadSessions(classId) {
     if (sectionChoicesDiv) sectionChoicesDiv.style.display = 'none'; // Hide section choices
     if (recordsDiv) recordsDiv.innerHTML = ''; // Clear previous records
     // --- End Loading State ---
-
+    
     if (!classId) {
         sessionSelect.innerHTML = '<option disabled selected>Please select a class first</option>';
         // Keep disabled
         return;
     }
-
+    
     try {
         console.log(`Loading DISTINCT DATES for class ID: ${classId}`);
 
@@ -976,7 +993,7 @@ async function loadSessions(classId) {
                 headers['X-User-Role'] = userRole;
             }
         }
-
+        
         const response = await fetch(`${API_URL}/auth/class-sessions/${classId}`, {
             method: 'GET',
             credentials: 'include',
@@ -989,11 +1006,11 @@ async function loadSessions(classId) {
             sessionSelect.innerHTML += '<option disabled>Authentication failed. Please try logging in again.</option>';
             return;
         }
-
+        
         if (!response.ok) {
             throw new Error(`Server returned ${response.status}: ${response.statusText}`);
         }
-
+        
         const data = await response.json();
         console.log('Distinct dates data received:', data);
 
@@ -1010,7 +1027,7 @@ async function loadSessions(classId) {
                     const dateObj = new Date(dateStr + 'T00:00:00'); // Add time to parse correctly
                     if (!isNaN(dateObj.getTime())) {
                         displayDate = dateObj.toLocaleDateString('en-US', {
-                            year: 'numeric',
+                                year: 'numeric',
                             month: 'long', // Use 'long' for full month name
                             day: 'numeric'
                         });
@@ -1062,12 +1079,12 @@ async function loadAttendanceRecords(specificSessionId = null) {
         return; // Cannot proceed without the container
     }
     // --- End Loading State ---
-
+    
     if (!sessionId) {
         recordsDiv.innerHTML = '<div class="error-message">Please select a class, date, and section.</div>';
         return;
     }
-
+    
     try {
         // Include both cookie-based and header-based auth
         const headers = {
@@ -1082,7 +1099,7 @@ async function loadAttendanceRecords(specificSessionId = null) {
             headers['X-User-ID'] = userId;
             headers['X-User-Role'] = userRole;
         }
-
+        
         const response = await fetch(`${API_URL}/teacher/attendance/${sessionId}`, {
             method: 'GET',
             credentials: 'include',
@@ -1095,14 +1112,14 @@ async function loadAttendanceRecords(specificSessionId = null) {
             recordsDiv.innerHTML = '<div class="error-message">Authentication failed. Please try logging in again.</div>';
             return;
         }
-
+        
         if (!response.ok) {
             throw new Error(`Server returned ${response.status}: ${response.statusText}`);
         }
-
+        
         const data = await response.json();
         console.log('Attendance data received:', data);
-
+        
         if (data.success) {
             if (!data.attendanceRecords || data.attendanceRecords.length === 0) {
                 recordsDiv.innerHTML = '<p class="empty-message">No attendance records found for this session.</p>';
@@ -1111,7 +1128,7 @@ async function loadAttendanceRecords(specificSessionId = null) {
 
             // Get section information to display
             const sectionInfo = data.section ? `<p class="session-section">Section: ${data.section}</p>` : '';
-
+            
             // Create attendance table
             let tableHTML = `
                 <div class="attendance-header">
@@ -1129,7 +1146,7 @@ async function loadAttendanceRecords(specificSessionId = null) {
                     </thead>
                     <tbody>
             `;
-
+            
             data.attendanceRecords.forEach(record => {
                 // Format time safely with error handling for UTC+8 time
                 let timeDisplay = 'Unknown Time';
@@ -1153,7 +1170,7 @@ async function loadAttendanceRecords(specificSessionId = null) {
                 } catch (timeError) {
                     console.error('Error formatting time:', timeError, record);
                 }
-
+                
                 tableHTML += `
                     <tr>
                         <td>${record.student_number || record.student_id || 'Unknown'}</td>
@@ -1162,12 +1179,12 @@ async function loadAttendanceRecords(specificSessionId = null) {
                     </tr>
                 `;
             });
-
+            
             tableHTML += `
                     </tbody>
                 </table>
             `;
-
+            
             recordsDiv.innerHTML = tableHTML;
 
 
@@ -1197,12 +1214,12 @@ async function loadAttendanceRecords(specificSessionId = null) {
 async function viewCurrentSessionAttendance() {
     try {
         const currentSessionId = sessionStorage.getItem('currentQrSessionId');
-
-        if (!currentSessionId) {
+    
+    if (!currentSessionId) {
             alert('No active session. Please generate a QR code first.');
-            return;
-        }
-
+        return;
+    }
+    
         // Switch to the attendance view
         const viewAttendanceBtn = document.getElementById('view-attendance-btn');
         if (viewAttendanceBtn) {
@@ -1674,14 +1691,14 @@ async function generateQRCode() {
                 duration: parseInt(durationMinutes) // NEW: Send duration as integer
             })
         });
-
+        
         const data = await response.json();
 
         // --- Remove Loading State --- 
         const currentLoading = qrDisplayArea.querySelector('.loading-state');
         if (currentLoading) qrDisplayArea.removeChild(currentLoading);
         // --- End Remove Loading State --- 
-
+        
         if (data.success) {
             console.log("QR Code Generated:", data);
             // Store current session ID for viewing attendance
@@ -1694,7 +1711,7 @@ async function generateQRCode() {
             if (typeof window.loadActiveQrSessions === 'function') {
                 console.log("Refreshing active sessions list after QR generation...");
                 window.loadActiveQrSessions();
-            } else {
+        } else {
                 console.warn("loadActiveQrSessions function not found, cannot refresh list.");
             }
             // --- End Refresh ---
