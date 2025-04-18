@@ -127,6 +127,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 } else if (isManageClassesActive) {
                     pageTitle.textContent = 'Manage Your Classes';
                     pageTitle.style.display = 'block';
+                    pageTitle.style.textAlign = 'center';
                 } else {
                     pageTitle.style.display = 'none';
                 }
@@ -138,6 +139,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 } else if (isManageClassesActive) {
                     pageSubtitle.textContent = 'Create, view, and manage your academic classes in one place.';
                     pageSubtitle.style.display = 'block';
+                    pageTitle.style.textAlign = 'center';
                 } else {
                     pageSubtitle.style.display = 'none';
                 }
