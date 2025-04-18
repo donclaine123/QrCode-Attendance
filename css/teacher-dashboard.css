@@ -1499,7 +1499,7 @@ body {
 /* --- End Status Modal Styles --- */
 
 /* --- Mobile Menu Styles (Base) --- */
-.mobile-menu-overlay {
+#mobile-menu-overlay {
   display: none; /* Hidden by default */
   position: fixed;
   top: 0;
@@ -1512,7 +1512,7 @@ body {
   transition: opacity 0.3s ease-in-out;
 }
 
-.mobile-menu-overlay.visible {
+#mobile-menu-overlay.visible {
   display: block;
   opacity: 1;
 }
