@@ -1564,14 +1564,3 @@ body {
 .card-like-header .btn {
   margin-left: var(--spacing-md); /* Add some space to the left of the button */
 }
-
-/* Style for the main 'Dashboard' title */
-#dashboard-overview > .main-content-title {
-  font-size: 1.75rem; /* Match .page-title */
-  font-weight: 600;   /* Match .page-title */
-  color: var(--color-text);
-  margin-bottom: var(--spacing-lg); /* Add space below the title */
-  padding-left: var(--spacing-lg); /* Align with content below (optional) */
-  padding-right: var(--spacing-lg);
-  padding-top: var(--spacing-lg); /* Add space above */
-}
