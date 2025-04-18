@@ -550,15 +550,6 @@ body {
 }
 /* --- End Mobile Menu Base Styles --- */
 
-/* --- Main Content Title --- */
-.main-content-title {
-  font-size: 1.75rem; /* Match existing page-title */
-  font-weight: 600;
-  color: var(--color-text);
-  margin-bottom: var(--spacing-lg); /* Add space below the title */
-}
-/* --- End Main Content Title --- */
-
 /* Responsive */
 @media (max-width: 768px) {
   .mobile-menu-btn {
