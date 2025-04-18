@@ -539,37 +539,7 @@ body {
     flex-direction: column;
   }
   
-  .main-content {
-    margin-left: 0;
-    /* padding handled by the new mobile styles at the end */
-    border-left: none;
-    box-shadow: none;
-  }
-  
   /* Navigation */
-  .nav-menu {
-    display: flex;
-    flex-wrap: wrap;
-    gap: var(--spacing-xs);
-    padding: 0;
-    margin: 0;
-  }
-  
-  .nav-item {
-    margin-bottom: 0;
-    flex: 1 0 auto;
-    min-width: calc(33.333% - var(--spacing-xs));
-  }
-  
-  .nav-link {
-    padding: var(--spacing-sm);
-  text-align: center;
-    justify-content: center;
-  }
-  
-  .nav-icon {
-    margin-right: var(--spacing-xs);
-  }
   
   /* Content sections */
   #teacher-section {
@@ -1539,6 +1509,27 @@ body {
     position: fixed !important; /* Force fixed position */
     top: var(--spacing-md) !important; /* Force top position */
     left: var(--spacing-md) !important; /* Force left position */
+  }
+
+  .sidebar {
+    position: fixed; /* Change from static */
+    left: 0;
+    top: 0;
+    height: 100vh; /* Full height */
+    width: 260px; /* Keep original width or adjust */
+    transform: translateX(-100%); /* Hide off-screen */
+    transition: transform 0.3s ease-in-out;
+    z-index: 1005; /* Ensure sidebar is above overlay */
+    border-right: 1px solid var(--color-secondary-dark); /* Keep border */
+    box-shadow: var(--shadow-lg); /* Add shadow */
+    /* Override conflicting responsive styles */
+    padding: var(--spacing-lg); 
+    display: flex; 
+    flex-direction: column;
+  }
+
+  .sidebar.mobile-open {
+    transform: translateX(0); /* Slide in */
   }
 
   .main-content {
