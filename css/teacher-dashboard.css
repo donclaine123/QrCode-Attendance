@@ -1543,7 +1543,10 @@ body {
 /* Responsive adjustments */
 @media (max-width: 768px) {
   .mobile-menu-btn {
-    display: block; /* Show button on mobile */
+    display: block !important; /* Show button on mobile */
+    position: fixed !important; /* Force fixed position */
+    top: var(--spacing-md) !important; /* Force top position */
+    left: var(--spacing-md) !important; /* Force left position */
   }
 
   .sidebar {
