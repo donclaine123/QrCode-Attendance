@@ -99,6 +99,7 @@ document.addEventListener('DOMContentLoaded', function() {
             const pageTitle = document.querySelector('.page-title'); // Get the title element
             const pageSubtitle = document.querySelector('.page-subtitle'); // Get the subtitle element
             const mainContentTitle = document.getElementById('main-content-title-heading'); // Get the new Dashboard title
+            const attendanceTitle = document.getElementById('attendance-section-title'); // Get the new Attendances title
 
             if (overview) overview.style.display = (this.id === 'dashboard-nav') ? 'block' : 'none';
             if (qrSection) qrSection.style.display = (this.id === 'generate-qr-btn') ? 'block' : 'none';
@@ -108,6 +109,11 @@ document.addEventListener('DOMContentLoaded', function() {
             // Show/hide the main Dashboard title
             if (mainContentTitle) {
                 mainContentTitle.style.display = (this.id === 'dashboard-nav') ? 'block' : 'none';
+            }
+            
+            // Show/hide the Attendances title
+            if (attendanceTitle) {
+                attendanceTitle.style.display = (this.id === 'view-attendance-btn') ? 'block' : 'none';
             }
 
             // Show/hide the specific page title and subtitle based on the active section
