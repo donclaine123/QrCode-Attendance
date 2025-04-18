@@ -595,6 +595,16 @@ body {
     margin-top: var(--spacing-xl);
   }
   /* --- End Responsive QR Page Layout --- */
+
+  .main-content {
+    margin-left: 0; /* Take full width */
+  }
+
+  /* Ensure sidebar content is scrollable if needed */
+  .sidebar .nav-menu {
+    flex-grow: 1;
+    overflow-y: auto;
+  }
 }
 
 /* Small mobile devices */
