@@ -10,7 +10,9 @@
   <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Poppins:wght@500;600;700&display=swap" rel="stylesheet">
+  <link
+    href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Poppins:wght@500;600;700&display=swap"
+    rel="stylesheet">
   <link rel="icon" href="data:," />
 </head>
 
@@ -22,7 +24,7 @@
         <img src="../assets/logo.png" alt="Logo" class="sidebar-logo-image">
         <div class="sidebar-app-name">EazyAttend</div>
       </div>
-      
+
       <nav>
         <ul class="nav-menu">
           <li class="nav-item">
@@ -62,7 +64,7 @@
             </a>
           </li>
         </ul>
-    </nav>
+      </nav>
     </aside>
 
     <!-- Mobile Menu Overlay -->
@@ -72,11 +74,8 @@
     <!-- Main Content -->
     <main class="main-content">
       <!-- Mobile Menu Toggle Button -->
-      <button id="mobile-menu-toggle" class="mobile-menu-btn">&#9776;</button> 
+      <button id="mobile-menu-toggle" class="mobile-menu-btn">&#9776;</button>
       <!-- End Mobile Menu Toggle Button -->
-
-      <!-- Main Content Title -->
-      <!-- <h2 class="main-content-title">Dashboard</h2> -->
 
       <div class="content-header">
         <h1 class="page-title">QR Session Management</h1>
@@ -87,13 +86,13 @@
         <!-- Dashboard Overview with Recent Attendance Records -->
         <div id="dashboard-overview" class="dashboard-section">
           <!-- Dashboard Section Title -->
-          <h2 class="main-content-title">Dashboard</h2> 
+          <h2 class="main-content-title">Dashboard</h2>
 
           <h2 class="card-like-header">
             <span>Recent Attendance Records</span>
             <!-- Refresh Button Moved Here -->
             <button id="refresh-recent-attendance-btn" class="btn btn-primary btn-sm">
-                <span class="btn-icon">🔄</span> Refresh
+              <span class="btn-icon">🔄</span> Refresh
             </button>
           </h2>
           <table id="recent-attendance-table">
@@ -116,8 +115,8 @@
 
         <!-- QR Code Section -->
         <div id="qr-section" class="dashboard-section qr-management-page" style="display: none;">
-           <!-- Container for the two columns -->
-           <div class="two-column-layout">
+          <!-- Container for the two columns -->
+          <div class="two-column-layout">
 
             <!-- Left Column: QR Code Settings -->
             <div class="qr-settings-column card">
@@ -129,12 +128,12 @@
                     <option value="">-- Select a Class --</option>
                     <!-- Options populated by JS -->
                   </select>
-    </div>
-    
+                </div>
+
                 <div class="form-group icon-input-group">
                   <label for="qr-section-input"><span class="label-icon">👤</span> Section (Recommended)</label>
                   <input type="text" id="qr-section-input" placeholder="e.g. A, B, Morning" class="form-control">
-      </div>
+                </div>
 
                 <div class="form-group icon-input-group">
                   <label for="duration-select"><span class="label-icon">⏱️</span> QR Code Validity</label>
@@ -145,9 +144,9 @@
                     <option value="30">30 minutes</option>
                     <option value="60">60 minutes</option>
                   </select>
-    </div>
-    
-        <div class="form-group">
+                </div>
+
+                <div class="form-group">
                   <label><span class="label-icon">🏷️</span> QR Code Type</label>
                   <div class="checkbox-group">
                     <label for="type-attendance">
@@ -187,8 +186,10 @@
                     </div>
                   </div>
                   <div id="qr-actions" class="qr-actions">
-                    <button id="download-qr-btn" class="btn btn-secondary"><span class="btn-icon">💾</span> Download</button>
-                    <button id="refresh-qr-btn" class="btn btn-warning"><span class="btn-icon">🔄</span> Refresh</button>
+                    <button id="download-qr-btn" class="btn btn-secondary"><span class="btn-icon">💾</span>
+                      Download</button>
+                    <button id="refresh-qr-btn" class="btn btn-warning"><span class="btn-icon">🔄</span>
+                      Refresh</button>
                   </div>
                 </div>
               </div>
@@ -197,33 +198,33 @@
           </div>
           <!-- End two-column-layout -->
 
-         <!-- Active Sessions Card (Re-added Below Columns) -->
-         <div id="active-sessions-section" class="card active-sessions-card">
-           <h2 class="card-header"><span class="card-icon">🕒</span> Active QR Sessions</h2>
-           <div class="table-responsive card-body"> 
-             <table id="active-sessions-table">
-               <thead>
-                 <tr>
-                   <th>Class Name</th>
-                   <th>Section</th>
-                   <th>Expires At</th>
-                   <th>Status</th>
-                   <th>Actions</th>
-                 </tr>
-               </thead>
-               <tbody>
-                 <!-- Active sessions will be populated here by JS -->
-                 <tr>
-                   <td colspan="5" class="empty-state">
-                     <span class="empty-icon">ⓘ</span> Loading active sessions...
-                   </td>
-                 </tr>
-               </tbody>
-             </table>
-           </div>
-         </div>
+          <!-- Active Sessions Card (Re-added Below Columns) -->
+          <div id="active-sessions-section" class="card active-sessions-card">
+            <h2 class="card-header"><span class="card-icon">🕒</span> Active QR Sessions</h2>
+            <div class="table-responsive card-body">
+              <table id="active-sessions-table">
+                <thead>
+                  <tr>
+                    <th>Class Name</th>
+                    <th>Section</th>
+                    <th>Expires At</th>
+                    <th>Status</th>
+                    <th>Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <!-- Active sessions will be populated here by JS -->
+                  <tr>
+                    <td colspan="5" class="empty-state">
+                      <span class="empty-icon">ⓘ</span> Loading active sessions...
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
         </div>
-         <!-- End qr-section -->
+        <!-- End qr-section -->
 
         <!-- Classes Management Section -->
         <div id="classes-section" class="dashboard-section manage-classes-page" style="display: none;">
@@ -232,97 +233,99 @@
           <!-- <p class="page-subtitle">Create, view, and manage your academic classes in one place.</p> -->
 
           <div class="manage-classes-columns">
-             <!-- Left Column: Add New Class -->
-             <div class="add-class-column">
-                <div class="card">
-                   <h3 class="card-header"><span class="card-icon">➕</span> Add New Class</h3>
-                   <div class="card-body">
-                      <div class="form-group">
-                         <label for="class-name">Class Name:</label>
-                         <input type="text" id="class-name" class="input-field" placeholder="e.g., CS101" required>
-        </div>
-        <div class="form-group">
-                         <label for="subject">Subject:</label>
-                         <input type="text" id="subject" class="input-field" placeholder="e.g., Introduction to Programming" required>
-        </div>
-        <div class="form-group">
-                         <label for="description">Description (Optional):</label>
-                         <textarea id="description" class="input-field" placeholder="Add a brief description of the class..."></textarea>
-                      </div>
-                   </div>
-                   <div class="form-actions">
-                       <button id="add-class-btn" class="btn btn-primary btn-full-width">
-                          <span class="btn-icon">➕</span> Add Class
-                       </button>
-                   </div>
+            <!-- Left Column: Add New Class -->
+            <div class="add-class-column">
+              <div class="card">
+                <h3 class="card-header"><span class="card-icon">➕</span> Add New Class</h3>
+                <div class="card-body">
+                  <div class="form-group">
+                    <label for="class-name">Class Name:</label>
+                    <input type="text" id="class-name" class="input-field" placeholder="e.g., CS101" required>
+                  </div>
+                  <div class="form-group">
+                    <label for="subject">Subject:</label>
+                    <input type="text" id="subject" class="input-field" placeholder="e.g., Introduction to Programming"
+                      required>
+                  </div>
+                  <div class="form-group">
+                    <label for="description">Description (Optional):</label>
+                    <textarea id="description" class="input-field"
+                      placeholder="Add a brief description of the class..."></textarea>
+                  </div>
                 </div>
-             </div>
+                <div class="form-actions">
+                  <button id="add-class-btn" class="btn btn-primary btn-full-width">
+                    <span class="btn-icon">➕</span> Add Class
+                  </button>
+                </div>
+              </div>
+            </div>
 
-             <!-- Right Column: Your Classes -->
-             <div class="your-classes-column">
-                <div class="card">
-                    <h3 class="card-header"><span class="card-icon">📋</span> Your Classes</h3>
-                    <div id="classes-list" class="card-body classes-list-container">
-                       <!-- Class items will be populated here by JS -->
-                       <div id="classes-container">
-                           <!-- Placeholder or loading state can go here -->
-                           <p class="loading-indicator">Loading classes...</p>
-                       </div>
-                    </div>
-        </div>
-      </div>
-    </div>
-    
-        <div class="form-group">
-          <!-- Summary Row -->
-          <div class="class-summary-row">
-              <div class="summary-card">
-                  <div class="summary-icon-wrapper"><span class="summary-icon">📚</span></div>
-                  <div class="summary-content">
-                      <span class="summary-title">Total Classes</span>
-                      <span id="total-classes-value" class="summary-value">-</span>
+            <!-- Right Column: Your Classes -->
+            <div class="your-classes-column">
+              <div class="card">
+                <h3 class="card-header"><span class="card-icon">📋</span> Your Classes</h3>
+                <div id="classes-list" class="card-body classes-list-container">
+                  <!-- Class items will be populated here by JS -->
+                  <div id="classes-container">
+                    <!-- Placeholder or loading state can go here -->
+                    <p class="loading-indicator">Loading classes...</p>
                   </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <!-- Summary Row -->
+            <div class="class-summary-row">
+              <div class="summary-card">
+                <div class="summary-icon-wrapper"><span class="summary-icon">📚</span></div>
+                <div class="summary-content">
+                  <span class="summary-title">Total Classes</span>
+                  <span id="total-classes-value" class="summary-value">-</span>
+                </div>
               </div>
               <div class="summary-card">
-                  <div class="summary-icon-wrapper"><span class="summary-icon">🗓️</span></div>
-                  <div class="summary-content">
-                      <span class="summary-title">Current Semester</span>
-                      <span id="current-semester-value" class="summary-value">Fall 2023</span> <!-- Placeholder -->
-                  </div>
+                <div class="summary-icon-wrapper"><span class="summary-icon">🗓️</span></div>
+                <div class="summary-content">
+                  <span class="summary-title">Current Semester</span>
+                  <span id="current-semester-value" class="summary-value">Fall 2023</span> <!-- Placeholder -->
+                </div>
               </div>
-          </div>
+            </div>
           </div>
         </div>
-        
+
         <!-- Attendance Records Section -->
         <div id="attendance-section" class="dashboard-section" style="display: none;">
           <h3>View Attendance Records</h3>
-        <div class="form-group">
+          <div class="form-group">
             <label for="attendance-class-select">Select Class:</label>
             <select id="attendance-class-select">
               <option value="">-- Select a Class --</option>
             </select>
-            
+
             <label for="session-select">Select Session:</label>
             <select id="session-select">
               <option value="">-- Select a Session --</option>
             </select>
           </div>
-          
+
           <!-- Container for section choices -->
           <div id="section-choices" class="form-group" style="display: none;">
             <label>Select Section for this Date:</label>
             <div id="section-buttons-container"></div>
           </div>
-          
+
           <!-- Add Refresh Button -->
           <div class="form-actions" style="margin-top: var(--spacing-md); text-align: right;">
             <button id="refresh-attendance-btn" class="btn btn-secondary">
-                <span class="btn-icon">🔄</span> Refresh List
+              <span class="btn-icon">🔄</span> Refresh List
             </button>
-        </div>
+          </div>
           <!-- End Refresh Button -->
-          
+
           <div id="attendance-records"></div>
         </div>
       </div>
@@ -333,7 +336,7 @@
       <div id="status-modal-content" class="modal-content">
         <div id="status-modal-icon-container"></div>
         <p id="status-modal-message"></p>
-    </div>
+      </div>
     </div>
     <!-- End Status Modal -->
 
