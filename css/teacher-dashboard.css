@@ -719,6 +719,11 @@ body {
     width: 100%;
   }
 
+  /* Prevent mobile menu button from becoming full width */
+  .mobile-menu-btn {
+    width: auto;
+  }
+
   /* Ensure buttons in QR actions stack nicely */
   .qr-actions {
     flex-direction: column;
