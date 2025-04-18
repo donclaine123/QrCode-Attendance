@@ -550,6 +550,15 @@ body {
 }
 /* --- End Mobile Menu Base Styles --- */
 
+/* --- NEW: Style for the main content title (e.g., "Dashboard") --- */
+.main-content-title {
+  font-size: 2rem; /* Larger font size */
+  font-weight: 600; /* Bold */
+  color: var(--color-text); /* Standard text color */
+  margin-bottom: var(--spacing-lg); /* Space below the title */
+}
+/* --- End Main Content Title Style --- */
+
 /* Responsive */
 @media (max-width: 768px) {
   .mobile-menu-btn {
