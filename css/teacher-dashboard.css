@@ -534,17 +534,30 @@ body {
 
 /* Responsive */
 @media (max-width: 768px) {
+  .mobile-menu-btn {
+    display: block;
+  }
+
   /* Basic layout */
   .dashboard {
     flex-direction: column;
   }
   
   .sidebar {
-    width: 100%;
-    height: auto;
-    position: static;
-    border-right: none;
-    border-bottom: 1px solid var(--color-secondary-dark);
+    /* Mobile menu styles for sidebar */
+    position: fixed; /* Change to fixed */
+    left: 0;
+    top: 0;
+    height: 100vh; /* Full height */
+    width: 260px; /* Restore original width */
+    transform: translateX(-100%); /* Hide off-screen */
+    transition: transform 0.3s ease-in-out;
+    z-index: 1005; /* Ensure sidebar is above overlay */
+    border-right: 1px solid var(--color-secondary-dark); /* Keep border */
+    box-shadow: var(--shadow-lg); /* Add shadow */
+    padding: var(--spacing-lg); /* Restore padding */
+    display: flex; /* Restore flex */
+    flex-direction: column; /* Restore flex direction */
   }
   
   .main-content {
@@ -552,6 +565,11 @@ body {
     padding: var(--spacing-lg);
     border-left: none;
     box-shadow: none;
+    padding-top: 60px;
+  }
+  
+  .sidebar.mobile-open {
+    transform: translateX(0);
   }
   
   /* Navigation */
@@ -571,7 +589,7 @@ body {
   
   .nav-link {
     padding: var(--spacing-sm);
-  text-align: center;
+    text-align: center;
     justify-content: center;
   }
   
@@ -1479,6 +1497,42 @@ body {
   line-height: 1.5;
 }
 /* --- End Status Modal Styles --- */
+
+/* --- Mobile Menu Styles (Base) --- */
+.mobile-menu-overlay {
+  display: none; /* Hidden by default */
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.5); /* Semi-transparent black */
+  z-index: 999; /* Below sidebar, above main content */
+  opacity: 0;
+  transition: opacity 0.3s ease-in-out;
+}
+
+.mobile-menu-overlay.visible {
+  display: block;
+  opacity: 1;
+}
+
+.mobile-menu-btn {
+  display: none; /* Hidden by default on larger screens */
+  position: fixed;
+  top: var(--spacing-md);
+  left: var(--spacing-md);
+  z-index: 1010; /* Above sidebar and overlay */
+  background-color: var(--color-primary);
+  color: var(--color-white);
+  border: none;
+  padding: var(--spacing-sm) var(--spacing-md);
+  font-size: 1.5rem;
+  border-radius: var(--border-radius-sm);
+  cursor: pointer;
+  box-shadow: var(--shadow-md);
+}
+/* --- End Mobile Menu Base Styles --- */
 
 /* New style for the header containing the button */
 .card-like-header {
