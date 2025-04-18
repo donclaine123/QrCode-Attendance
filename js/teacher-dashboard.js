@@ -1669,7 +1669,7 @@ async function generateQRCode() {
              if (typeof window.loadActiveQrSessions === 'function') {
                  console.log("Refreshing active sessions list after QR generation...");
                  window.loadActiveQrSessions();
-             } else {
+        } else {
                  console.warn("loadActiveQrSessions function not found, cannot refresh list.");
              }
              // --- End Refresh ---
