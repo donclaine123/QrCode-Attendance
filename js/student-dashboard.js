@@ -706,6 +706,10 @@ function setupMobileMenu() {
     if (toggleBtn && sidebar) {
         toggleBtn.addEventListener('click', () => {
             sidebar.classList.toggle('mobile-open');
+            // Hide button when menu opens, show when it closes (on mobile)
+            if (window.innerWidth <= 768) { // Only apply on mobile view
+                toggleBtn.style.display = sidebar.classList.contains('mobile-open') ? 'none' : 'block';
+            }
         });
 
         // Optional: Close menu when clicking a nav link inside
@@ -714,6 +718,10 @@ function setupMobileMenu() {
                 // Only close if it's currently open (for mobile view)
                 if (sidebar.classList.contains('mobile-open')) {
                     sidebar.classList.remove('mobile-open');
+                    // Ensure button reappears when menu closes via link click
+                    if (window.innerWidth <= 768) {
+                        toggleBtn.style.display = 'block'; 
+                    }
                 }
             });
         });
@@ -723,6 +731,10 @@ function setupMobileMenu() {
         if (mainContent) {
             mainContent.addEventListener('click', (event) => {
                 if (sidebar.classList.contains('mobile-open') && !sidebar.contains(event.target) && !toggleBtn.contains(event.target)) {
+                    // Ensure button reappears when menu closes via outside click
+                    if (window.innerWidth <= 768) {
+                         toggleBtn.style.display = 'block';
+                    }
                     sidebar.classList.remove('mobile-open');
                 }
             });
